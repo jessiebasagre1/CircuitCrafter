@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d5562cc34807e2439c5cc188b7351d9, type: 3}
+  m_Name: Dialog_Motherboard_HowTo
+  m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
+  lines:
+  - speakerName: Guide
+    text: Locate the CPU socket near the center of the motherboard. Before removing
+      the processor, unlock the CPU retention lever and carefully open the CPU socket
+      cover. Once the processor is fully exposed, gently lift the CPU straight out
+      of the socket.
+  - speakerName: Guide
+    text: Next, locate the RAM module. Memory modules are secured by locking clips
+      on each side of the memory slot.
+  - speakerName: Guide
+    text: Disconnect both the SATA data cable and the SATA power cable before removing
+      the storage device.
