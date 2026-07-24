@@ -207,11 +207,28 @@ public class VerletRope : MonoBehaviour
 
     private void BuildTubeMesh()
     {
+        // Tracks the last known-good forward direction so a momentarily
+        // collapsed segment (zero-length, e.g. anchors overlapping) reuses
+        // the previous ring's orientation instead of feeding a zero vector
+        // into Quaternion.LookRotation (which spams "viewing vector is zero").
+        Vector3 lastGoodFwd = transform.forward;
+
         for (int i = 0; i < segCount; i++)
         {
-            Vector3 fwd = (i < segCount - 1)
-                ? (points[i + 1] - points[i]).normalized
-                : (points[i] - points[i - 1]).normalized;
+            Vector3 rawFwd = (i < segCount - 1)
+                ? (points[i + 1] - points[i])
+                : (points[i] - points[i - 1]);
+
+            Vector3 fwd;
+            if (rawFwd.sqrMagnitude > 0.0000001f)
+            {
+                fwd = rawFwd.normalized;
+                lastGoodFwd = fwd;
+            }
+            else
+            {
+                fwd = lastGoodFwd;
+            }
 
             Quaternion rot = Quaternion.LookRotation(fwd);
             for (int r = 0; r < radialSegments; r++)
