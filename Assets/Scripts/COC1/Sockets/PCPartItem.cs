@@ -91,7 +91,7 @@ public class PCPartItem : MonoBehaviour
         }
     }
 
-   
+
 
     void Update()
     {
@@ -183,9 +183,47 @@ public class PCPartItem : MonoBehaviour
 
             if (removalDialog != null && !justCompleted)
                 DialogManager.Instance.ShowDialog(removalDialog);
+
+            // Checkpointing on task completion is now handled generically by
+            // TaskCheckpointAutosaver (listens to TaskManager.OnTaskCompleted
+            // for ANY task) — no save call needed here anymore.
         }
 
         Restart(ShrinkThenDisable());
+
+        OnPickedUp();
+    }
+
+    /// <summary>
+    /// Same end-state as Pickup() (detached from socket, hidden, task/dialog
+    /// side effects reported) but WITHOUT the shrink tween — snaps straight to
+    /// hidden. Use this when restoring a save on scene load, where there's no
+    /// reason to visually animate a part shrinking away before the player has
+    /// even seen it.
+    /// </summary>
+    public void PickupInstant()
+    {
+        if (HomeSocket != null)
+        {
+            HomeSocket.Occupant = null;
+            HomeSocket = null;
+        }
+
+        if (!hasReportedRemoval)
+        {
+            hasReportedRemoval = true;
+
+            bool wasAlreadyComplete = TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.TaskId);
+            TaskManager.Instance.ReportProgress(PCDisassemblySetup.TaskId);
+            bool justCompleted = !wasAlreadyComplete && TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.TaskId);
+
+            if (removalDialog != null && !justCompleted)
+                DialogManager.Instance.ShowDialog(removalDialog);
+        }
+
+        if (scaleRoutine != null) StopCoroutine(scaleRoutine);
+        transform.localScale = Vector3.zero;
+        gameObject.SetActive(false);
 
         OnPickedUp();
     }
@@ -234,6 +272,10 @@ public class PCPartItem : MonoBehaviour
 
             if (installDialog != null && !justCompleted)
                 DialogManager.Instance.ShowDialog(installDialog);
+
+            // Checkpointing on task completion is now handled generically by
+            // TaskCheckpointAutosaver (listens to TaskManager.OnTaskCompleted
+            // for ANY task) — no save call needed here anymore.
         }
 
         OnReturnedToSocket(socket);

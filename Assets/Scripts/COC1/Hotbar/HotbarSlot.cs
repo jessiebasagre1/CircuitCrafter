@@ -25,9 +25,26 @@ public class HotbarSlot : MonoBehaviour, IPointerDownHandler, IPointerClickHandl
     void Awake()
     {
         if (iconImage == null)
+        {
             Debug.LogError($"{name}: Icon Image is not assigned on this HotbarSlot.", this);
+            return; // already logged; don't touch iconImage further
+        }
+
+        // Don't blindly hide it — StoredItem may already have been set by
+        // SaveManager.RestoreParts() before this GameObject was ever activated
+        // (the hotbar panel starts inactive until the player enters station
+        // view via StationCameraSwitch, so Awake() can run well after a load
+        // has already populated this slot). Reflect whatever state actually
+        // exists right now instead of assuming empty.
+        if (StoredItem != null)
+        {
+            iconImage.sprite = StoredItem.icon;
+            iconImage.enabled = true;
+        }
         else
+        {
             iconImage.enabled = false;
+        }
     }
 
     public void SetItem(PCPartItem item)

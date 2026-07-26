@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 8-Reboot
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 7
-  displayText: 
+  displayText: Setup needs to restart your computer to continue.
   duration: 2
-  requiresRebootAnimation: 0
+  requiresRebootAnimation: 1
   educationalDialog: {fileID: 0}
   requiresUserInput: 0

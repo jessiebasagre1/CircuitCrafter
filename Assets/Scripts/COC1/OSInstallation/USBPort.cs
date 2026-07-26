@@ -1,10 +1,10 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
 /// Represents a physical USB port on the case/motherboard. Plugging is driven
 /// by PlayerInteractor's proximity search (is a held drive close to and
-/// visible from this port?) rather than precise raycast aim — easier to hit
+/// visible from this port?) rather than precise raycast aim Â— easier to hit
 /// than requiring the player's crosshair land exactly on a small port.
 /// </summary>
 public class USBPort : MonoBehaviour
@@ -17,7 +17,7 @@ public class USBPort : MonoBehaviour
     private void OnEnable() => allPorts.Add(this);
     private void OnDisable() => allPorts.Remove(this);
 
-    [Tooltip("Optional — snaps the drive's transform to sit neatly in the port once plugged in. Leave unassigned to skip snapping.")]
+    [Tooltip("Optional Â— snaps the drive's transform to sit neatly in the port once plugged in. Leave unassigned to skip snapping.")]
     [SerializeField] private Transform snapPoint;
 
     public USBDriveItem CurrentDrive { get; private set; }
@@ -26,12 +26,13 @@ public class USBPort : MonoBehaviour
     {
         if (CurrentDrive != null && CurrentDrive != drive)
         {
-            Debug.Log($"{name}: port already occupied by '{CurrentDrive.name}' — remove it first.", this);
+            Debug.Log($"{name}: port already occupied by '{CurrentDrive.name}' Â— remove it first.", this);
             return;
         }
 
         CurrentDrive = drive;
         drive.IsInsertedInPort = true;
+        drive.CurrentPort = this;
 
         drive.transform.SetParent(snapPoint != null ? snapPoint : transform, worldPositionStays: false);
         drive.transform.localPosition = Vector3.zero;
@@ -49,6 +50,7 @@ public class USBPort : MonoBehaviour
 
         Debug.Log($"{name}: '{CurrentDrive.name}' unplugged.", this);
         CurrentDrive.IsInsertedInPort = false;
+        CurrentDrive.CurrentPort = null;
         CurrentDrive = null;
     }
 

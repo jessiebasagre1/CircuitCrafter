@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 3-BootMediaCheck
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 2
-  displayText: 
+  displayText: Detecting boot device...\nBooting from USB drive
   duration: 2
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}

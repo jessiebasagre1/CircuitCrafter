@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 10-Complete
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 9
-  displayText: 
-  duration: 2
+  displayText: Installation complete. Welcome to your new desktop!
+  duration: 1
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 0

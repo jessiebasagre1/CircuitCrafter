@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 7-Installing
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 6
-  displayText: 
-  duration: 2
+  displayText: Installing features and updates...
+  duration: 6
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 0

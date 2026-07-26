@@ -27,11 +27,21 @@ public class RAMLock : MonoBehaviour
 
     public bool IsOpen { get; private set; }
 
-    void Start()
+    void Awake()
     {
+        // IMPORTANT: this must be captured in Awake, not Start.
+        // SaveManager restores latch state (Open()/Close()) from
+        // SceneManager.sceneLoaded, which fires after Awake/OnEnable but
+        // BEFORE Start for objects in the newly loaded scene. If this were
+        // captured in Start(), Continue would call Close()/Open() first
+        // (moving this transform), and Start() would then cache that
+        // corrupted position as "closed" forever for this session.
         closedPosition = transform.position;
         closedRotation = transform.rotation;
+    }
 
+    void Start()
+    {
         if (highlightVisual != null)
             highlightVisual.SetActive(false); // always start hidden, regardless of Inspector state
     }
@@ -44,7 +54,7 @@ public class RAMLock : MonoBehaviour
         RefreshHighlight();
     }
 
-  
+
 
     public void Toggle()
     {

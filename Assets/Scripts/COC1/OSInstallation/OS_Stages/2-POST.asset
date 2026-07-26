@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 2-POST
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 1
-  displayText: 
+  displayText: "Running startup checks...\\nCPU OK \xB7 Memory OK \xB7 Storage OK"
   duration: 2
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}

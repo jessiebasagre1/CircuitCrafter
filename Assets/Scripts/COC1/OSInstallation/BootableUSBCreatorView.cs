@@ -91,11 +91,12 @@ public class BootableUSBCreatorView : MonoBehaviour
     {
         if (creator.IsWriting) return;
 
+        bool started = creator.BeginCreate();
+        if (!started) return; // blocked by a validation check — creator already showed the warning dialog
+
         progressBar.value = 0f;
         statusText.text = "Writing image...";
         SetControlsInteractable(false);
-
-        creator.BeginCreate();
     }
 
     private void HandleProgress(float t)

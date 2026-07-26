@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 1-Power_On
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 0
-  displayText: 
-  duration: 3
+  displayText: Powering on...
+  duration: 1.5
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 0

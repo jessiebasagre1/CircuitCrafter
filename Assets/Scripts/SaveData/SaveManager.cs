@@ -1,40 +1,53 @@
-using System;
-using System.IO;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Captures and restores game progress: which parts are installed, which
-/// cables are plugged, RAM latch states, USB drive bootable/inserted state,
-/// and how far the OS install has progressed. Saved as JSON to
-/// Application.persistentDataPath.
+/// Captures and restores game progress for a single ongoing save (no player
+/// profiles). Also tracks which COC modes have been completed, which
+/// MainMenuController uses to decide which mode buttons are unlocked.
 ///
-/// IMPORTANT ASSUMPTIONS � please confirm/correct against your real scripts:
-///   - CableConnector.isPlugged is a plain public bool field (settable
-///     directly). This save system does NOT reposition the cable's actual
-///     transform/rope � it only restores the flag. If your CableConnector
-///     needs a proper Plug()/Unplug() method call to look right physically
-///     (move the connector transform, update VerletRope anchors), let me
-///     know and I'll wire that in instead of the direct field set.
-///   - RAMLatch has both Open() and Close() methods. Only Close() was
-///     confirmed from RAMPartItem's code � Open() is assumed by symmetry.
-///     If it doesn't exist, add one, or tell me RAMLatch's real API.
+/// Persists across scene loads (DontDestroyOnLoad) since the main menu and
+/// gameplay scenes are separate — SelectMode remembers what to do and acts
+/// on it the moment the next scene finishes loading.
+///
+/// Confirmed against the real project scripts:
+///   - CableConnector.isPlugged is a plain public bool field, and Plug(socket)
+///     / Unplug() are the real methods — cables don't report task progress at
+///     all (only PCPartItem parts count toward disassemble_pc/assemble_pc), so
+///     restore just calls these directly to snap the connector's transform/
+///     parent back correctly.
+///   - The RAM retention clip class is RAMLock (not RAMLatch) — confirmed
+///     to have both Open() and Close().
 ///   - Scenes always start with every PCPartItem already installed in its
-///     HomeSocket (matches PCPartItem.Awake() capturing HomeSocket from the
-///     parent socket). Loading a save therefore only ever REMOVES parts
-///     marked as not-installed � it can't re-insert a part into a socket it
-///     doesn't already start in, since HomeSocket is lost once removed.
+///     HomeSocket. Loading a save therefore only ever REMOVES parts marked
+///     as not-installed — it can't re-insert a part into a socket it doesn't
+///     already start in, since HomeSocket is lost once removed.
+///   - Parts restored as "removed" must also be placed into a HotbarSlot —
+///     PCPartItem.Pickup()/PickupInstant() only detach from the socket and
+///     hide the 3D object, they know nothing about the hotbar UI. Without
+///     this, a part correctly ends up out of its socket on Continue but its
+///     icon never appears in any hotbar slot.
 /// </summary>
 public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance { get; private set; }
 
     [Header("Scene References (for restoring things that need object lookups)")]
-    [Tooltip("Same list you assigned on BootableUSBCreator � used to look up an ISOImageData by name when restoring a drive's written image.")]
+    [Tooltip("Same list you assigned on BootableUSBCreator — used to look up an ISOImageData by name when restoring a drive's written image.")]
     [SerializeField] private ISOImageData[] knownIsoImages;
 
-    private const string SaveFileName = "savegame.json";
-    private string SavePath => Path.Combine(Application.persistentDataPath, SaveFileName);
+    public string CurrentGameMode { get; private set; }
+
+    private List<string> completedModes = new List<string>();
+
+    private bool pendingLoadExisting;
+    private bool pendingNewGame;
+
+    private string SavePath => Path.Combine(Application.persistentDataPath, "savegame.json");
 
     private void Awake()
     {
@@ -44,6 +57,100 @@ public class SaveManager : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // Load just the completedModes list up front (doesn't need any scene
+        // objects to exist), so the main menu can check unlocks immediately.
+        if (File.Exists(SavePath))
+        {
+            try
+            {
+                var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
+                if (data?.completedModes != null) completedModes = data.completedModes;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SaveManager] Couldn't pre-read completedModes: {e.Message}");
+            }
+        }
+    }
+
+    private void OnEnable() => SceneManager.sceneLoaded += HandleSceneLoaded;
+    private void OnDisable() => SceneManager.sceneLoaded -= HandleSceneLoaded;
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (pendingLoadExisting)
+        {
+            pendingLoadExisting = false;
+            LoadSave();
+        }
+        else if (pendingNewGame)
+        {
+            pendingNewGame = false;
+            SaveCheckpoint();
+        }
+    }
+
+
+
+    // ---------------------------------------------------------------
+    // Main menu entry points
+    // ---------------------------------------------------------------
+
+    /// <summary>Reads just the gameMode field from the existing save file,
+    /// without needing scene objects — used by MainMenuController to decide
+    /// whether picking a mode should Continue or start fresh.</summary>
+    public string GetSavedGameMode()
+    {
+        if (!File.Exists(SavePath)) return null;
+        try
+        {
+            var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
+            return data?.gameMode;
+        }
+        catch { return null; }
+    }
+
+    public string GetSavedProgressLabel()
+    {
+        if (!File.Exists(SavePath)) return null;
+        try
+        {
+            var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
+            return data?.progressLabel;
+        }
+        catch { return null; }
+    }
+
+    public bool IsModeCompleted(string modeId) => completedModes.Contains(modeId);
+
+    /// <summary>Call this from whatever signifies a mode is finished (e.g.
+    /// OSInstallManager.OnInstallComplete for COC1) — unlocks the next mode
+    /// and saves immediately.</summary>
+    public void MarkModeComplete(string modeId)
+    {
+        if (!completedModes.Contains(modeId))
+            completedModes.Add(modeId);
+        SaveCheckpoint();
+    }
+
+    /// <summary>Call this from a mode button on the main menu. Automatically
+    /// continues if this mode already has saved progress, otherwise starts
+    /// fresh.</summary>
+    public void SelectMode(string modeId, string sceneName)
+    {
+        if (GetSavedGameMode() == modeId)
+        {
+            CurrentGameMode = modeId;
+            pendingLoadExisting = true;
+        }
+        else
+        {
+            CurrentGameMode = modeId;
+            pendingNewGame = true;
+        }
+        SceneManager.LoadScene(sceneName);
     }
 
     public bool HasSaveFile() => File.Exists(SavePath);
@@ -51,6 +158,7 @@ public class SaveManager : MonoBehaviour
     public void DeleteSave()
     {
         if (File.Exists(SavePath)) File.Delete(SavePath);
+        completedModes.Clear();
     }
 
     // ---------------------------------------------------------------
@@ -58,20 +166,24 @@ public class SaveManager : MonoBehaviour
     // ---------------------------------------------------------------
 
     /// <summary>Call this at any checkpoint (task completed, stage advanced,
-    /// USB created) � also called automatically by OSInstallManager and
-    /// BootableUSBCreator at their own checkpoints.</summary>
+    /// USB created) — also called automatically by OSInstallManager,
+    /// BootableUSBCreator, and TaskManager at their own checkpoints.</summary>
     public void SaveCheckpoint()
     {
         var data = new GameSaveData
         {
-            savedAtUtc = DateTime.UtcNow.ToString("o")
+            savedAtUtc = DateTime.UtcNow.ToString("o"),
+            gameMode = CurrentGameMode,
+            completedModes = new List<string>(completedModes),
+            progressLabel = BuildProgressLabel()
         };
 
         CaptureParts(data);
-        //CaptureCables(data);
-        //CaptureRamLatches(data);
+        CaptureCables(data);
+        CaptureRamLatches(data);
         CaptureUsbDrives(data);
         CaptureOSInstall(data);
+        CaptureGenericSaveables(data);
 
         string json = JsonUtility.ToJson(data, prettyPrint: true);
         File.WriteAllText(SavePath, json);
@@ -79,15 +191,40 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"[SaveManager] Saved checkpoint to {SavePath}");
     }
 
+    private string BuildProgressLabel()
+    {
+        if (OSInstallManager.Instance != null && OSInstallManager.Instance.CurrentStageIndex >= 0)
+            return OSInstallManager.Instance.CurrentStage.ToString();
+        return "Just started";
+    }
+
     private void CaptureParts(GameSaveData data)
     {
-        // includeInactive: true � removed parts get SetActive(false) after
-        // their shrink animation (see PCPartItem.ShrinkThenDisable), so a
-        // normal FindObjectsOfType would miss them entirely.
-        var allParts = FindObjectsOfType<PCPartItem>(includeInactive: true);
+        // includeInactive — removed parts get SetActive(false) after their
+        // shrink animation (see PCPartItem.ShrinkThenDisable), so a normal
+        // FindObjectsByType would miss them entirely.
+        var allParts = FindObjectsByType<PCPartItem>(FindObjectsInactive.Include);
+
+        // Dedupe by partId — RestoreParts() only ever tracks ONE object per
+        // partId (its own byId dictionary keeps just the first match), so if
+        // two PCPartItem objects in the scene accidentally share a partId,
+        // writing an entry for both here produces two conflicting PartEntry
+        // rows for the same restored object. Whichever entry happened to be
+        // last in the list would then silently win on load — e.g. flipping
+        // an untouched, still-installed CPU into the hotbar. Keeping this in
+        // sync with RestoreParts' "first one wins" rule avoids that.
+        var seenIds = new HashSet<string>();
         foreach (var part in allParts)
         {
             if (string.IsNullOrEmpty(part.partId)) continue;
+
+            if (!seenIds.Add(part.partId))
+            {
+                Debug.LogWarning($"[SaveManager] Duplicate partId '{part.partId}' found on '{part.name}' — " +
+                                  $"only the first object with this partId is saved/restored. Check for a " +
+                                  $"leftover/duplicate PCPartItem using this same partId.", part);
+                continue;
+            }
 
             data.parts.Add(new PartEntry
             {
@@ -97,31 +234,47 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    //private void CaptureCables(GameSaveData data)
-    //{
-    //    var allCables = FindObjectsOfType<CableConnector>(includeInactive: true);
-    //    foreach (var cable in allCables)
-    //    {
-    //        data.cables.Add(new CableEntry
-    //        {
-    //            cableName = cable.name,
-    //            isPlugged = cable.isPlugged
-    //        });
-    //    }
-    //}
+    private void CaptureCables(GameSaveData data)
+    {
+        var allCables = FindObjectsByType<CableConnector>(FindObjectsInactive.Include);
 
-    //private void CaptureRamLatches(GameSaveData data)
-    //{
-    //    var allLatches = FindObjectsOfType<RAMLatch>(includeInactive: true);
-    //    foreach (var latch in allLatches)
-    //    {
-    //        data.ramLatches.Add(new RamLatchEntry
-    //        {
-    //            latchName = latch.name,
-    //            isOpen = latch.IsOpen
-    //        });
-    //    }
-    //}
+        // Dedupe by name — same reasoning as CaptureParts()'s partId dedupe above.
+        // RestoreCables() only ever tracks ONE object per cable name (its own
+        // cablesByName dictionary keeps just the first match), so two CableConnector
+        // objects sharing a name here would write two conflicting CableEntry rows for
+        // the same restored object — last one in the list silently wins on load.
+        var seenNames = new HashSet<string>();
+        foreach (var cable in allCables)
+        {
+            if (!seenNames.Add(cable.name))
+            {
+                Debug.LogWarning($"[SaveManager] Duplicate cable name '{cable.name}' found — " +
+                                  $"only the first object with this name is saved/restored. Check for a " +
+                                  $"leftover/duplicate CableConnector using this same name.", cable);
+                continue;
+            }
+
+            data.cables.Add(new CableEntry
+            {
+                cableName = cable.name,
+                isPlugged = cable.isPlugged,
+                socketName = cable.pluggedSocket != null ? cable.pluggedSocket.name : ""
+            });
+        }
+    }
+
+    private void CaptureRamLatches(GameSaveData data)
+    {
+        var allLatches = FindObjectsByType<RAMLock>(FindObjectsInactive.Include);
+        foreach (var latch in allLatches)
+        {
+            data.ramLatches.Add(new RamLatchEntry
+            {
+                latchName = latch.name,
+                isOpen = latch.IsOpen
+            });
+        }
+    }
 
     private void CaptureUsbDrives(GameSaveData data)
     {
@@ -146,6 +299,25 @@ public class SaveManager : MonoBehaviour
             : -1;
     }
 
+    /// <summary>Finds every MonoBehaviour in the scene implementing ISaveable
+    /// and captures its state — lets future systems (TaskManager, etc.)
+    /// participate in saving with zero changes needed here.</summary>
+    private void CaptureGenericSaveables(GameSaveData data)
+    {
+        var allBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include);
+        foreach (var behaviour in allBehaviours)
+        {
+            if (behaviour is ISaveable saveable)
+            {
+                data.genericEntries.Add(new GenericEntry
+                {
+                    key = saveable.SaveKey,
+                    json = saveable.CaptureState()
+                });
+            }
+        }
+    }
+
     // ---------------------------------------------------------------
     // Load
     // ---------------------------------------------------------------
@@ -161,18 +333,22 @@ public class SaveManager : MonoBehaviour
         string json = File.ReadAllText(SavePath);
         var data = JsonUtility.FromJson<GameSaveData>(json);
 
+        CurrentGameMode = data.gameMode;
+        completedModes = data.completedModes ?? new List<string>();
+
         RestoreParts(data);
         RestoreCables(data);
-        //RestoreRamLatches(data);
+        RestoreRamLatches(data);
         RestoreUsbDrives(data);
         RestoreOSInstall(data);
+        RestoreGenericSaveables(data);
 
         Debug.Log($"[SaveManager] Loaded save from {SavePath} (saved at {data.savedAtUtc})");
     }
 
     private void RestoreParts(GameSaveData data)
     {
-        var allParts = FindObjectsOfType<PCPartItem>(includeInactive: true);
+        var allParts = FindObjectsByType<PCPartItem>(FindObjectsInactive.Include);
         var byId = new Dictionary<string, PCPartItem>();
         foreach (var part in allParts)
         {
@@ -188,57 +364,77 @@ public class SaveManager : MonoBehaviour
 
             if (entry.isInstalled && !currentlyInstalled)
             {
-                // See class-level assumption note: re-inserting isn't
-                // supported without a known target socket. Log so it's
-                // obvious during testing rather than silently wrong.
-                Debug.LogWarning($"[SaveManager] '{entry.partId}' was saved as installed but starts removed in this scene � can't auto re-insert without a socket reference.");
+                Debug.LogWarning($"[SaveManager] '{entry.partId}' was saved as installed but starts removed in this scene — can't auto re-insert without a socket reference.");
             }
             else if (!entry.isInstalled && currentlyInstalled)
             {
-                part.Pickup();
+                // Detach from the socket and hide instantly (no shrink tween needed on load).
+                part.PickupInstant();
+
+                // PickupInstant() only detaches/hides the 3D object — it has no
+                // knowledge of the hotbar UI, so we have to place it into a slot
+                // ourselves, exactly like DragController does on a live drop.
+                var slot = HotbarManager.Instance.GetFirstEmptySlot();
+                if (slot != null)
+                    slot.SetItem(part);
+                else
+                    Debug.LogWarning($"[SaveManager] '{entry.partId}' restored as removed, but the hotbar is full — it has nowhere to appear.");
             }
         }
     }
 
     private void RestoreCables(GameSaveData data)
     {
-        var allCables = FindObjectsOfType<CableConnector>(includeInactive: true);
-        var byName = new Dictionary<string, CableConnector>();
+        var allCables = FindObjectsByType<CableConnector>(FindObjectsInactive.Include);
+        var cablesByName = new Dictionary<string, CableConnector>();
         foreach (var cable in allCables)
         {
-            if (!byName.ContainsKey(cable.name))
-                byName.Add(cable.name, cable);
+            if (!cablesByName.ContainsKey(cable.name))
+                cablesByName.Add(cable.name, cable);
+        }
+
+        var allSockets = FindObjectsByType<PortSocket>(FindObjectsInactive.Include);
+        var socketsByName = new Dictionary<string, PortSocket>();
+        foreach (var socket in allSockets)
+        {
+            if (!socketsByName.ContainsKey(socket.name))
+                socketsByName.Add(socket.name, socket);
         }
 
         foreach (var entry in data.cables)
         {
-            if (!byName.TryGetValue(entry.cableName, out var cable)) continue;
+            if (!cablesByName.TryGetValue(entry.cableName, out var cable)) continue;
 
-            // ASSUMPTION: isPlugged is a plain public field. This does not
-            // reposition the connector transform � see class doc comment.
-            cable.isPlugged = entry.isPlugged;
+            if (entry.isPlugged && !string.IsNullOrEmpty(entry.socketName)
+                && socketsByName.TryGetValue(entry.socketName, out var socket))
+            {
+                cable.Plug(socket);
+            }
+            else if (!entry.isPlugged && cable.isPlugged)
+            {
+                cable.Unplug();
+            }
         }
     }
 
-    //private void RestoreRamLatches(GameSaveData data)
-    //{
-    //    var allLatches = FindObjectsOfType<RAMLatch>(includeInactive: true);
-    //    var byName = new Dictionary<string, RAMLatch>();
-    //    foreach (var latch in allLatches)
-    //    {
-    //        if (!byName.ContainsKey(latch.name))
-    //            byName.Add(latch.name, latch);
-    //    }
+    private void RestoreRamLatches(GameSaveData data)
+    {
+        var allLatches = FindObjectsByType<RAMLock>(FindObjectsInactive.Include);
+        var byName = new Dictionary<string, RAMLock>();
+        foreach (var latch in allLatches)
+        {
+            if (!byName.ContainsKey(latch.name))
+                byName.Add(latch.name, latch);
+        }
 
-    //    foreach (var entry in data.ramLatches)
-    //    {
-    //        if (!byName.TryGetValue(entry.latchName, out var latch)) continue;
+        foreach (var entry in data.ramLatches)
+        {
+            if (!byName.TryGetValue(entry.latchName, out var latch)) continue;
 
-    //        // ASSUMPTION: RAMLatch has an Open() method mirroring Close().
-    //        if (entry.isOpen) latch.Open();
-    //        else latch.Close();
-    //    }
-    //}
+            if (entry.isOpen) latch.Open();
+            else latch.Close();
+        }
+    }
 
     private void RestoreUsbDrives(GameSaveData data)
     {
@@ -263,9 +459,6 @@ public class SaveManager : MonoBehaviour
                 drive.ClearBootableState();
             }
 
-            // Route through USBPort.PlugIn/Unplug rather than setting the
-            // flag directly, so the drive's transform actually snaps back
-            // into the port visually on load.
             USBPort targetPort = FindPortHolding(drive) ?? FindFirstEmptyPort();
             if (entry.isInsertedInPort && targetPort != null)
                 targetPort.PlugIn(drive);
@@ -307,5 +500,22 @@ public class SaveManager : MonoBehaviour
         if (OSInstallManager.Instance == null) return;
         if (data.osInstall.stageIndex >= 0)
             OSInstallManager.Instance.RestoreToStage(data.osInstall.stageIndex);
+    }
+
+    private void RestoreGenericSaveables(GameSaveData data)
+    {
+        var allBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include);
+        var saveablesByKey = new Dictionary<string, ISaveable>();
+        foreach (var behaviour in allBehaviours)
+        {
+            if (behaviour is ISaveable saveable && !saveablesByKey.ContainsKey(saveable.SaveKey))
+                saveablesByKey.Add(saveable.SaveKey, saveable);
+        }
+
+        foreach (var entry in data.genericEntries)
+        {
+            if (saveablesByKey.TryGetValue(entry.key, out var saveable))
+                saveable.RestoreState(entry.json);
+        }
     }
 }

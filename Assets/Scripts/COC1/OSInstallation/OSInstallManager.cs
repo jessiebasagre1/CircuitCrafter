@@ -1,11 +1,11 @@
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// Drives the simulated OS installation sequence after PC assembly.
-/// Does NOT emulate a real OS install � it's a scripted, data-driven
+/// Does NOT emulate a real OS install Â it's a scripted, data-driven
 /// state machine (POST -> boot check -> installer -> progress -> reboot -> desktop)
 /// that reuses the same event/listener pattern as DialogManager.
 ///
@@ -14,7 +14,7 @@ using UnityEngine;
 ///     CableConnector exposes a public bool isPlugged
 ///   - RAMPartItem/PCPartItem.HomeSocket is null when picked up, non-null
 ///     when seated (RAMPartItem already gates the latch-closed check itself)
-///   - DialogManager.Instance.ShowDialog(DialogSequence) � no DialogType enum
+///   - DialogManager.Instance.ShowDialog(DialogSequence) Â no DialogType enum
 /// </summary>
 public class OSInstallManager : MonoBehaviour
 {
@@ -43,6 +43,9 @@ public class OSInstallManager : MonoBehaviour
     [SerializeField] private RAMPartItem[] ramSticks;
     [SerializeField] private USBDriveItem usbDrive;
 
+    [Tooltip("This target PC's own USB port. usbDrive must be plugged into THIS specific port  not just plugged in somewhere  for install to be allowed. Prevents a drive left plugged into the reference PC's port from being mistaken for being plugged in here.")]
+    [SerializeField] private USBPort targetPort;
+
     [Header("Warning Dialogs (assign DialogSequence assets)")]
     [SerializeField] private DialogSequence noPowerWarning;
     [SerializeField] private DialogSequence noRamWarning;
@@ -57,7 +60,7 @@ public class OSInstallManager : MonoBehaviour
     /// exactly where the player left off.</summary>
     public int CurrentStageIndex { get; private set; } = -1;
 
-    // UI listens to these � mirrors DialogView's listener pattern
+    // UI listens to these Â mirrors DialogView's listener pattern
     public event Action<OSInstallStageData> OnStageChanged;
     public event Action<float> OnStageProgress; // 0-1 within current stage
     public event Action OnInstallComplete;
@@ -77,7 +80,7 @@ public class OSInstallManager : MonoBehaviour
 
     /// <summary>
     /// Jumps the monitor UI straight to a previously-reached stage without
-    /// replaying earlier stages or their timers � used when restoring a save.
+    /// replaying earlier stages or their timers Â used when restoring a save.
     /// Does NOT resume the coroutine sequence (the player will need to
     /// re-trigger BeginInstall to continue from a live stage if you want
     /// that; this just gets the visuals showing the right screen).
@@ -102,7 +105,7 @@ public class OSInstallManager : MonoBehaviour
 
         if (bootDrive.cables == null || bootDrive.cables.Length == 0)
         {
-            Debug.LogWarning($"OSInstallManager: {bootDrive.name}.cables is empty � assign its CableConnector(s) in the Inspector.");
+            Debug.LogWarning($"OSInstallManager: {bootDrive.name}.cables is empty Â assign its CableConnector(s) in the Inspector.");
             return;
         }
 
@@ -127,22 +130,37 @@ public class OSInstallManager : MonoBehaviour
     /// </summary>
     public void BeginInstall()
     {
-        if (IsRunning) return;
+        if (IsRunning)
+        {
+            Debug.LogWarning($"[OSInstallManager] BeginInstall ignored - already running. " +
+                $"CurrentStage={CurrentStage}, waitingForUserInput={_waitingForUserInput}");
+            return;
+        }
 
         DialogSequence failDialog;
         string failReason;
         if (!CanStartInstall(out failReason, out failDialog))
         {
+            Debug.LogWarning($"[OSInstallManager] BeginInstall blocked: {failReason}");
+
             OnInstallFailed?.Invoke(failReason);
 
             if (failDialog != null && DialogManager.Instance != null)
                 DialogManager.Instance.ShowDialog(failDialog);
+            else if (failDialog == null)
+                Debug.LogWarning("[OSInstallManager] No warning DialogSequence assigned for this failure - player saw nothing on screen.");
 
             return;
         }
 
         IsRunning = true;
-        _runningCoroutine = StartCoroutine(RunSequence());
+
+        // Resume from wherever a loaded save left off (RestoreToStage sets
+        // CurrentStageIndex) rather than always restarting at stage 0 â
+        // otherwise reloading mid-install and pressing Power On again would
+        // silently discard progress and replay the whole sequence.
+        int startIndex = CurrentStageIndex >= 0 ? CurrentStageIndex : 0;
+        _runningCoroutine = StartCoroutine(RunSequence(startIndex));
     }
 
     public void StopInstall()
@@ -153,23 +171,31 @@ public class OSInstallManager : MonoBehaviour
         IsRunning = false;
     }
 
+    /// <summary>The dropdown option (from OSInstallStageData.userChoices) the
+    /// player picked on the current/last requiresUserInput stage, e.g.
+    /// "Filipino" or "Erase disk". Null if that stage had no dropdown.</summary>
+    public string SelectedChoice { get; private set; }
+
     /// <summary>
     /// Call this from UI when a stage has requiresUserInput = true
     /// (e.g. player picked a language or partition layout) to unblock the sequence.
+    /// Pass the chosen dropdown option's text, or leave null for stages with
+    /// no dropdown (plain Continue button).
     /// </summary>
-    public void SubmitUserChoice()
+    public void SubmitUserChoice(string choice = null)
     {
+        SelectedChoice = choice;
         _waitingForUserInput = false;
     }
 
     // ---------------------------------------------------------------
-    // Validation � reuses existing part-state checks
+    // Validation Â reuses existing part-state checks
     // ---------------------------------------------------------------
 
     private bool CanStartInstall(out string failReason, out DialogSequence failDialog)
     {
         // PSU is "powered" once every cable assigned to it (cables array on
-        // CableGatedPartItem) is plugged in � same check the PSU itself uses
+        // CableGatedPartItem) is plugged in Â same check the PSU itself uses
         // to decide whether it can be picked up, just inverted.
         if (psu == null || !AllCablesPlugged(psu.cables))
         {
@@ -187,7 +213,7 @@ public class OSInstallManager : MonoBehaviour
 
         foreach (var ram in ramSticks)
         {
-            // A RAM stick is "installed" when it currently has a HomeSocket �
+            // A RAM stick is "installed" when it currently has a HomeSocket Â
             // Pickup() nulls this out, ReturnToSocket() sets it. Clip-closed
             // state is already enforced by RAMPartItem.PickupBlockedReason,
             // so if it's seated here the latch is guaranteed closed.
@@ -208,9 +234,12 @@ public class OSInstallManager : MonoBehaviour
         }
 
         // Separate from bootDrive above: bootDrive is the target disk the OS
-        // gets installed ONTO. usbDrive is the install MEDIA � it must have
+        // gets installed ONTO. usbDrive is the install MEDIA Â it must have
         // been through BootableUSBCreator and be plugged into the PC.
-        if (usbDrive == null || !usbDrive.IsBootable || !usbDrive.IsInsertedInPort)
+        // Must be plugged into THIS PC's port specifically  IsInsertedInPort
+        // alone would also be true if it's still sitting in the reference
+        // PC's port and was never explicitly removed from there.
+        if (usbDrive == null || !usbDrive.IsBootable || usbDrive.CurrentPort != targetPort)
         {
             failReason = "No bootable USB drive detected. Create one and plug it in.";
             failDialog = noBootableUSBWarning;
@@ -238,9 +267,9 @@ public class OSInstallManager : MonoBehaviour
 
     private bool _waitingForUserInput;
 
-    private IEnumerator RunSequence()
+    private IEnumerator RunSequence(int startIndex)
     {
-        for (int i = 0; i < stages.Count; i++)
+        for (int i = startIndex; i < stages.Count; i++)
         {
             var stageData = stages[i];
             CurrentStageIndex = i;

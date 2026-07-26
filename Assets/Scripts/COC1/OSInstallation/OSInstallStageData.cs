@@ -25,4 +25,8 @@ public class OSInstallStageData : ScriptableObject
 
     [Tooltip("If true, this stage pauses and waits for a user choice (e.g. partition/language select) instead of auto-advancing")]
     public bool requiresUserInput = false;
+
+    [Header("User Choice (only used when Requires User Input is true)")]
+    [Tooltip("Options shown in a dropdown for this stage, e.g. \"English\", \"Filipino\" for LanguageSelect, or \"Erase disk\", \"Manual partitioning\" for PartitionSelect. Leave empty to fall back to a plain Continue button with no dropdown.")]
+    public string[] userChoices;
 }

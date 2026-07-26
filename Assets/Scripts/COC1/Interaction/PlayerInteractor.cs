@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
 /// Detects clicks/keypresses on InteractableObjects and calls Interact() on
@@ -28,7 +28,7 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private KeyCode interactKey = KeyCode.E;
 
     [Header("Aim forgiveness (generic InteractableObject clicks only)")]
-    [Tooltip("SphereCast radius for the generic click system (motherboard, etc) — not used for the USB drive/port proximity system below.")]
+    [Tooltip("SphereCast radius for the generic click system (motherboard, etc) â€” not used for the USB drive/port proximity system below.")]
     [SerializeField] private float castRadius = 0.05f;
 
     [Header("USB drive/port proximity system")]
@@ -68,7 +68,7 @@ public class PlayerInteractor : MonoBehaviour
         if (interactPressed)
         {
             // Proximity pickup takes priority over the generic raycast click
-            // system — if a drive's in easy range, grab it without needing
+            // system â€” if a drive's in easy range, grab it without needing
             // a precise click.
             if (!holdingDrive && nearbyDrive != null)
                 nearbyDrive.RequestPickup();
@@ -151,7 +151,7 @@ public class PlayerInteractor : MonoBehaviour
         if (Physics.Raycast(origin, toTarget.normalized, out RaycastHit hit, dist, visibilityObstructionMask))
         {
             // Something on the obstruction mask sits meaningfully closer than
-            // the target itself — a wall/desk/etc is in the way.
+            // the target itself â€” a wall/desk/etc is in the way.
             if (hit.distance < dist - 0.05f) return false;
         }
 
@@ -159,7 +159,7 @@ public class PlayerInteractor : MonoBehaviour
     }
 
     // ---------------------------------------------------------------
-    // Generic click-to-Interact() system — unchanged, used for anything
+    // Generic click-to-Interact() system â€” unchanged, used for anything
     // that isn't a USB drive/port (motherboard, etc).
     // ---------------------------------------------------------------
 

@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: 5-PartitionSelect
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 4
-  displayText: 
-  duration: 2
+  displayText: Choose where to install the operating system.\nSelect the target drive
+    to continue.
+  duration: 0
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
-  requiresUserInput: 0
+  requiresUserInput: 1
+  userChoices:
+  - Erase disk and install
+  - Manual partitioning

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 6-Copying
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 5
-  displayText: 
-  duration: 2
+  displayText: Copying installation files...
+  duration: 5
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 0

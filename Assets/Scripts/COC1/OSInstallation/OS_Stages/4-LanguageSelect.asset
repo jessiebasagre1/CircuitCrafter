@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: 4-LanguageSelect
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 3
-  displayText: 
-  duration: 2
+  displayText: Select your language and keyboard layout, then continue.
+  duration: 0
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
-  requiresUserInput: 0
+  requiresUserInput: 1
+  userChoices:
+  - English
+  - Filipino

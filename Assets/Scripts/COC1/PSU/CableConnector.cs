@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
 /// The draggable plug end of a cable. Pick it up with the mouse, drag it near a compatible
@@ -44,7 +44,7 @@ public class CableConnector : MonoBehaviour
     public PortSocket startSocket;
     public bool startPlugged;
     [Header("Locking")]
-    [Tooltip("If true, this connector can never be dragged/unplugged — useful for a fixed end of a cable that should stay in place.")]
+    [Tooltip("If true, this connector can never be dragged/unplugged - useful for a fixed end of a cable that should stay in place.")]
     public bool isLocked = false;
 
     [Header("Assemble/Disassemble")]
@@ -59,11 +59,6 @@ public class CableConnector : MonoBehaviour
 
     private Vector3 unplugOrigin;
     private bool justUnplugged;
-
-    // Task progress guards — mirror PCPartItem's hasReportedRemoval/hasReportedInstall
-    // pattern, but kept local since CableConnector does not inherit from PCPartItem.
-    private bool hasReportedUnplug;
-    private bool hasReportedPlug;
 
     void Awake()
     {
@@ -83,9 +78,7 @@ public class CableConnector : MonoBehaviour
                                   $"{startSocket.acceptedType} (this connector is {cableType}). " +
                                   "Plugging anyway - double check the assignment.", this);
 
-            // reportProgress: false — this is the scene's starting state, not something
-            // the player did, so it must not count toward the assemble task.
-            Plug(startSocket, reportProgress: false);
+            Plug(startSocket);
         }
     }
 
@@ -189,37 +182,28 @@ public class CableConnector : MonoBehaviour
     }
 
     /// <summary>
-    /// Plugs this connector into the given socket. reportProgress should be false only for the
-    /// scene-start "already plugged" case in Awake() — every player-driven plug should leave it
-    /// true (the default) so it counts toward the assemble task.
+    /// Plugs this connector into the given socket. Cables do NOT report task progress -
+    /// only PCPartItem parts (CPU, RAM, PSU, SSD, etc.) count toward disassemble_pc/assemble_pc.
     /// </summary>
-    public void Plug(PortSocket socket, bool reportProgress = true)
+    public void Plug(PortSocket socket)
     {
         transform.SetPositionAndRotation(socket.snapPoint.position, socket.snapPoint.rotation);
         transform.SetParent(socket.snapPoint, true);
         isPlugged = true;
         pluggedSocket = socket;
         socket.SetOccupied(this, true);
-
-        if (reportProgress && !hasReportedPlug)
-        {
-            hasReportedPlug = true;
-            TaskManager.Instance.ReportProgress(PCDisassemblySetup.AssembleTaskId);
-        }
     }
 
+    /// <summary>
+    /// Unplugs this connector. Cables do NOT report task progress - only PCPartItem parts
+    /// count toward disassemble_pc/assemble_pc.
+    /// </summary>
     public void Unplug()
     {
         if (pluggedSocket != null) pluggedSocket.SetOccupied(this, false);
         transform.SetParent(null);
         isPlugged = false;
         pluggedSocket = null;
-
-        if (!hasReportedUnplug)
-        {
-            hasReportedUnplug = true;
-            TaskManager.Instance.ReportProgress(PCDisassemblySetup.TaskId);
-        }
     }
 
     /*

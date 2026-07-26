@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 9-FirstBoot
   m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
   stage: 8
-  displayText: 
-  duration: 2
+  displayText: Getting things ready...\nThis won't take long.
+  duration: 3
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 0
