@@ -7,10 +7,11 @@ using TMPro;
 /// Listens to OSInstallManager events and updates the install screen UI.
 /// Decoupled the same way DialogView listens to DialogManager.
 ///
-/// continueButton handles stages with requiresUserInput = true (e.g.
-/// LanguageSelect, PartitionSelect)  without it, OSInstallManager's
-/// _waitingForUserInput flag never clears and the sequence hangs forever
-/// on those stages.
+/// continueButton/choiceDropdown handle generic requiresUserInput stages
+/// (e.g. LanguageSelect). The PartitionSelect stage instead shows
+/// partitionSelectPanel (an interactive table with New/Format/Delete/Next) —
+/// that view calls SubmitUserChoice() itself, so the generic button/dropdown
+/// stay hidden whenever partitionOptions is populated on the stage asset.
 /// </summary>
 public class OSInstallView : MonoBehaviour
 {
@@ -20,6 +21,10 @@ public class OSInstallView : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private TMP_Dropdown choiceDropdown;
     [SerializeField] private GameObject rebootOverlay;
+
+    [Header("Partition Select (interactive table)")]
+    [SerializeField] private GameObject partitionSelectPanel;
+    [SerializeField] private PartitionSelectView partitionSelectView;
 
     private void Start()
     {
@@ -53,6 +58,9 @@ public class OSInstallView : MonoBehaviour
 
         if (rebootOverlay != null)
             rebootOverlay.SetActive(true);
+
+        if (partitionSelectPanel != null)
+            partitionSelectPanel.SetActive(false);
     }
 
     private void OnDestroy()
@@ -73,6 +81,8 @@ public class OSInstallView : MonoBehaviour
         installPanel.SetActive(true);
         stageLabel.text = stage.displayText;
 
+        bool isPartitionStage = stage.partitionOptions != null && stage.partitionOptions.Length > 0;
+
         bool showsProgress = !stage.requiresUserInput;
         if (progressBar != null)
         {
@@ -80,10 +90,13 @@ public class OSInstallView : MonoBehaviour
             progressBar.value = 0f;
         }
 
+        // Generic continue button/dropdown stay hidden for the partition
+        // stage — PartitionSelectView drives its own Next button instead.
         if (continueButton != null)
-            continueButton.gameObject.SetActive(stage.requiresUserInput);
+            continueButton.gameObject.SetActive(stage.requiresUserInput && !isPartitionStage);
 
-        bool showsDropdown = stage.requiresUserInput && stage.userChoices != null && stage.userChoices.Length > 0;
+        bool showsDropdown = stage.requiresUserInput && !isPartitionStage
+            && stage.userChoices != null && stage.userChoices.Length > 0;
         if (choiceDropdown != null)
         {
             choiceDropdown.gameObject.SetActive(showsDropdown);
@@ -95,6 +108,12 @@ public class OSInstallView : MonoBehaviour
                 choiceDropdown.RefreshShownValue();
             }
         }
+
+        if (partitionSelectPanel != null)
+            partitionSelectPanel.SetActive(isPartitionStage);
+
+        if (isPartitionStage && partitionSelectView != null)
+            partitionSelectView.Populate(stage);
 
         if (rebootOverlay != null)
             rebootOverlay.SetActive(stage.requiresRebootAnimation);
@@ -124,6 +143,7 @@ public class OSInstallView : MonoBehaviour
         }
         if (continueButton != null) continueButton.gameObject.SetActive(false);
         if (choiceDropdown != null) choiceDropdown.gameObject.SetActive(false);
+        if (partitionSelectPanel != null) partitionSelectPanel.SetActive(false);
         if (rebootOverlay != null) rebootOverlay.SetActive(false);
         // TODO: transition to "desktop" scene/view here
     }

@@ -19,6 +19,10 @@ MonoBehaviour:
   requiresRebootAnimation: 0
   educationalDialog: {fileID: 0}
   requiresUserInput: 1
-  userChoices:
-  - Erase disk and install
-  - Manual partitioning
+  userChoices: []
+  partitionOptions:
+  - partitionName: Drive 0 Unallocated Space
+    totalSizeGB: 256
+    freeSpaceGB: 256
+    kind: 2
+    isFormatted: 0

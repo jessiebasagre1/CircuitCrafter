@@ -27,6 +27,34 @@ public class OSInstallStageData : ScriptableObject
     public bool requiresUserInput = false;
 
     [Header("User Choice (only used when Requires User Input is true)")]
-    [Tooltip("Options shown in a dropdown for this stage, e.g. \"English\", \"Filipino\" for LanguageSelect, or \"Erase disk\", \"Manual partitioning\" for PartitionSelect. Leave empty to fall back to a plain Continue button with no dropdown.")]
+    [Tooltip("Options shown in a dropdown for this stage, e.g. \"English\", \"Filipino\" for LanguageSelect. Leave empty if this stage uses Partition Options below instead, or falls back to a plain Continue button.")]
     public string[] userChoices;
+
+    [Header("Partition Options (only used on the PartitionSelect stage)")]
+    [Tooltip("Starting disk layout shown in the interactive partition table. Leave empty for stages other than PartitionSelect.")]
+    public PartitionOption[] partitionOptions;
+}
+
+/// <summary>
+/// One row of the partition table's starting state. The runtime UI
+/// (PartitionSelectView) works off a copy of this data, not the asset
+/// itself, so New/Format/Delete during play never modifies the asset.
+/// </summary>
+[System.Serializable]
+public class PartitionOption
+{
+    public string partitionName = "Drive 0 Unallocated Space";
+    public float totalSizeGB = 256f;
+    public float freeSpaceGB = 256f;
+    public PartitionKind kind = PartitionKind.Unallocated;
+
+    [Tooltip("Runtime-only in practice — leave false on the asset. New/Format/Delete during play mutate a copy of this data, never the asset itself.")]
+    public bool isFormatted = false;
+}
+
+public enum PartitionKind
+{
+    Primary,
+    Extended,
+    Unallocated
 }
