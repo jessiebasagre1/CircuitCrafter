@@ -302,7 +302,7 @@ public class OSInstallManager : MonoBehaviour
         OnInstallComplete?.Invoke();
 
         if (SaveManager.Instance != null)
-            SaveManager.Instance.SaveCheckpoint();
+            SaveManager.Instance.SaveCheckpoint(showProgressToast: true); // OS install milestone
     }
 
     private IEnumerator RunTimedStage(float duration)

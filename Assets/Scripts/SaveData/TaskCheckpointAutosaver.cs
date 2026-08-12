@@ -28,6 +28,10 @@ public class TaskCheckpointAutosaver : MonoBehaviour
         if (SaveManager.Instance == null) return;
 
         Debug.Log($"[TaskCheckpointAutosaver] '{completedTaskId}' completed — checkpointing.");
-        SaveManager.Instance.SaveCheckpoint();
+
+        // showProgressToast: true — a completed task (e.g. disassemble_pc,
+        // assemble_pc) is a real milestone worth confirming to the player,
+        // unlike OSInstallManager's per-stage saves.
+        SaveManager.Instance.SaveCheckpoint(showProgressToast: true);
     }
 }

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,10 +39,13 @@ public class DialogManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            Debug.LogWarning($"[DialogManager] Duplicate detected on '{name}' - " +
+                $"an instance already exists on '{Instance.name}'. Destroying this one.", this);
             Destroy(gameObject);
             return;
         }
         Instance = this;
+        Debug.Log($"[DialogManager] Instance set to '{name}'.", this);
         dialogPanel.SetActive(false);
     }
 
@@ -71,7 +74,7 @@ public class DialogManager : MonoBehaviour
     {
         if (sequence == null || sequence.lines.Count == 0)
         {
-            // Nothing to show — fire the callback immediately so callers don't stall.
+            // Nothing to show Â— fire the callback immediately so callers don't stall.
             onComplete?.Invoke();
             return;
         }
@@ -145,7 +148,7 @@ public class DialogManager : MonoBehaviour
         callback?.Invoke();
     }
 
-    /// <summary>True only on the exact frame the dialog just closed — lets other
+    /// <summary>True only on the exact frame the dialog just closed Â— lets other
     /// scripts ignore the same key/click press that closed it.</summary>
     public bool WasDialogClosedThisFrame => closedFrame == Time.frameCount;
 }

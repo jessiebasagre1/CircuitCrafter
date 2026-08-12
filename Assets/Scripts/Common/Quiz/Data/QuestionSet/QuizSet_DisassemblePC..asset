@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: QuizSet_DisassemblePC.
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: assemble_pc
+  questionPool:
+  - {fileID: 11400000, guid: 57ad2dfb2aea8a64395f26c1d882a621, type: 2}
+  - {fileID: 11400000, guid: 204ee353ece0fe641895b2cc2d942d5b, type: 2}
+  - {fileID: 11400000, guid: 68917f33996310444aa37a958f63183c, type: 2}
+  - {fileID: 11400000, guid: 5f9458751a34282499ade58c8ea2d90f, type: 2}
+  - {fileID: 11400000, guid: ced31561417410a4f8228d1163480d60, type: 2}
+  questionsToAsk: 5
+  randomizeSelection: 1

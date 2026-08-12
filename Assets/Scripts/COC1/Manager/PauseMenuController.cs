@@ -109,9 +109,15 @@ public class PauseMenuController : MonoBehaviour
 
     private void OnMainMenuClicked()
     {
-        // Always restore timeScale before leaving — otherwise the Main Menu
-        // scene (and whatever loads after it) would load already frozen.
-        Time.timeScale = 1f;
+        // FIX: previously this jumped straight to SaveCheckpoint()+LoadScene()
+        // without ever closing the pause panel or clearing IsPaused/timeScale/
+        // cursor state first. If this GameObject ever survives the scene load
+        // (e.g. it's sitting on a DontDestroyOnLoad "Managers" root — see the
+        // TaskManager/HotbarManager/DialogManager note below), an active,
+        // input-frozen pausePanel would be left sitting on top of whatever
+        // loads next, eating every click. Closing it properly first makes
+        // this safe regardless of how the Managers hierarchy is set up.
+        CloseMenu();
 
         if (SaveManager.Instance != null)
             SaveManager.Instance.SaveCheckpoint();

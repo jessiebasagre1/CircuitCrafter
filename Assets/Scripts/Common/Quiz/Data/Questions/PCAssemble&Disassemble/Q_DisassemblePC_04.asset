@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q_DisassemblePC_04
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What should you do before removing a RAM module?
+  choices:
+  - Turn on the PC
+  - Release the RAM slot's locking clips
+  - Remove the CPU
+  - Apply thermal paste
+  correctChoiceIndex: 1
+  points: 10
+  explanation: RAM modules are held in place by locking clips. Open the clips first,
+    then carefully remove the RAM by holding its edges.

@@ -10,15 +10,69 @@ public class StationCameraSwitch : MonoBehaviour
     public GameObject[] enableOnStationView;   // e.g. hotbar, OS install UI
     public GameObject[] disableOnStationView;  // e.g. ssdPlane, waypoint arrow
 
+    [Header("Task Gate (optional)")]
+    [Tooltip("If set, this station is treated as the destination for a task/objective. " +
+             "Once ALL of these task IDs are complete (see TaskManager), the station is " +
+             "locked out: pressing E no longer enters it, and a debug log is printed instead. " +
+             "Leave empty for stations that aren't tied to a task (e.g. purely cosmetic zoom-ins).")]
+    [SerializeField] private string[] gatedTaskIds;
+
     private bool playerNearby = false;
     private bool usingStationCamera = false;
+
+    public bool IsUsingStationCamera => usingStationCamera;
+
+    /// <summary>Forces this station back to the player camera if it's currently active  used
+    /// e.g. when the gated task completes while the player is still standing inside the station
+    /// view, so they aren't left staring at a station they can no longer re-enter.</summary>
+    public void ForceReturnToPlayerCamera()
+    {
+        if (usingStationCamera) ToggleCamera(false);
+    }
 
     void Update()
     {
         if (playerNearby && Input.GetKeyDown(KeyCode.E))
         {
-            ToggleCamera(!usingStationCamera);
+            bool enteringStation = !usingStationCamera;
+
+            if (enteringStation && IsGatedTaskComplete())
+            {
+                Debug.Log($"[StationCameraSwitch] '{name}': You've already done this step", this);
+                return;
+            }
+
+            ToggleCamera(enteringStation);
+
+            if (enteringStation)
+                OnEnteredStation();
         }
+    }
+
+    /// <summary>True once every task ID listed in gatedTaskIds is complete. False (never gated)
+    /// if no task IDs were assigned, so ungated stations behave exactly as before.</summary>
+    private bool IsGatedTaskComplete()
+    {
+        if (gatedTaskIds == null || gatedTaskIds.Length == 0) return false;
+        if (TaskManager.Instance == null) return false;
+
+        foreach (var taskId in gatedTaskIds)
+        {
+            if (string.IsNullOrEmpty(taskId)) continue;
+            if (!TaskManager.Instance.IsTaskComplete(taskId)) return false;
+        }
+        return true;
+    }
+
+    /// <summary>Called the first time the player actually enters a gated station while its
+    /// task(s) are still incomplete  i.e. they've "found" the objective, so the waypoint
+    /// arrow (if it's currently pointing here) can be cleared. Stations with no gatedTaskIds
+    /// configured are assumed to be outside the guided task flow and don't touch the arrow.</summary>
+    private void OnEnteredStation()
+    {
+        if (gatedTaskIds == null || gatedTaskIds.Length == 0) return;
+        if (WaypointIndicator.Instance != null)
+            WaypointIndicator.Instance.ClearTarget();
     }
 
     private void ToggleCamera(bool useStation)

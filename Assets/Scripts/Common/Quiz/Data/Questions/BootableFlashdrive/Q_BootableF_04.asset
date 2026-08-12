@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q_BootableF_04
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What file format is commonly used as the source when creating bootable
+    installation media?
+  choices:
+  - .txt
+  - .jpg
+  - .iso
+  - .mp3
+  correctChoiceIndex: 2
+  points: 10
+  explanation: An ISO file is a disk image containing the files and structure needed
+    for an operating system installation.

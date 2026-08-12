@@ -47,6 +47,22 @@ public class SaveManager : MonoBehaviour
     private bool pendingLoadExisting;
     private bool pendingNewGame;
 
+    /// <summary>True while LoadSave() is actively restoring state. RestoreState()
+    /// on ISaveable objects (e.g. TaskManager) re-fires events like OnTaskCompleted
+    /// so systems can react to a loaded save — but listeners such as
+    /// TaskCheckpointAutosaver react to those same events by calling
+    /// SaveCheckpoint(), which would otherwise overwrite savegame.json mid-restore
+    /// with only-partially-restored data (e.g. a task later in the same
+    /// RestoreGenericSaveables loop that hasn't been re-applied yet). SaveCheckpoint()
+    /// checks this and no-ops while it's true.</summary>
+    public bool IsRestoringSave { get; private set; }
+
+    /// <summary>Fires only when SaveCheckpoint(showProgressToast: true) is called —
+    /// i.e. at a real milestone (task completed, USB created, OS install finished),
+    /// not on every minor autosave. UI (see SaveToast) subscribes to this to show a
+    /// brief "Progress Saved" confirmation to the player.</summary>
+    public event Action OnProgressSaved;
+
     private string SavePath => Path.Combine(Application.persistentDataPath, "savegame.json");
 
     private void Awake()
@@ -59,18 +75,34 @@ public class SaveManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Load just the completedModes list up front (doesn't need any scene
-        // objects to exist), so the main menu can check unlocks immediately.
+        // Load completedModes AND the last-known gameMode up front (doesn't
+        // need any scene objects to exist), so the main menu can check
+        // unlocks immediately.
+        //
+        // Preloading gameMode here matters even outside the normal
+        // MainMenu -> SelectMode() flow: CurrentGameMode is otherwise ONLY
+        // ever set inside SelectMode(). If a gameplay scene is entered
+        // without going through SelectMode first (e.g. pressing Play
+        // directly on the COC1 scene in the Editor while iterating),
+        // CurrentGameMode stays null for the whole session — and every
+        // SaveCheckpoint() call (task completion, Pause Menu "Main Menu",
+        // etc.) would silently write gameMode: null into savegame.json,
+        // clobbering whatever valid mode was saved there before. That
+        // leaves HasSaveFile() true but GetSavedGameMode() empty, so
+        // Continue logs "no saved game mode found" even though a checkpoint
+        // clearly just got written. Seeding CurrentGameMode from disk here
+        // prevents that overwrite.
         if (File.Exists(SavePath))
         {
             try
             {
                 var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
                 if (data?.completedModes != null) completedModes = data.completedModes;
+                if (!string.IsNullOrEmpty(data?.gameMode)) CurrentGameMode = data.gameMode;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[SaveManager] Couldn't pre-read completedModes: {e.Message}");
+                Debug.LogWarning($"[SaveManager] Couldn't pre-read save data: {e.Message}");
             }
         }
     }
@@ -125,6 +157,27 @@ public class SaveManager : MonoBehaviour
 
     public bool IsModeCompleted(string modeId) => completedModes.Contains(modeId);
 
+    /// <summary>Sets CurrentGameMode to modeId, but ONLY if it isn't already
+    /// set — never overwrites a value SelectMode() already assigned this
+    /// session. Call this once near the start of each gameplay scene (e.g.
+    /// PCDisassemblySetup.Start()) so CurrentGameMode is correct even when
+    /// the scene is entered without going through the Main Menu first (e.g.
+    /// pressing Play directly on the scene in the Editor while iterating).
+    /// Without this, any SaveCheckpoint() fired during such a session (task
+    /// completion, Pause Menu, etc.) writes gameMode: null into
+    /// savegame.json — and since SaveManager is DontDestroyOnLoad,
+    /// Awake()'s own disk preload only ever runs once per app launch, so it
+    /// can't catch this mid-session.</summary>
+    public void EnsureGameMode(string modeId)
+    {
+        if (string.IsNullOrEmpty(modeId)) return;
+        if (string.IsNullOrEmpty(CurrentGameMode))
+        {
+            CurrentGameMode = modeId;
+            Debug.Log($"[SaveManager] CurrentGameMode was unset — claimed as '{modeId}' by the active scene.");
+        }
+    }
+
     /// <summary>Call this from whatever signifies a mode is finished (e.g.
     /// OSInstallManager.OnInstallComplete for COC1) — unlocks the next mode
     /// and saves immediately.</summary>
@@ -135,6 +188,14 @@ public class SaveManager : MonoBehaviour
         SaveCheckpoint();
     }
 
+    /// <summary>True if the scene about to load (or that just loaded) is being
+    /// resumed from an existing save, as opposed to started fresh. Scene
+    /// scripts that should only run their one-time "first time entering this
+    /// level" behaviour (e.g. IntroDialogTrigger's intro popup) — and NOT
+    /// repeat it every time the player hits Continue — should check this in
+    /// their own Start().</summary>
+    public bool IsContinuingSave { get; private set; }
+
     /// <summary>Call this from a mode button on the main menu. Automatically
     /// continues if this mode already has saved progress, otherwise starts
     /// fresh.</summary>
@@ -144,11 +205,13 @@ public class SaveManager : MonoBehaviour
         {
             CurrentGameMode = modeId;
             pendingLoadExisting = true;
+            IsContinuingSave = true;
         }
         else
         {
             CurrentGameMode = modeId;
             pendingNewGame = true;
+            IsContinuingSave = false;
         }
         SceneManager.LoadScene(sceneName);
     }
@@ -168,8 +231,20 @@ public class SaveManager : MonoBehaviour
     /// <summary>Call this at any checkpoint (task completed, stage advanced,
     /// USB created) — also called automatically by OSInstallManager,
     /// BootableUSBCreator, and TaskManager at their own checkpoints.</summary>
-    public void SaveCheckpoint()
+    public void SaveCheckpoint(bool showProgressToast = false)
     {
+        if (IsRestoringSave)
+        {
+            // A load is currently in progress and re-firing events (e.g.
+            // TaskManager.RestoreState() re-invoking OnTaskCompleted) that some
+            // listener is reacting to by checkpointing. Writing now would save
+            // half-restored state and clobber the real file. Once LoadSave()
+            // finishes, everything is already on disk correctly anyway, so this
+            // checkpoint isn't needed.
+            Debug.Log("[SaveManager] Ignored SaveCheckpoint() call during LoadSave() restore.");
+            return;
+        }
+
         var data = new GameSaveData
         {
             savedAtUtc = DateTime.UtcNow.ToString("o"),
@@ -189,6 +264,9 @@ public class SaveManager : MonoBehaviour
         File.WriteAllText(SavePath, json);
 
         Debug.Log($"[SaveManager] Saved checkpoint to {SavePath}");
+
+        if (showProgressToast)
+            OnProgressSaved?.Invoke();
     }
 
     private string BuildProgressLabel()
@@ -336,12 +414,22 @@ public class SaveManager : MonoBehaviour
         CurrentGameMode = data.gameMode;
         completedModes = data.completedModes ?? new List<string>();
 
-        RestoreParts(data);
-        RestoreCables(data);
-        RestoreRamLatches(data);
-        RestoreUsbDrives(data);
-        RestoreOSInstall(data);
-        RestoreGenericSaveables(data);
+        IsRestoringSave = true;
+        try
+        {
+            RestoreParts(data);
+            RestoreCables(data);
+            RestoreRamLatches(data);
+            RestoreUsbDrives(data);
+            RestoreOSInstall(data);
+            RestoreGenericSaveables(data);
+        }
+        finally
+        {
+            // Always clear this, even if a Restore step throws, so the save
+            // system doesn't get permanently stuck refusing to checkpoint.
+            IsRestoringSave = false;
+        }
 
         Debug.Log($"[SaveManager] Loaded save from {SavePath} (saved at {data.savedAtUtc})");
     }

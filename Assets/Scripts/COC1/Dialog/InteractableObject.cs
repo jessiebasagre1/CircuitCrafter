@@ -18,6 +18,8 @@ public class InteractableObject : MonoBehaviour
 
     private bool hasShownTutorial;
 
+
+
     public void Interact()
     {
         if (tutorialDialog != null && (!showOnlyOnce || !hasShownTutorial))

@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -27,7 +27,7 @@ public class PCPartItem : MonoBehaviour
     public Vector3 installRotationCorrectionEuler = Vector3.zero;
 
     [Header("Pickup-Ready Highlight")]
-    [Tooltip("Optional visual (outline, glow, etc.) shown whenever this part is currently able to be picked up — e.g. once all its cables are unplugged, or its lock(s) are open. Leave unassigned for parts that don't need this. Automatically kept in sync every frame.")]
+    [Tooltip("Optional visual (outline, glow, etc.) shown whenever this part is currently able to be picked up ï¿½ e.g. once all its cables are unplugged, or its lock(s) are open. Leave unassigned for parts that don't need this. Automatically kept in sync every frame.")]
     public GameObject pickupReadyVisual;
     bool pickupReadyVisualActive;
 
@@ -37,10 +37,10 @@ public class PCPartItem : MonoBehaviour
     Coroutine scaleRoutine;
     //Dialog
     [Header("Tutorial")]
-    [Tooltip("Optional — shown the moment this specific part is removed. Leave unassigned for parts that don't need one.")]
+    [Tooltip("Optional ï¿½ shown the moment this specific part is removed. Leave unassigned for parts that don't need one.")]
     [SerializeField] private DialogSequence removalDialog;
     [SerializeField] private DialogSequence blockedWarningDialog;
-    [Tooltip("Optional — shown the moment this specific part is reinstalled. Leave unassigned for parts that don't need one.")]
+    [Tooltip("Optional ï¿½ shown the moment this specific part is reinstalled. Leave unassigned for parts that don't need one.")]
     [SerializeField] private DialogSequence installDialog;
 
     [Header("Disassembly Order (optional)")]
@@ -77,7 +77,7 @@ public class PCPartItem : MonoBehaviour
 
     void Awake()
     {
-        // Capture WORLD scale, not local — local scale only means "normal size"
+        // Capture WORLD scale, not local ï¿½ local scale only means "normal size"
         // relative to whichever socket this part happens to start in. If it's
         // later placed under a differently-scaled socket, reusing the old local
         // value would grow it to the wrong actual size.
@@ -97,7 +97,7 @@ public class PCPartItem : MonoBehaviour
     {
         if (pickupReadyVisual == null) return;
 
-        // Only relevant while actually installed in a socket — HomeSocket is null
+        // Only relevant while actually installed in a socket ï¿½ HomeSocket is null
         // while mid-drag or sitting in the hotbar, where "ready to pick up" doesn't apply.
         bool ready = HomeSocket != null && CanPickup();
         if (ready == pickupReadyVisualActive) return;
@@ -118,7 +118,7 @@ public class PCPartItem : MonoBehaviour
     {
         if (HomeSocket == null)
         {
-            Debug.Log($"{name}: can't drag — HomeSocket is null (this part isn't currently nested under a socket in the Hierarchy).", this);
+            Debug.Log($"{name}: can't drag ï¿½ HomeSocket is null (this part isn't currently nested under a socket in the Hierarchy).", this);
             return;
         }
 
@@ -127,7 +127,7 @@ public class PCPartItem : MonoBehaviour
             PCPartItem blocker = FindEarlierUnremovedPart();
             if (blocker != null)
             {
-                Debug.Log($"{name}: can't drag — must remove '{blocker.name}' (step {blocker.removalOrderStep}) first.", this);
+                Debug.Log($"{name}: can't drag ï¿½ must remove '{blocker.name}' (step {blocker.removalOrderStep}) first.", this);
                 if (outOfOrderDialog != null)
                     DialogManager.Instance.ShowDialog(outOfOrderDialog);
                 return;
@@ -137,7 +137,7 @@ public class PCPartItem : MonoBehaviour
         string blockReason = PickupBlockedReason();
         if (blockReason != null)
         {
-            Debug.Log($"{name}: can't drag — {blockReason}", this);
+            Debug.Log($"{name}: can't drag ï¿½ {blockReason}", this);
             if (blockedWarningDialog != null)
                 DialogManager.Instance.ShowDialog(blockedWarningDialog);
             return;
@@ -153,13 +153,13 @@ public class PCPartItem : MonoBehaviour
     /// reason string if it's blocked.
     ///
     /// IMPORTANT: this is called both once per click (and logged then) AND
-    /// silently every frame by the pickup-ready highlight below — do not put
+    /// silently every frame by the pickup-ready highlight below ï¿½ do not put
     /// Debug.Log calls inside your override, or they'll spam the Console
     /// every frame. TryBeginDrag() above handles logging on actual clicks.
     /// </summary>
     protected virtual string PickupBlockedReason() => null;
 
-    /// <summary>Silent, per-frame-safe version of the pickup check — no logging.</summary>
+    /// <summary>Silent, per-frame-safe version of the pickup check ï¿½ no logging.</summary>
     bool CanPickup() => PickupBlockedReason() == null;
     private bool hasReportedRemoval;
     private bool hasReportedInstall;
@@ -186,7 +186,7 @@ public class PCPartItem : MonoBehaviour
 
             // Checkpointing on task completion is now handled generically by
             // TaskCheckpointAutosaver (listens to TaskManager.OnTaskCompleted
-            // for ANY task) — no save call needed here anymore.
+            // for ANY task) ï¿½ no save call needed here anymore.
         }
 
         Restart(ShrinkThenDisable());
@@ -195,11 +195,25 @@ public class PCPartItem : MonoBehaviour
     }
 
     /// <summary>
-    /// Same end-state as Pickup() (detached from socket, hidden, task/dialog
-    /// side effects reported) but WITHOUT the shrink tween — snaps straight to
-    /// hidden. Use this when restoring a save on scene load, where there's no
-    /// reason to visually animate a part shrinking away before the player has
-    /// even seen it.
+    /// Snaps straight to hidden, WITHOUT the shrink tween AND WITHOUT reporting
+    /// task progress or showing the removal dialog. Use this when restoring a
+    /// save on scene load.
+    ///
+    /// Deliberately does NOT call TaskManager.ReportProgress() or
+    /// DialogManager.ShowDialog(): those are first-time, player-facing side
+    /// effects, and during a restore they're both wrong to replay -
+    /// TaskManager.RestoreState() (called separately, straight from the save
+    /// data) is the single source of truth for task progress on load, so
+    /// reporting here again would race/duplicate it. And popping the removal
+    /// dialog back up for every previously-removed part would re-show
+    /// tutorials the player already saw last session - worse, since
+    /// DialogManager only supports one open dialog at a time, restoring
+    /// several removed parts in a row would repeatedly stomp the dialog
+    /// queue, leaving it stuck open (and, if pauseGameWhileOpen is on,
+    /// Time.timeScale stuck at 0) since nothing ever properly closes it.
+    ///
+    /// hasReportedRemoval is still set here so a live Pickup() later in this
+    /// session won't double-report this same part.
     /// </summary>
     public void PickupInstant()
     {
@@ -209,17 +223,7 @@ public class PCPartItem : MonoBehaviour
             HomeSocket = null;
         }
 
-        if (!hasReportedRemoval)
-        {
-            hasReportedRemoval = true;
-
-            bool wasAlreadyComplete = TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.TaskId);
-            TaskManager.Instance.ReportProgress(PCDisassemblySetup.TaskId);
-            bool justCompleted = !wasAlreadyComplete && TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.TaskId);
-
-            if (removalDialog != null && !justCompleted)
-                DialogManager.Instance.ShowDialog(removalDialog);
-        }
+        hasReportedRemoval = true;
 
         if (scaleRoutine != null) StopCoroutine(scaleRoutine);
         transform.localScale = Vector3.zero;
@@ -230,7 +234,7 @@ public class PCPartItem : MonoBehaviour
 
     /// <summary>
     /// Called right after this part starts being picked up. Override to add
-    /// part-specific side effects — e.g. hiding cables that are physically
+    /// part-specific side effects ï¿½ e.g. hiding cables that are physically
     /// attached to this part so they disappear along with it.
     /// </summary>
     protected virtual void OnPickedUp() { }
@@ -252,7 +256,7 @@ public class PCPartItem : MonoBehaviour
         {
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
-            Debug.LogWarning($"{socket.name} has no recorded installed offset (no part started here at scene load) — falling back to zero offset.", socket);
+            Debug.LogWarning($"{socket.name} has no recorded installed offset (no part started here at scene load) ï¿½ falling back to zero offset.", socket);
         }
 
         transform.localScale = Vector3.zero;
@@ -275,7 +279,7 @@ public class PCPartItem : MonoBehaviour
 
             // Checkpointing on task completion is now handled generically by
             // TaskCheckpointAutosaver (listens to TaskManager.OnTaskCompleted
-            // for ANY task) — no save call needed here anymore.
+            // for ANY task) ï¿½ no save call needed here anymore.
         }
 
         OnReturnedToSocket(socket);
@@ -284,7 +288,7 @@ public class PCPartItem : MonoBehaviour
 
     /// <summary>
     /// Called right after this part successfully snaps into a socket.
-    /// Override to add part-specific side effects — e.g. auto-closing a
+    /// Override to add part-specific side effects ï¿½ e.g. auto-closing a
     /// retention clip once the part is reinstalled.
     /// </summary>
     protected virtual void OnReturnedToSocket(PartSocket socket) { }

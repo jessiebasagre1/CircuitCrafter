@@ -16,6 +16,11 @@ public class BootableUSBCreator : MonoBehaviour
 {
     public static BootableUSBCreator Instance { get; private set; }
 
+    [Tooltip("Registered with TaskManager as a 1-step task the moment the drive finishes writing. " +
+             "Add a QuizSetData with this exact taskId to QuizManager's Quiz Sets list to have a " +
+             "quiz auto-fire right after USB creation completes -- no extra trigger script needed.")]
+    public const string TaskId = "create_bootable_usb";
+
     [Header("Available options (populate dropdowns from these)")]
     [SerializeField] private ISOImageData[] availableImages;
     [SerializeField] private USBDriveItem[] availableDrives;
@@ -53,6 +58,12 @@ public class BootableUSBCreator : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void Start()
+    {
+        if (TaskManager.Instance != null)
+            TaskManager.Instance.RegisterTask(TaskId, 1);
     }
 
     // Call from the ISO dropdown's OnValueChanged
@@ -112,7 +123,12 @@ public class BootableUSBCreator : MonoBehaviour
         IsWriting = false;
         OnWriteComplete?.Invoke(drive);
 
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.SaveCheckpoint();
+        // Reporting here (instead of calling SaveManager.SaveCheckpoint()
+        // directly) lets TaskCheckpointAutosaver handle the checkpoint
+        // generically once this task completes -- same pattern as
+        // PCPartItem's assemble_pc/disassemble_pc reporting -- and lets
+        // QuizManager auto-fire a quiz for this task if one is configured.
+        if (TaskManager.Instance != null)
+            TaskManager.Instance.ReportProgress(TaskId);
     }
 }

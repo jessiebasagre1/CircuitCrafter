@@ -1,12 +1,12 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
 /// A single RAM socket's retention clip. Click to toggle open/closed. Exposes
-/// Open()/Close() so other scripts can control it too — used automatically
+/// Open()/Close() so other scripts can control it too ï¿½ used automatically
 /// by RAMPartItem to close the clip the moment a stick is reinstalled.
 ///
 /// Hover highlight: shows only while the mouse is over this lock. Color
-/// reflects state — a neutral color while closed, green once open.
+/// reflects state ï¿½ a neutral color while closed, green once open.
 /// </summary>
 public class RAMLock : MonoBehaviour
 {

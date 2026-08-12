@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: QuizSet_BootableF
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: create_bootable_usb
+  questionPool:
+  - {fileID: 11400000, guid: f546c10b53b2178498f0dc0f333db24a, type: 2}
+  - {fileID: 11400000, guid: 021a7e98dd08cb346b9816b52aa2bec7, type: 2}
+  - {fileID: 11400000, guid: 680f48db0557fb448a50c7b06d90a779, type: 2}
+  - {fileID: 11400000, guid: b3669481fce16924da13bac4f46aeae9, type: 2}
+  - {fileID: 11400000, guid: cfe159fd26a9f424c93c8eef97805699, type: 2}
+  questionsToAsk: 5
+  randomizeSelection: 1
