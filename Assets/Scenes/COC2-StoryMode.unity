@@ -203,7 +203,7 @@ GameObject:
   - component: {fileID: 81726277}
   m_Layer: 15
   m_Name: pin4
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -259,8 +259,8 @@ MonoBehaviour:
   pinNumber: 4
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.02026, y: -0.00358, z: -0.000839}
+  attachRotationEulerOffset: {x: 102, y: -56.83099, z: -54.63}
 --- !u!1 &170616953
 GameObject:
   m_ObjectHideFlags: 0
@@ -600,7 +600,7 @@ GameObject:
   - component: {fileID: 462727772}
   m_Layer: 15
   m_Name: pin2
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -656,8 +656,8 @@ MonoBehaviour:
   pinNumber: 2
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.01956, y: -0.00397, z: -0.00222}
+  attachRotationEulerOffset: {x: 102, y: -130.9, z: -121.8}
 --- !u!1 &462910891
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,7 +742,7 @@ GameObject:
   - component: {fileID: 477168732}
   m_Layer: 15
   m_Name: pin1
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -798,8 +798,8 @@ MonoBehaviour:
   pinNumber: 1
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02008, y: -0.00297, z: -0.00304}
-  attachRotationEulerOffset: {x: 0, y: -11.22, z: 9.98}
+  attachPositionOffset: {x: -0.01982, y: -0.00381, z: -0.00303}
+  attachRotationEulerOffset: {x: 102, y: -128.4, z: -117.07}
 --- !u!1 &527745320
 GameObject:
   m_ObjectHideFlags: 0
@@ -955,7 +955,7 @@ GameObject:
   - component: {fileID: 735071894}
   m_Layer: 15
   m_Name: pin6
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1011,8 +1011,8 @@ MonoBehaviour:
   pinNumber: 6
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.02045, y: -0.0034, z: 0.00091}
+  attachRotationEulerOffset: {x: 102, y: -114.7, z: -117.07}
 --- !u!1 &737205683
 GameObject:
   m_ObjectHideFlags: 0
@@ -1168,7 +1168,7 @@ GameObject:
   - component: {fileID: 840562277}
   m_Layer: 15
   m_Name: pin3
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1224,8 +1224,8 @@ MonoBehaviour:
   pinNumber: 3
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.02012, y: -0.00365, z: -0.00153}
+  attachRotationEulerOffset: {x: 102, y: -123.3, z: -117.07}
 --- !u!1 &842329603
 GameObject:
   m_ObjectHideFlags: 0
@@ -1638,7 +1638,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShapeRadius: 0.025
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -1979,7 +1979,7 @@ GameObject:
   - component: {fileID: 1444220282}
   m_Layer: 15
   m_Name: pin8
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2035,8 +2035,8 @@ MonoBehaviour:
   pinNumber: 8
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.02092, y: -0.00324, z: 0.00247}
+  attachRotationEulerOffset: {x: 102, y: -110.2, z: -117.07}
 --- !u!1 &1491146094
 GameObject:
   m_ObjectHideFlags: 0
@@ -2716,7 +2716,7 @@ GameObject:
   - component: {fileID: 2003239969}
   m_Layer: 0
   m_Name: WireDragManager
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2766,7 +2766,7 @@ GameObject:
   - component: {fileID: 2061481903}
   m_Layer: 15
   m_Name: pin5
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2822,8 +2822,8 @@ MonoBehaviour:
   pinNumber: 5
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.01956, y: -0.00347, z: -0.00004}
+  attachRotationEulerOffset: {x: 102, y: -55.9, z: -57.12399}
 --- !u!1 &2137971747
 GameObject:
   m_ObjectHideFlags: 0
@@ -2877,7 +2877,7 @@ GameObject:
   - component: {fileID: 2140749112}
   m_Layer: 15
   m_Name: pin7
-  m_TagString: Untagged
+  m_TagString: Wireslot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2933,8 +2933,8 @@ MonoBehaviour:
   pinNumber: 7
   endNumber: 2
   highlightVisual: {fileID: 0}
-  attachPositionOffset: {x: -0.02060002, y: -0.0001200004, z: 0.000000002868471}
-  attachRotationEulerOffset: {x: 0, y: 0, z: 0}
+  attachPositionOffset: {x: -0.02078, y: -0.00331, z: 0.00177}
+  attachRotationEulerOffset: {x: 102, y: -111.8, z: -117.07}
 --- !u!1 &2146229291
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -14,18 +14,18 @@ public class MainMenuController : MonoBehaviour
     [System.Serializable]
     public class GameModeOption
     {
-        public string modeId;       // e.g. "COC1" — stored in the save file
+        public string modeId;       // e.g. "COC1" ï¿½ stored in the save file
         public string displayName;  // e.g. "COC1 - Computer Assembly"
         public string sceneName;    // exact Unity scene name to load
     }
 
-    [Header("Game Modes (in order — index 0 must be COC1)")]
+    [Header("Game Modes (in order ï¿½ index 0 must be COC1)")]
     [SerializeField] private GameModeOption[] gameModes;
 
     [Header("Mode Buttons (same order as gameModes)")]
     [SerializeField] private Button[] modeButtons;
 
-    [Tooltip("Optional — shows 'Continue' vs 'New' under/near each button's label based on saved progress.")]
+    [Tooltip("Optional ï¿½ shows 'Continue' vs 'New' under/near each button's label based on saved progress.")]
     [SerializeField] private TMP_Text[] modeStatusTexts;
 
     [Header("Optional")]
@@ -33,6 +33,13 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        // MouseLook.cs locks and hides the cursor during gameplay and never
+        // resets it, so returning to the Main Menu from any gameplay scene
+        // otherwise leaves the cursor locked/invisible, making Continue and
+        // every other menu button unclickable.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         for (int i = 0; i < modeButtons.Length && i < gameModes.Length; i++)
         {
             int index = i; // capture for the closure
@@ -84,7 +91,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnModeClicked(int index)
     {
-        if (!IsUnlocked(index)) return; // safety check — button should already be non-interactable
+        if (!IsUnlocked(index)) return; // safety check ï¿½ button should already be non-interactable
         var mode = gameModes[index];
         SaveManager.Instance.SelectMode(mode.modeId, mode.sceneName);
     }
@@ -95,7 +102,7 @@ public class MainMenuController : MonoBehaviour
         RefreshButtons();
     }
 
-    /// <summary>Looks up the scene name for a given mode ID — used by
+    /// <summary>Looks up the scene name for a given mode ID ï¿½ used by
     /// CampaignMenuController's Continue button to resume the saved mode
     /// without going through the mode select panel.</summary>
     public string GetSceneNameForMode(string modeId)

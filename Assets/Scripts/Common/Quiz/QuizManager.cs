@@ -105,6 +105,14 @@ public class QuizManager : MonoBehaviour
         List<QuizQuestionData> picked = PickQuestions(set);
 
         IsQuizOpen = true;
+
+        // Switch to the quiz's own dedicated camera/background instead of just
+        // overlaying the quiz panel on whatever the player camera happens to be
+        // looking at -- fixes text contrast issues against unpredictable gameplay
+        // backgrounds/lighting.
+        if (QuizCameraController.Instance != null)
+            QuizCameraController.Instance.ActivateQuizCamera();
+
         quizView.BeginQuiz(set.taskId, picked, HandleQuizFinished);
     }
 
@@ -129,6 +137,11 @@ public class QuizManager : MonoBehaviour
     private void HandleQuizFinished(QuizResult result)
     {
         IsQuizOpen = false;
+
+        // Switch back to the player's normal camera/cursor state now that the
+        // quiz is done, mirroring ActivateQuizCamera() above.
+        if (QuizCameraController.Instance != null)
+            QuizCameraController.Instance.NotifyQuizFinished();
 
         if (ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(result.pointsEarned, $"quiz:{result.taskId}");
