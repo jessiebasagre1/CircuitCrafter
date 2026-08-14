@@ -58,7 +58,11 @@ public class DialogManager : MonoBehaviour
         // immediately skip the first line.
         if (Time.frameCount == openedFrame) return;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        // Space bar for PC keyboard, plus a tap/click for mobile - Android's
+        // legacy Input Manager simulates single-finger touch as a mouse
+        // click, so GetMouseButtonDown(0) covers both a PC mouse click and a
+        // phone tap with the same check.
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             AdvanceDialog();
     }
 

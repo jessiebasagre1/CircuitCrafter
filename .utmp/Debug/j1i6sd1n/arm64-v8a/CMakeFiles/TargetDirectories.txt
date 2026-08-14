@@ -1,0 +1,5 @@
+C:/Users/CLienT/Desktop/My Unity Projects/CircuitCrafter/.utmp/Debug/j1i6sd1n/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/CLienT/Desktop/My Unity Projects/CircuitCrafter/.utmp/Debug/j1i6sd1n/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/CLienT/Desktop/My Unity Projects/CircuitCrafter/.utmp/Debug/j1i6sd1n/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/Users/CLienT/Desktop/My Unity Projects/CircuitCrafter/.utmp/Debug/j1i6sd1n/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/Users/CLienT/Desktop/My Unity Projects/CircuitCrafter/.utmp/Debug/j1i6sd1n/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir

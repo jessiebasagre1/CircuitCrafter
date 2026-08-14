@@ -2,6 +2,19 @@ using UnityEngine;
 
 public class StationCameraSwitch : MonoBehaviour
 {
+    /// <summary>
+    /// Whichever station the player is currently near (about to enter) OR
+    /// currently inside (about to exit). A single mobile "Enter/Exit" button
+    /// can route through this static reference to work correctly for every
+    /// station in the game - assembly, bootable USB, OS install, etc -
+    /// without needing a separate button per station.
+    /// </summary>
+    public static StationCameraSwitch NearbyOrActive { get; private set; }
+
+    [Header("Optional display name (for a mobile button label, e.g. \"Enter Assembly Station\")")]
+    [SerializeField] private string displayName = "Station";
+    public string DisplayName => displayName;
+
     [Header("Cameras")]
     public Camera playerCamera;
     public Camera stationCamera;
@@ -34,19 +47,32 @@ public class StationCameraSwitch : MonoBehaviour
     {
         if (playerNearby && Input.GetKeyDown(KeyCode.E))
         {
-            bool enteringStation = !usingStationCamera;
-
-            if (enteringStation && IsGatedTaskComplete())
-            {
-                Debug.Log($"[StationCameraSwitch] '{name}': You've already done this step", this);
-                return;
-            }
-
-            ToggleCamera(enteringStation);
-
-            if (enteringStation)
-                OnEnteredStation();
+            HandleInteractPressed();
         }
+    }
+
+    /// <summary>
+    /// Runs the enter/exit logic for this station. Called from Update() for
+    /// the PC keyboard (E key), and from StationInteractionRelay for the
+    /// mobile on-screen button - both paths funnel through here so the
+    /// gating, waypoint-clearing, etc. only needs to exist in one place.
+    /// </summary>
+    public void HandleInteractPressed()
+    {
+        if (!playerNearby) return;
+
+        bool enteringStation = !usingStationCamera;
+
+        if (enteringStation && IsGatedTaskComplete())
+        {
+            Debug.Log($"[StationCameraSwitch] '{name}': You've already done this step", this);
+            return;
+        }
+
+        ToggleCamera(enteringStation);
+
+        if (enteringStation)
+            OnEnteredStation();
     }
 
     /// <summary>True once every task ID listed in gatedTaskIds is complete. False (never gated)
@@ -90,7 +116,12 @@ public class StationCameraSwitch : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) playerNearby = true;
+        if (other.CompareTag("Player"))
+        {
+            playerNearby = true;
+            NearbyOrActive = this;
+            Debug.Log($"[StationCameraSwitch] ENTER trigger: '{name}' - NearbyOrActive is now '{NearbyOrActive.name}'", this);
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -99,6 +130,15 @@ public class StationCameraSwitch : MonoBehaviour
         {
             playerNearby = false;
             if (usingStationCamera) ToggleCamera(false);
+            if (NearbyOrActive == this)
+            {
+                NearbyOrActive = null;
+                Debug.Log($"[StationCameraSwitch] EXIT trigger: '{name}' - NearbyOrActive cleared to null", this);
+            }
+            else
+            {
+                Debug.Log($"[StationCameraSwitch] EXIT trigger: '{name}' - but NearbyOrActive was '{(NearbyOrActive != null ? NearbyOrActive.name : "null")}', not this one, so left untouched", this);
+            }
         }
     }
 }

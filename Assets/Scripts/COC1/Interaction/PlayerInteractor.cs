@@ -14,6 +14,13 @@
 /// walking camera, being near+looking at a loose drive lets you press
 /// pickup to grab it. On the assembly-station camera, being near+looking at
 /// a port while holding a drive lets you press Q to plug it in.
+///
+/// MOBILE: assign interactButton / plugButton in the Inspector to on-screen
+/// UI Buttons. They're auto shown/hidden each frame based on nearbyDrive/
+/// nearbyPort/holdingDrive, mirroring the existing promptText logic, and
+/// their OnClick can be wired directly to RequestInteract()/RequestPlug()
+/// -- or left unassigned entirely for a PC-only build, in which case
+/// keyboard/mouse behave exactly as before.
 /// </summary>
 public class PlayerInteractor : MonoBehaviour
 {
@@ -43,8 +50,16 @@ public class PlayerInteractor : MonoBehaviour
     [Tooltip("Simple prompt text, e.g. 'Press E to pick up' / 'Press Q to plug in'. Leave unassigned to skip.")]
     [SerializeField] private TMPro.TMP_Text promptText;
 
+    [Header("Mobile Buttons (optional)")]
+    [Tooltip("On-screen button for pickup/interact. Wire its OnClick to RequestInteract(). Auto shown/hidden based on nearbyDrive.")]
+    [SerializeField] private UnityEngine.UI.Button interactButton;
+    [Tooltip("On-screen button for plugging in a held drive. Wire its OnClick to RequestPlug(). Auto shown/hidden based on nearbyPort + holding state.")]
+    [SerializeField] private UnityEngine.UI.Button plugButton;
+
     private USBDriveItem nearbyDrive;
     private USBPort nearbyPort;
+    private bool interactRequested;
+    private bool plugRequested;
 
     private void Reset()
     {
@@ -65,6 +80,13 @@ public class PlayerInteractor : MonoBehaviour
             ? Input.GetKeyDown(interactKey)
             : Input.GetMouseButtonDown(0);
 
+        // Mobile button press, consumed same as a keyboard/mouse press.
+        if (interactRequested)
+        {
+            interactPressed = true;
+            interactRequested = false;
+        }
+
         if (interactPressed)
         {
             // Proximity pickup takes priority over the generic raycast click
@@ -76,13 +98,39 @@ public class PlayerInteractor : MonoBehaviour
                 TryGenericInteract();
         }
 
-        if (holdingDrive && nearbyPort != null && Input.GetKeyDown(plugKey))
+        bool plugPressed = holdingDrive && nearbyPort != null &&
+                            (Input.GetKeyDown(plugKey) || plugRequested);
+        plugRequested = false;
+
+        if (plugPressed)
         {
             nearbyPort.PlugIn(CarriedItemHolder.Instance.HeldDrive);
             CarriedItemHolder.Instance.ClearHeld();
         }
 
         UpdatePrompt(holdingDrive);
+        UpdateMobileButtons(holdingDrive);
+    }
+
+    /// <summary>Wire this to the mobile Interact/Pickup button's OnClick.</summary>
+    public void RequestInteract()
+    {
+        interactRequested = true;
+    }
+
+    /// <summary>Wire this to the mobile Plug button's OnClick.</summary>
+    public void RequestPlug()
+    {
+        plugRequested = true;
+    }
+
+    private void UpdateMobileButtons(bool holdingDrive)
+    {
+        if (interactButton != null)
+            interactButton.gameObject.SetActive(!holdingDrive && nearbyDrive != null);
+
+        if (plugButton != null)
+            plugButton.gameObject.SetActive(holdingDrive && nearbyPort != null);
     }
 
     /// <summary>Finds the nearest loose (not held, not plugged in) drive that's
