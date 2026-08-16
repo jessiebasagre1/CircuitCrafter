@@ -10,20 +10,32 @@ using UnityEngine;
 /// same idea as a real technician's sign-off sheet.
 ///
 /// UI (checklist rows, Submit button) is expected to call Refresh() when the
-/// panel opens and SubmitReport() on click; this class holds no Canvas
-/// references itself, same separation as OSInstallManager/OSInstallView.
+/// panel opens and SubmitReport() on click -- see ServiceReportView. This
+/// class holds no Canvas references itself, same separation as
+/// OSInstallManager/OSInstallView.
 /// </summary>
 public class ServiceReportPanel : MonoBehaviour
 {
-    [Tooltip("Every TaskManager taskId that must be complete before the report can be submitted, e.g. InstallDrivers/InstallAppSoftware/InstallUpdates from SystemConfigTaskIds.")]
-    [SerializeField] private string[] requiredTaskIds = new string[]
+    [Serializable]
+    public class RequiredTask
     {
-        SystemConfigTaskIds.InstallDrivers,
-        SystemConfigTaskIds.InstallAppSoftware,
-        SystemConfigTaskIds.InstallUpdates,
+        [Tooltip("Must exactly match a taskId used elsewhere, e.g. SystemConfigTaskIds.InstallDrivers.")]
+        public string taskId;
+
+        [Tooltip("Human-readable label shown on the checklist row, e.g. \"Drivers installed\".")]
+        public string label;
+    }
+
+    [Tooltip("Every task that must be complete before the report can be submitted.")]
+    [SerializeField]
+    private RequiredTask[] requiredTasks = new RequiredTask[]
+    {
+        new RequiredTask { taskId = SystemConfigTaskIds.InstallDrivers, label = "Drivers installed" },
+        new RequiredTask { taskId = SystemConfigTaskIds.InstallAppSoftware, label = "Application software installed" },
+        new RequiredTask { taskId = SystemConfigTaskIds.InstallUpdates, label = "Updates/patches installed" },
     };
 
-    [Tooltip("Optional -- if assigned, the report also requires every diagnostic test to have PASSED (not just been run) before it can be submitted.")]
+    [Tooltip("Optional -- if assigned, the report also requires every diagnostic test to have PASSED (not just been run) before it can be submitted. Adds its own \"Diagnostics passed\" row to the checklist.")]
     [SerializeField] private DiagnosticsTestManager diagnostics;
 
     [Tooltip("Reported to TaskManager (1 step) once the player successfully submits the report.")]
@@ -34,14 +46,14 @@ public class ServiceReportPanel : MonoBehaviour
 
     public bool IsReadyToSubmit { get; private set; }
 
-    /// <summary>Fires whenever Refresh() runs, with the current per-item
-    /// complete/incomplete state (same order as requiredTaskIds) so UI can
-    /// draw checkmarks without querying TaskManager itself.</summary>
-    public event Action<IReadOnlyList<(string taskId, bool complete)>> OnChecklistRefreshed;
+    /// <summary>Fires whenever Refresh() runs, with a ready-to-display
+    /// (label, complete) row per required task, plus a trailing "Diagnostics
+    /// passed" row if a DiagnosticsTestManager is assigned.</summary>
+    public event Action<IReadOnlyList<(string label, bool complete)>> OnChecklistRefreshed;
 
     public event Action OnReportSubmitted;
 
-    private readonly List<(string taskId, bool complete)> _checklist = new List<(string, bool)>();
+    private readonly List<(string label, bool complete)> _checklist = new List<(string, bool)>();
 
     private void Start()
     {
@@ -65,10 +77,11 @@ public class ServiceReportPanel : MonoBehaviour
 
         if (TaskManager.Instance != null)
         {
-            foreach (var id in requiredTaskIds)
+            foreach (var task in requiredTasks)
             {
-                bool complete = TaskManager.Instance.IsTaskComplete(id);
-                _checklist.Add((id, complete));
+                if (task == null || string.IsNullOrEmpty(task.taskId)) continue;
+                bool complete = TaskManager.Instance.IsTaskComplete(task.taskId);
+                _checklist.Add((task.label, complete));
                 if (!complete) ready = false;
             }
         }
@@ -77,8 +90,11 @@ public class ServiceReportPanel : MonoBehaviour
             ready = false;
         }
 
-        if (diagnostics != null && !diagnostics.AllTestsPassed)
-            ready = false;
+        if (diagnostics != null)
+        {
+            _checklist.Add(("Diagnostics passed", diagnostics.AllTestsPassed));
+            if (!diagnostics.AllTestsPassed) ready = false;
+        }
 
         IsReadyToSubmit = ready;
         OnChecklistRefreshed?.Invoke(_checklist);

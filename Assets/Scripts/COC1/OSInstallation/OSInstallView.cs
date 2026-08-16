@@ -25,7 +25,7 @@ public class OSInstallView : MonoBehaviour
     [Header("Partition Select (interactive table)")]
     [SerializeField] private GameObject partitionSelectPanel;
     [SerializeField] private PartitionSelectView partitionSelectView;
-
+    [SerializeField] private GameObject desktopPanel;
     private void Start()
     {
         // Start() (not OnEnable()) so this is guaranteed to run AFTER every
@@ -145,7 +145,7 @@ public class OSInstallView : MonoBehaviour
         if (choiceDropdown != null) choiceDropdown.gameObject.SetActive(false);
         if (partitionSelectPanel != null) partitionSelectPanel.SetActive(false);
         if (rebootOverlay != null) rebootOverlay.SetActive(false);
-        // TODO: transition to "desktop" scene/view here
+        if (desktopPanel != null) desktopPanel.SetActive(true);
     }
 
     private void HandleFailed(string reason)

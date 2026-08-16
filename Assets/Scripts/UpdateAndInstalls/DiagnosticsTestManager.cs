@@ -27,6 +27,10 @@ public class DiagnosticsTestManager : MonoBehaviour
     /// before the first run, or if any test in the last run failed.</summary>
     public bool AllTestsPassed { get; private set; }
 
+    /// <summary>True once RunAllTests has completed at least one full pass this
+    /// session. Lets UI distinguish "never tested yet" from "tested and failed".</summary>
+    public bool HasRun { get; private set; }
+
     // UI hooks -- mirrors OSInstallManager's event pattern
     public event Action<DiagnosticTestData> OnTestStarted;
     public event Action<DiagnosticTestData, float> OnTestProgress; // 0-1

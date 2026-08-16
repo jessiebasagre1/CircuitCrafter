@@ -4,23 +4,37 @@
 /// Detects clicks/keypresses on InteractableObjects and calls Interact() on
 /// them (unchanged generic behavior, used for motherboard etc).
 ///
-/// USB drive pickup and port plugging use a SEPARATE, more forgiving system:
-/// instead of requiring a precise raycast/SphereCast hit, this searches for
-/// the nearest drive/port that is both within range AND actually visible on
-/// screen (in the camera's viewport and not blocked by a wall/object). This
-/// takes priority over the generic click system when something's in range.
+/// USB drive pickup/removal and port plugging use a SEPARATE, more forgiving
+/// system: instead of requiring a precise raycast/SphereCast hit, this
+/// searches for the nearest drive/port that is both within range AND
+/// actually visible on screen (in the camera's viewport and not blocked by a
+/// wall/object). This takes priority over the generic click system when
+/// something's in range.
+///
+/// IMPORTANT: this forgiving search covers a drive whether it's loose OR
+/// currently plugged into a port. Grabbing a plugged-in drive (to unplug it)
+/// used to fall through to the generic click system instead, which uses a
+/// tiny 0.05 SphereCast -- basically requiring pixel-precise aim at the
+/// port. That's why plugged-in drives used to be much harder to grab than
+/// loose ones. UpdateNearbyDrive now finds ANY drive in range (loose or
+/// inserted), and the grab action branches on IsInsertedInPort to either
+/// pick it up directly or unplug-then-pick-up via its CurrentPort.
 ///
 /// Attach one copy to each camera (walking + assembly-station). On the
 /// walking camera, being near+looking at a loose drive lets you press
 /// pickup to grab it. On the assembly-station camera, being near+looking at
-/// a port while holding a drive lets you press Q to plug it in.
+/// a plugged-in drive lets you press the SAME pickup input to unplug and
+/// grab it, or (while holding a drive) press Q to plug it in.
 ///
 /// MOBILE: assign interactButton / plugButton in the Inspector to on-screen
-/// UI Buttons. They're auto shown/hidden each frame based on nearbyDrive/
-/// nearbyPort/holdingDrive, mirroring the existing promptText logic, and
-/// their OnClick can be wired directly to RequestInteract()/RequestPlug()
-/// -- or left unassigned entirely for a PC-only build, in which case
-/// keyboard/mouse behave exactly as before.
+/// UI Buttons. interactButton IS the mobile "Grab" button -- it fires the
+/// exact same logic as the PC grab key (currently bound via interactKey,
+/// e.g. G), including the unplug-and-grab case above. They're auto
+/// shown/hidden each frame based on nearbyDrive/nearbyPort/holdingDrive,
+/// mirroring the existing promptText logic, and their OnClick can be wired
+/// directly to RequestInteract()/RequestPlug() -- or left unassigned
+/// entirely for a PC-only build, in which case keyboard/mouse behave
+/// exactly as before.
 /// </summary>
 public class PlayerInteractor : MonoBehaviour
 {
@@ -90,12 +104,19 @@ public class PlayerInteractor : MonoBehaviour
         if (interactPressed)
         {
             // Proximity pickup takes priority over the generic raycast click
-            // system — if a drive's in easy range, grab it without needing
-            // a precise click.
+            // system — if a drive's in easy range (loose OR plugged in),
+            // grab it without needing a precise click.
             if (!holdingDrive && nearbyDrive != null)
-                nearbyDrive.RequestPickup();
+            {
+                if (nearbyDrive.IsInsertedInPort)
+                    nearbyDrive.CurrentPort?.RequestRemoveDrive();
+                else
+                    nearbyDrive.RequestPickup();
+            }
             else
+            {
                 TryGenericInteract();
+            }
         }
 
         bool plugPressed = holdingDrive && nearbyPort != null &&
@@ -133,8 +154,12 @@ public class PlayerInteractor : MonoBehaviour
             plugButton.gameObject.SetActive(holdingDrive && nearbyPort != null);
     }
 
-    /// <summary>Finds the nearest loose (not held, not plugged in) drive that's
-    /// within pickupRange and actually visible on screen, highlights it.</summary>
+    /// <summary>Finds the nearest grabbable drive within pickupRange and
+    /// actually visible on screen, highlights it. "Grabbable" includes both
+    /// loose drives (picked up directly) AND drives currently plugged into a
+    /// port (unplugged then picked up) — both get the same forgiving
+    /// distance/visibility check, so a plugged-in drive is no harder to grab
+    /// than a loose one.</summary>
     private void UpdateNearbyDrive(bool holdingDrive)
     {
         USBDriveItem found = null;
@@ -144,7 +169,7 @@ public class PlayerInteractor : MonoBehaviour
             float bestDist = pickupRange;
             foreach (var drive in USBDriveItem.AllDrives)
             {
-                if (drive == null || drive.IsInsertedInPort) continue;
+                if (drive == null) continue;
 
                 float dist = Vector3.Distance(interactionCamera.transform.position, drive.transform.position);
                 if (dist > bestDist) continue;
@@ -231,7 +256,10 @@ public class PlayerInteractor : MonoBehaviour
         if (holdingDrive && nearbyPort != null)
             promptText.text = $"Press {plugKey} to plug in";
         else if (!holdingDrive && nearbyDrive != null)
-            promptText.text = useKeyboardInteract ? $"Press {interactKey} to pick up" : "Click to pick up";
+        {
+            string action = nearbyDrive.IsInsertedInPort ? "unplug" : "pick up";
+            promptText.text = useKeyboardInteract ? $"Press {interactKey} to {action}" : $"Click to {action}";
+        }
         else
             promptText.text = "";
     }
