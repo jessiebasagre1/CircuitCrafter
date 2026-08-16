@@ -3,12 +3,17 @@ using UnityEngine;
 /// <summary>
 /// Forgiving click/drag/hover detection for the assemble view, so parts,
 /// RAM locks, and cable connectors stay interactable even when small on
-/// screen (camera zoomed out / far away) — no need to zoom in.
+/// screen (camera zoomed out / far away) - no need to zoom in.
 ///
 /// Uses SphereCastAll (not a single-hit raycast) so a small RAM lock isn't
 /// shadowed by the larger part collider it sits next to, and explicitly
 /// includes trigger colliders in case any interactable uses one.
 /// Attach to the Assemble Camera.
+///
+/// Reads pointer state via PointerInput (not Input.mousePosition /
+/// Input.GetMouseButtonDown directly) - see PointerInput.cs for why: on
+/// mobile, MouseLook.cs turns off Input.simulateMouseWithTouches, which
+/// silently kills raw mouse APIs for everyone, not just MouseLook.
 /// </summary>
 public class PartClickDetector : MonoBehaviour
 {
@@ -21,9 +26,24 @@ public class PartClickDetector : MonoBehaviour
     private CableConnector activeCable;
     private RAMLock hoveredLock;
 
+    /// <summary>Exposed so TouchLookField can check whether a touch started over an
+    /// interactable part, and ignore it (so dragging a part doesn't also spin the
+    /// camera via that same finger). Same idea as VirtualJoystick.Background.</summary>
+    public static PartClickDetector Instance { get; private set; }
+
     private void Reset()
     {
         assembleCamera = GetComponent<Camera>();
+    }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void Update()
@@ -32,35 +52,60 @@ public class PartClickDetector : MonoBehaviour
 
         UpdateHover();
 
-        if (Input.GetMouseButtonDown(0))
+        if (PointerInput.Down)
             HandleClick();
 
-        if (Input.GetMouseButtonUp(0) && activeCable != null)
+        if (PointerInput.Up && activeCable != null)
         {
             activeCable.EndDrag();
             activeCable = null;
         }
     }
 
-    /// <summary>Precise thin ray — exactly where the cursor points. Tried first.</summary>
-    private RaycastHit[] CastPrecise()
+    /// <summary>True if a tappable part/lock/cable sits under the given screen point.
+    /// Used by TouchLookField so it doesn't steal a touch meant for a part.</summary>
+    public bool IsOverInteractable(Vector2 screenPos)
     {
-        Ray ray = assembleCamera.ScreenPointToRay(Input.mousePosition);
+        return HasInteractableIn(CastPrecise(screenPos)) || HasInteractableIn(CastForgiving(screenPos));
+    }
+
+    private static bool HasInteractableIn(RaycastHit[] hits)
+    {
+        foreach (var hit in hits)
+        {
+            if (hit.collider.GetComponentInParent<RAMLock>() != null) return true;
+            if (hit.collider.GetComponentInParent<CPULock>() != null) return true;
+            if (hit.collider.GetComponentInParent<CableConnector>() != null) return true;
+            if (hit.collider.GetComponentInParent<PCPartItem>() != null) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Precise thin ray - exactly where the cursor points. Tried first.</summary>
+    private RaycastHit[] CastPrecise() => CastPrecise(PointerInput.Position);
+
+    private RaycastHit[] CastPrecise(Vector2 screenPos)
+    {
+        Ray ray = assembleCamera.ScreenPointToRay(screenPos);
         RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance, interactableLayerMask, QueryTriggerInteraction.Collide);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         return hits;
     }
 
-    /// <summary>Forgiving fallback — only used if the precise ray hits nothing.</summary>
-    private RaycastHit[] CastForgiving()
+    /// <summary>Forgiving fallback - only used if the precise ray hits nothing.</summary>
+    private RaycastHit[] CastForgiving() => CastForgiving(PointerInput.Position);
+
+    private RaycastHit[] CastForgiving(Vector2 screenPos)
     {
-        Ray ray = assembleCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = assembleCamera.ScreenPointToRay(screenPos);
         RaycastHit[] hits = Physics.SphereCastAll(ray, clickRadius, maxDistance, interactableLayerMask, QueryTriggerInteraction.Collide);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         return hits;
     }
 
-    /// <summary>Tries precise first (exact cursor position), falls back to forgiving only if nothing's exactly under the cursor.</summary>
+    /// <summary>Tries precise first - if the cursor is precisely on something, that's
+    /// always what the player meant, regardless of what else is nearby in the
+    /// forgiving radius (fixes neighboring RAM locks stealing the click).</summary>
     private bool TryResolveInteraction(RaycastHit[] hits)
     {
         if (hits.Length == 0) return false;
@@ -84,14 +129,13 @@ public class PartClickDetector : MonoBehaviour
         if (partHit != null) { partHit.TryBeginDrag(); return true; }
         return false;
     }
+
     private void HandleClick()
     {
-        // Try an exact hit first — if the cursor is precisely on something, that's
-        // always what the player meant, regardless of what else is nearby in the
-        // forgiving radius (fixes neighboring RAM locks stealing the click).
         if (TryResolveInteraction(CastPrecise())) return;
         TryResolveInteraction(CastForgiving());
     }
+
     private void UpdateHover()
     {
         RAMLock lockUnderCursor = FindRAMLockUnderCursor();

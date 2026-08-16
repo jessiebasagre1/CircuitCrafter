@@ -38,6 +38,10 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
 
     public bool IsPressed { get; private set; }
 
+    /// <summary>Exposed so TouchLookField can check whether a touch started over the joystick,
+    /// and ignore it, regardless of Canvas sibling/raycast order.</summary>
+    public RectTransform Background => background;
+
     private Vector2 inputStartPos;
 
     private void Awake()
@@ -53,7 +57,17 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
     public void OnPointerDown(PointerEventData eventData)
     {
         IsPressed = true;
-        OnDrag(eventData); // handle immediate placement on first touch, not just movement after
+
+        // Remember exactly where the finger first landed, so movement below is
+        // measured as a delta from THIS point, not from the background's center.
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            background, eventData.position, eventData.pressEventCamera, out inputStartPos);
+
+        // Handle always starts centered on touch-down, regardless of where within
+        // the background the finger actually landed - it should only move once you
+        // drag AWAY from that starting point, not snap to wherever you first tapped.
+        handle.anchoredPosition = Vector2.zero;
+        Value = Vector2.zero;
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -61,7 +75,8 @@ public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler,
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             background, eventData.position, eventData.pressEventCamera, out Vector2 localPoint);
 
-        Vector2 clamped = Vector2.ClampMagnitude(localPoint, handleRange);
+        Vector2 delta = localPoint - inputStartPos;
+        Vector2 clamped = Vector2.ClampMagnitude(delta, handleRange);
         handle.anchoredPosition = clamped;
 
         Vector2 raw = clamped / handleRange; // -1..1 range

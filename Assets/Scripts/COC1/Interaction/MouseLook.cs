@@ -15,14 +15,39 @@ public class MouseLook : MonoBehaviour
         // any editor/device quirks around calling it unnecessarily).
 #if !UNITY_ANDROID && !UNITY_IOS
         Cursor.lockState = CursorLockMode.Locked;
+#else
+        // Unity's legacy Input Manager emulates a "Mouse X"/"Mouse Y" axis from
+        // ANY touch drag on screen by default - including a drag happening over
+        // the virtual joystick UI. That simulated axis is independent of the UI
+        // event system, so even though VirtualJoystick correctly captures that
+        // touch (and TouchLookField never sees it), Input.GetAxis("Mouse X"/"Mouse Y")
+        // below would still pick up the joystick drag and rotate the camera along
+        // with it. Turning this off means touch only drives look via
+        // TouchLookField's explicit ConsumeDelta(), cleanly separated from
+        // whatever's driving the joystick.
+        Input.simulateMouseWithTouches = false;
 #endif
     }
 
     void Update()
     {
-        // PC mouse axis - unchanged from original.
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        // PC mouse axis - only read when no touch is active. On touch
+        // devices, Unity can synthesize "Mouse X"/"Mouse Y" from ANY finger
+        // movement on screen (via simulateMouseWithTouches and/or the input
+        // system's own touch-to-mouse simulation), completely independent of
+        // which UI element that touch actually landed on - so a finger
+        // dragging the joystick can leak into these axes even though
+        // TouchLookField correctly ignores that same touch. Skipping the
+        // read entirely whenever any touch is present removes that leak at
+        // the source, and also stops the joystick-finger and look-finger
+        // from both feeding rotation at once when used together.
+        float mouseX = 0f;
+        float mouseY = 0f;
+        if (Input.touchCount == 0)
+        {
+            mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
+            mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        }
 
         // Mobile touch-drag look, additive. On a touch device with no mouse
         // connected, mouseX/mouseY above are already ~0, so this simply adds

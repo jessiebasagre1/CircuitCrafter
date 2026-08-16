@@ -106,6 +106,21 @@ public class QuizManager : MonoBehaviour
 
         IsQuizOpen = true;
 
+        // If the player is currently standing inside a station's own camera
+        // view (e.g. a checklist/diagnostics station), exit that FIRST so the
+        // player camera is what's active right before ActivateQuizCamera()
+        // snapshots things below. Otherwise QuizCameraController has no idea
+        // the station camera even exists: it'd never switch it off, leaving
+        // it active underneath the quiz camera the whole time, and
+        // NotifyQuizFinished() would have nothing to restore to afterward --
+        // the station camera would just still be sitting there once the quiz
+        // camera turns off. Same pattern PCDisassemblySetup already uses for
+        // its own quiz, just generalized here so every station gets it for
+        // free instead of needing a manual ForceReturnToPlayerCamera() call
+        // wired up per station.
+        if (StationCameraSwitch.NearbyOrActive != null && StationCameraSwitch.NearbyOrActive.IsUsingStationCamera)
+            StationCameraSwitch.NearbyOrActive.ForceReturnToPlayerCamera();
+
         // Switch to the quiz's own dedicated camera/background instead of just
         // overlaying the quiz panel on whatever the player camera happens to be
         // looking at -- fixes text contrast issues against unpredictable gameplay

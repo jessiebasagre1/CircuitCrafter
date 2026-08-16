@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d5562cc34807e2439c5cc188b7351d9, type: 3}
+  m_Name: COC2_IntroDialog
+  m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
+  lines:
+  - speakerName: Guide
+    text: "Alright, welcome to Networking 101! Before this PC can talk to anything
+      else, it needs a proper network cable \u2014 and you're going to make one from
+      scratch."
+  - speakerName: Guide
+    text: 'You''ll find a crimping station nearby. That''s where the real work happens:
+      stripping, arranging, and crimping an RJ45 connector onto a length of cable.'
+  - speakerName: Guide
+    text: "Cable wiring isn't random \u2014 it follows a standard called TIA/EIA-568,
+      so each of the 8 wires has an exact spot it needs to go. Get the order wrong,
+      and the cable simply won't work."
+  - speakerName: Guide
+    text: Head over to the crimping station and grab the tool. I'll walk you through
+      the color order once you're there.

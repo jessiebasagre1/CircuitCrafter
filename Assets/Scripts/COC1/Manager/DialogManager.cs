@@ -58,12 +58,21 @@ public class DialogManager : MonoBehaviour
         // immediately skip the first line.
         if (Time.frameCount == openedFrame) return;
 
-        // Space bar for PC keyboard, plus a tap/click for mobile - Android's
-        // legacy Input Manager simulates single-finger touch as a mouse
-        // click, so GetMouseButtonDown(0) covers both a PC mouse click and a
-        // phone tap with the same check.
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        // Keyboard skip (PC). Touch/mouse-tap skip is handled by RequestAdvance()
+        // below, called from DialogTapAdvance via the UI EventSystem - see that
+        // script's comment for why it's not read here as raw Input polling too.
+        if (Input.GetKeyDown(KeyCode.Space))
             AdvanceDialog();
+    }
+
+    /// <summary>Called when the player taps/clicks anywhere on screen to skip -
+    /// wired up via DialogTapAdvance on a full-screen child of dialogPanel, so it
+    /// reaches here through the UI EventSystem rather than raw Input polling.</summary>
+    public void RequestAdvance()
+    {
+        if (!IsDialogOpen) return;
+        if (Time.frameCount == openedFrame) return;
+        AdvanceDialog();
     }
 
     /// <summary>Call this from anywhere to show a tutorial popup.</summary>

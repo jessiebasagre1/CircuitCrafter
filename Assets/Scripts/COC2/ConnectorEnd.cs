@@ -30,6 +30,21 @@ namespace CSSSimulation.Networking
             return true;
         }
 
+        /// <summary>How many of the 8 slots currently have a wire recognized as seated.
+        /// Diagnostic helper  if this stays below 8 even though every wire looks visually
+        /// placed, the usual cause is a WireIdentity.endNumber on one of the wires not
+        /// matching this ConnectorEnd's endNumber, which makes AssignWire() silently
+        /// refuse to mark that slot filled (it still logs a warning, easy to miss).</summary>
+        public int FilledCount()
+        {
+            int count = 0;
+            foreach (var slot in slots)
+            {
+                if (slot != null && slot.IsFilled) count++;
+            }
+            return count;
+        }
+
         /// <summary>Reads the current wire in each slot into a pin-ordered WireColor[8].</summary>
         public WireColor[] GetArrangement()
         {
@@ -49,7 +64,7 @@ namespace CSSSimulation.Networking
         /// <summary>
         /// Checks the current arrangement against the given cable type definition and
         /// fires OnValidated with the result. Call this whenever a wire is placed/removed,
-        /// or on a "Check Cable" button press — whichever fits your crimping station flow.
+        /// or on a "Check Cable" button press  whichever fits your crimping station flow.
         /// </summary>
         public bool CheckCompletion(CableTypeSO cableType)
         {
@@ -62,6 +77,31 @@ namespace CSSSimulation.Networking
             bool result = IsFullyArranged() && cableType.ValidateEnd(endNumber, GetArrangement());
             OnValidated?.Invoke(result);
             return result;
+        }
+        /// <summary>Locks (or unlocks) every wire currently seated in this end's slots so they
+        /// can't be dragged back out. Called by CrimpingStationController once a crimp succeeds.</summary>
+        public void LockAllWires(bool locked)
+        {
+            foreach (var slot in slots)
+            {
+                if (slot == null || !slot.IsFilled) continue;
+                var draggable = slot.CurrentWire.GetComponent<WireDraggable>();
+                if (draggable != null) draggable.SetLocked(locked);
+            }
+        }
+
+        /// <summary>Sends every wire currently seated in this end's slots back to its tray
+        /// position and empties the slots. Called by CrimpingStationController when an
+        /// auto-check finds the arrangement is wrong. No-ops on wires that are already
+        /// locked (crimped), same as LockAllWires respects that state.</summary>
+        public void ReturnAllWiresHome()
+        {
+            foreach (var slot in slots)
+            {
+                if (slot == null || !slot.IsFilled) continue;
+                var draggable = slot.CurrentWire.GetComponent<WireDraggable>();
+                if (draggable != null) draggable.ForceReturnHome();
+            }
         }
     }
 }

@@ -13,6 +13,12 @@ using UnityEngine.UI;
 /// matching PartSocket in the world (physics raycast). If neither is valid,
 /// the item returns to wherever it started.
 ///
+/// Reads pointer state via PointerInput (not Input.mousePosition /
+/// Input.GetMouseButtonUp directly) - see PointerInput.cs for why: on
+/// mobile, MouseLook.cs turns off Input.simulateMouseWithTouches, which
+/// silently kills raw mouse APIs for everyone, not just MouseLook. Without
+/// this, dragging never even started on touch devices.
+///
 /// Requires an EventSystem in the scene (standard Unity UI requirement).
 /// </summary>
 public class DragController : MonoBehaviour
@@ -70,11 +76,11 @@ public class DragController : MonoBehaviour
         // Screen Space - Overlay canvas assumed: screen point == canvas point.
         // If your hotbar canvas is Screen Space - Camera or World Space, convert
         // with RectTransformUtility.ScreenPointToLocalPointInRectangle instead.
-        dragIcon.transform.position = Input.mousePosition;
+        dragIcon.transform.position = PointerInput.Position;
 
         UpdateHoverHighlight();
 
-        if (Input.GetMouseButtonUp(0))
+        if (PointerInput.Up)
             ResolveDrop();
     }
 
@@ -98,7 +104,7 @@ public class DragController : MonoBehaviour
     /// <summary>Raycasts for a socket under the cursor that would actually accept the dragged item right now.</summary>
     PartSocket FindValidSocketUnderCursor()
     {
-        Ray ray = worldCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = worldCamera.ScreenPointToRay(PointerInput.Position);
         if (!Physics.Raycast(ray, out RaycastHit hit, socketRaycastDistance, socketLayerMask))
             return null;
 
@@ -123,7 +129,7 @@ public class DragController : MonoBehaviour
 
     bool TryDropOnHotbar()
     {
-        var pointerData = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+        var pointerData = new PointerEventData(EventSystem.current) { position = PointerInput.Position };
         var results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointerData, results);
 

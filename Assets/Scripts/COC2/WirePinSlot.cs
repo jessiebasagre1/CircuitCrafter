@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace CSSSimulation.Networking
 {
@@ -6,7 +6,7 @@ namespace CSSSimulation.Networking
     /// Represents a single pin position (1-8) inside an RJ45 connector housing.
     /// Place 8 of these as children of a housing, one per pin slot, positioned to match
     /// the real connector's pin order. Assignment now happens explicitly via
-    /// WireDragController on drop (see AssignWire), matching how PartSocket works —
+    /// WireDragController on drop (see AssignWire), matching how PartSocket works ï¿½
     /// no more automatic trigger-based detection.
     /// </summary>
     [RequireComponent(typeof(Collider))]
@@ -30,6 +30,11 @@ namespace CSSSimulation.Networking
         public Vector3 attachPositionOffset = Vector3.zero;
         [Tooltip("Local rotation offset in degrees, applied the same way.")]
         public Vector3 attachRotationEulerOffset = Vector3.zero;
+        [Tooltip("Local scale the wire should grow to once it's seated in this slot (its full, " +
+                 "RJ45-fitted size). The wire's scale while loose in the tray is typically smaller " +
+                 "than this, so on snap it animates from its current scale up to this value. Default " +
+                 "(1,1,1); tweak per slot if a particular pin needs a different fitted size.")]
+        public Vector3 attachScale = Vector3.one;
 
         public WireIdentity CurrentWire { get; private set; }
         public bool IsFilled => CurrentWire != null;

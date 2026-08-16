@@ -1,25 +1,45 @@
 using UnityEngine;
 
 /// <summary>
-/// Watches for the three things that make up COC1 (assemble, disassemble,
-/// OS install) and calls SaveManager.MarkModeComplete("COC1") the moment
-/// all three are done. Drop this on any persistent-ish GameObject in the
-/// COC1 scene (e.g. alongside PCDisassemblySetup or OSInstallManager).
+/// Watches for everything that makes up COC1 -- assemble, disassemble, OS
+/// install, PLUS the post-install configuration checklist (install drivers,
+/// install application software, install updates/patches, test the
+/// computer, document the completed work) -- and calls
+/// SaveManager.MarkModeComplete("COC1") the moment all of it is done. Drop
+/// this on any persistent-ish GameObject in the COC1 scene (e.g. alongside
+/// PCDisassemblySetup or OSInstallManager).
+///
+/// requiredTaskIds replaces the old one-bool-per-item approach: every entry
+/// is a TaskManager taskId that must be complete. Add or remove entries here
+/// as the module's scope changes -- no other code in this class needs to
+/// change. OS install is checked separately since it isn't a TaskManager
+/// task (see osInstallDone below).
 ///
 /// Handles two cases:
-///   1. Live completion during this session — via TaskManager.OnTaskCompleted
+///   1. Live completion during this session -- via TaskManager.OnTaskCompleted
 ///      and OSInstallManager.OnInstallComplete events.
-///   2. Resuming a save where one or two of the three were already finished
-///      in an earlier session — checked directly on Start() so this doesn't
-///      depend on load order between this script and TaskManager/
-///      OSInstallManager's own save restore.
+///   2. Resuming a save where some items were already finished in an earlier
+///      session -- checked directly on Start() so this doesn't depend on
+///      load order between this script and TaskManager/OSInstallManager's
+///      own save restore.
 /// </summary>
 public class COC1CompletionManager : MonoBehaviour
 {
     private const string ModeId = "COC1";
 
-    private bool assembleDone;
-    private bool disassembleDone;
+    [Tooltip("Every TaskManager taskId that must be complete for COC1 to count as finished, besides the OS install itself (checked separately below).")]
+    [SerializeField]
+    private string[] requiredTaskIds = new string[]
+    {
+        PCDisassemblySetup.AssembleTaskId,
+        PCDisassemblySetup.TaskId,
+        SystemConfigTaskIds.InstallDrivers,
+        SystemConfigTaskIds.InstallAppSoftware,
+        SystemConfigTaskIds.InstallUpdates,
+        SystemConfigTaskIds.TestComputer,
+        SystemConfigTaskIds.DocumentWork,
+    };
+
     private bool osInstallDone;
 
     private void Start()
@@ -32,12 +52,6 @@ public class COC1CompletionManager : MonoBehaviour
 
         // Catch state that was already finished before this listener existed
         // this session (e.g. resumed a save mid-way through COC1).
-        if (TaskManager.Instance != null)
-        {
-            assembleDone = TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.AssembleTaskId);
-            disassembleDone = TaskManager.Instance.IsTaskComplete(PCDisassemblySetup.TaskId);
-        }
-
         if (OSInstallManager.Instance != null)
             osInstallDone = OSInstallManager.Instance.CurrentStage == OSInstallManager.InstallStage.Complete;
 
@@ -55,13 +69,8 @@ public class COC1CompletionManager : MonoBehaviour
 
     private void HandleTaskCompleted(string completedTaskId)
     {
-        if (completedTaskId == PCDisassemblySetup.AssembleTaskId)
-            assembleDone = true;
-        else if (completedTaskId == PCDisassemblySetup.TaskId)
-            disassembleDone = true;
-        else
-            return; // not one of the two tasks we care about
-
+        // Any completed task might be one we're waiting on -- cheap enough to
+        // just recheck everything rather than tracking each id individually.
         CheckAllComplete();
     }
 
@@ -73,11 +82,18 @@ public class COC1CompletionManager : MonoBehaviour
 
     private void CheckAllComplete()
     {
-        if (!assembleDone || !disassembleDone || !osInstallDone) return;
+        if (!osInstallDone) return;
+        if (TaskManager.Instance == null) return;
+
+        foreach (var taskId in requiredTaskIds)
+        {
+            if (string.IsNullOrEmpty(taskId)) continue;
+            if (!TaskManager.Instance.IsTaskComplete(taskId)) return;
+        }
 
         if (SaveManager.Instance != null && !SaveManager.Instance.IsModeCompleted(ModeId))
         {
-            Debug.Log("[COC1CompletionManager] Assembly + disassembly + OS install all complete — marking COC1 done.");
+            Debug.Log("[COC1CompletionManager] Assembly + disassembly + OS install + system configuration all complete - marking COC1 done.");
             SaveManager.Instance.MarkModeComplete(ModeId);
         }
     }

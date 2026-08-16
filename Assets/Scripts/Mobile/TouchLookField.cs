@@ -52,6 +52,37 @@ public class TouchLookField : MonoBehaviour, IPointerDownHandler, IDragHandler, 
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // Don't start a look-drag while a tutorial dialog is open - the same
+        // finger tap used to skip the dialog shouldn't also rotate the camera
+        // underneath it.
+        if (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen)
+        {
+            dragging = false;
+            return;
+        }
+
+        // Safety net independent of Canvas sibling/raycast order: if this touch
+        // started over the joystick's own area, it belongs to the joystick, not
+        // look. Without this check, if TouchLookField ever ends up as a later
+        // sibling (rendered on top) of the joystick - even temporarily, or after
+        // some other UI change - it would swallow the touch before VirtualJoystick
+        // ever sees it, making the joystick rotate the camera instead of moving
+        // the player.
+        if (IsOverJoystick(eventData))
+        {
+            dragging = false;
+            return;
+        }
+
+        // Same idea, but for PC parts / RAM locks / cables: if this touch landed on
+        // something PartClickDetector considers interactable, let that own the touch
+        // instead (drag-to-place a part shouldn't also spin the camera underneath it).
+        if (PartClickDetector.Instance != null && PartClickDetector.Instance.IsOverInteractable(eventData.position))
+        {
+            dragging = false;
+            return;
+        }
+
         dragging = true;
         lastPointerPos = eventData.position;
     }
@@ -67,5 +98,14 @@ public class TouchLookField : MonoBehaviour, IPointerDownHandler, IDragHandler, 
     public void OnPointerUp(PointerEventData eventData)
     {
         dragging = false;
+    }
+
+    private static bool IsOverJoystick(PointerEventData eventData)
+    {
+        RectTransform joystickBg = VirtualJoystick.Instance != null ? VirtualJoystick.Instance.Background : null;
+        if (joystickBg == null) return false;
+
+        return RectTransformUtility.RectangleContainsScreenPoint(
+            joystickBg, eventData.position, eventData.pressEventCamera);
     }
 }

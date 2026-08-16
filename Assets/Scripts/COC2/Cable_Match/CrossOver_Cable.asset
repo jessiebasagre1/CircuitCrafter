@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: CrossOver_Cable
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CableTypeSO
   endAStandard: {fileID: 11400000, guid: b919520497da33c4d844063c7d8134d2, type: 2}
-  endBStandard: {fileID: 11400000, guid: 13011088f9a42f942857e71f82ff0d69, type: 2}
+  endBStandard: {fileID: 11400000, guid: b919520497da33c4d844063c7d8134d2, type: 2}
   displayName: Cross over Cable

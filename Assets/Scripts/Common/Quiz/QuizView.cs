@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -29,7 +29,7 @@ public class QuizView : MonoBehaviour
     [Header("Navigation")]
     [Tooltip("Shown after the player answers, so they can read the explanation before moving on.")]
     [SerializeField] private Button nextButton;
-    [Tooltip("Optional — changes the Next button's label to something like 'See Results' on the last question.")]
+    [Tooltip("Optional ï¿½ changes the Next button's label to something like 'See Results' on the last question.")]
     [SerializeField] private TMP_Text nextButtonLabel;
 
     [Header("Results UI")]
@@ -42,6 +42,7 @@ public class QuizView : MonoBehaviour
     private int pointsEarned;
     private string currentTaskId;
     private Action<QuizResult> onFinished;
+    private QuizResult pendingResult;
     private bool acceptingInput;
     private bool settingUpToggles;
 
@@ -172,7 +173,7 @@ public class QuizView : MonoBehaviour
     {
         if (quizPanel != null) quizPanel.SetActive(false);
 
-        var result = new QuizResult
+        pendingResult = new QuizResult
         {
             taskId = currentTaskId,
             totalQuestions = currentQuestions?.Count ?? 0,
@@ -182,16 +183,25 @@ public class QuizView : MonoBehaviour
 
         if (resultsPanel != null) resultsPanel.SetActive(true);
         if (resultsSummaryText != null)
-            resultsSummaryText.text = $"You got {result.correctAnswers}/{result.totalQuestions} correct!\n+{result.pointsEarned} points";
+            resultsSummaryText.text = $"You got {pendingResult.correctAnswers}/{pendingResult.totalQuestions} correct!\n+{pendingResult.pointsEarned} points";
 
-        // Fires now so QuizManager can score/log immediately; the player
-        // closes the results panel manually via CloseResults().
-        onFinished?.Invoke(result);
-        onFinished = null;
+        // NOTE: onFinished is deliberately NOT invoked here. QuizManager uses
+        // onFinished to score the result AND to tell QuizCameraController to
+        // switch the camera back (station/player) via NotifyQuizFinished().
+        // Firing that the moment results appear would yank the camera away
+        // while the player is still reading their score. Instead we wait
+        // until they actually dismiss the results panel -- see CloseResults().
     }
 
     private void CloseResults()
     {
         if (resultsPanel != null) resultsPanel.SetActive(false);
+
+        // Now that the player has actually clicked Continue/Close, report
+        // the finished result -- this is what triggers QuizManager to score
+        // it and switch the camera back.
+        onFinished?.Invoke(pendingResult);
+        onFinished = null;
+        pendingResult = default;
     }
 }
