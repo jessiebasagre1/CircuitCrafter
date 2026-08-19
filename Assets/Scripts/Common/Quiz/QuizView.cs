@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +16,16 @@ public class QuizView : MonoBehaviour
     [Header("Panels")]
     [SerializeField] private GameObject quizPanel;
     [SerializeField] private GameObject resultsPanel;
+
+    [Header("Intro (optional)")]
+    [Tooltip("Optional -- e.g. a \"Quiz Time!\" panel shown briefly right when the quiz starts, before the first question appears. Leave empty to skip straight to the first question, same as before this existed.")]
+    [SerializeField] private GameObject introPanel;
+    [Tooltip("Optional -- if assigned, introPanel fades in/out using this instead of popping instantly. Leave empty for a plain instant show/hide.")]
+    [SerializeField] private CanvasGroup introCanvasGroup;
+    [Tooltip("Total time introPanel stays on screen (fade in + hold + fade out all included) before the first question appears.")]
+    [SerializeField] private float introDuration = 1.5f;
+    [Tooltip("How long the fade in and fade out each take. Only used if Intro Canvas Group is assigned. Must be less than half of Intro Duration.")]
+    [SerializeField] private float introFadeDuration = 0.3f;
 
     [Header("Question UI")]
     [SerializeField] private TMP_Text progressText;   // e.g. "Question 2 / 3"
@@ -73,9 +84,61 @@ public class QuizView : MonoBehaviour
         pointsEarned = 0;
 
         if (resultsPanel != null) resultsPanel.SetActive(false);
-        if (quizPanel != null) quizPanel.SetActive(true);
 
+        // quizPanel deliberately stays hidden here -- PlayIntroThenShowFirstQuestion()
+        // shows introPanel first (if assigned) and only reveals quizPanel once
+        // that's done, so the question never flashes up underneath the intro.
+        StartCoroutine(PlayIntroThenShowFirstQuestion());
+    }
+
+    /// <summary>Shows introPanel (if assigned) for introDuration -- fading via
+    /// introCanvasGroup if one's assigned, otherwise just popping instantly --
+    /// then reveals quizPanel and shows the first question. If introPanel is
+    /// left unassigned this skips straight to the first question, exactly as
+    /// BeginQuiz() used to behave on its own.</summary>
+    private IEnumerator PlayIntroThenShowFirstQuestion()
+    {
+        if (introPanel != null)
+        {
+            introPanel.SetActive(true);
+
+            if (introCanvasGroup != null)
+            {
+                float fade = Mathf.Clamp(introFadeDuration, 0f, introDuration / 2f);
+                yield return Fade(introCanvasGroup, 0f, 1f, fade);
+                yield return new WaitForSeconds(Mathf.Max(0f, introDuration - fade * 2f));
+                yield return Fade(introCanvasGroup, 1f, 0f, fade);
+            }
+            else
+            {
+                yield return new WaitForSeconds(introDuration);
+            }
+
+            introPanel.SetActive(false);
+        }
+
+        if (quizPanel != null) quizPanel.SetActive(true);
         ShowQuestion();
+    }
+
+    private IEnumerator Fade(CanvasGroup group, float from, float to, float duration)
+    {
+        group.alpha = from;
+
+        if (duration <= 0f)
+        {
+            group.alpha = to;
+            yield break;
+        }
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            group.alpha = Mathf.Lerp(from, to, t / duration);
+            yield return null;
+        }
+        group.alpha = to;
     }
 
     private void ShowQuestion()

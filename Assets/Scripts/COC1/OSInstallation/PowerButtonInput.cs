@@ -20,6 +20,10 @@ using UnityEngine.UI;
 /// just track OSInstallManager.IsRunning, because IsRunning flips back to
 /// false again once the install finishes, which would make the button
 /// silently reappear later even though there's nothing left to power on.
+///
+/// GATING: assign gate (e.g. requiredTaskIds = ["create_bootable_usb"]) to
+/// keep the key/button locked until a prior step is done. Leave gate at its
+/// default, empty state to keep this always available, same as before.
 /// </summary>
 public class PowerButtonInput : MonoBehaviour
 {
@@ -35,6 +39,10 @@ public class PowerButtonInput : MonoBehaviour
     [Header("Mobile Button (optional)")]
     [Tooltip("On-screen button that powers on the PC, same as pressing the key. Wire its OnClick to RequestPowerOn(). Auto shown/hidden based on station view, and permanently hidden once used.")]
     [SerializeField] private Button mobilePowerButton;
+
+    [Header("Locking (optional)")]
+    [Tooltip("Leave every sub-field empty/unchecked to keep the key/button always available (once in station view).")]
+    [SerializeField] private TaskGate gate = new TaskGate();
 
     [Tooltip("TEMPORARY: logs which check is blocking the key each frame. Turn off once T works.")]
     [SerializeField] private bool debugLogging = false;
@@ -62,17 +70,22 @@ public class PowerButtonInput : MonoBehaviour
     {
         bool inStationView = targetStationCamera == null || targetStationCamera.activeInHierarchy;
         bool alreadyRunning = IsAlreadyRunning();
+        bool unlocked = gate.IsUnlocked();
 
         if (debugLogging && Input.GetKeyDown(powerKey))
-            Debug.Log($"[PowerButtonInput] T pressed. inStationView={inStationView}, " +
+            Debug.Log($"[PowerButtonInput] T pressed. inStationView={inStationView}, unlocked={unlocked}, " +
                 $"targetStationCamera={(targetStationCamera == null ? "unassigned (listens everywhere)" : targetStationCamera.name)}, " +
                 $"dialogOpen={(DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen)}, " +
                 $"managerInstance={(OSInstallManager.Instance != null)}");
 
-        bool shouldShow = inStationView && !alreadyRunning && !hasPoweredOn;
+        bool shouldShow = inStationView && !alreadyRunning && !hasPoweredOn && unlocked;
 
         if (promptText != null)
-            promptText.text = shouldShow ? $"Press {powerKey} to power on" : "";
+        {
+            if (!inStationView || alreadyRunning || hasPoweredOn) promptText.text = "";
+            else if (!unlocked) promptText.text = "Create a bootable USB drive first";
+            else promptText.text = $"Press {powerKey} to power on";
+        }
 
         if (mobilePowerButton != null)
             mobilePowerButton.gameObject.SetActive(shouldShow);
@@ -91,8 +104,15 @@ public class PowerButtonInput : MonoBehaviour
             powerOnRequested = false;
         }
 
-        if (pressed)
-            TryPowerOn();
+        if (!pressed) return;
+
+        if (!unlocked)
+        {
+            gate.ShowLockedMessage();
+            return;
+        }
+
+        TryPowerOn();
     }
 
     /// <summary>Wire this to the mobile power button's OnClick.</summary>

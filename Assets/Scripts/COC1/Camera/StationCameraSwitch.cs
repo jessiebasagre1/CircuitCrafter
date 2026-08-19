@@ -23,7 +23,11 @@ public class StationCameraSwitch : MonoBehaviour
     public GameObject[] enableOnStationView;   // e.g. hotbar, OS install UI
     public GameObject[] disableOnStationView;  // e.g. ssdPlane, waypoint arrow
 
-    [Header("Task Gate (optional)")]
+    [Header("Entry Gate (optional)")]
+    [Tooltip("If set, the player can't enter this station AT ALL - via E or the mobile button - until every listed task is complete. This is the main 'do things in order' control: gate the USB creator station on assemble_pc + disassemble_pc, gate the target PC station on create_bootable_usb, etc. Leave empty for stations that are available from the start.")]
+    [SerializeField] private TaskGate entryGate = new TaskGate();
+
+    [Header("Task Gate (optional, separate from Entry Gate above)")]
     [Tooltip("If set, this station is treated as the destination for a task/objective. " +
              "Once ALL of these task IDs are complete (see TaskManager), the station is " +
              "locked out: pressing E no longer enters it, and a debug log is printed instead. " +
@@ -62,6 +66,13 @@ public class StationCameraSwitch : MonoBehaviour
         if (!playerNearby) return;
 
         bool enteringStation = !usingStationCamera;
+
+        if (enteringStation && !entryGate.IsUnlocked())
+        {
+            Debug.Log($"[StationCameraSwitch] '{name}': entry blocked, prerequisite task(s) not complete yet.", this);
+            entryGate.ShowLockedMessage();
+            return;
+        }
 
         if (enteringStation && IsGatedTaskComplete())
         {

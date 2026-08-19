@@ -2260,9 +2260,9 @@ MonoBehaviour:
   - modeId: COC1
     displayName: COC1-Computer Assembly
     sceneName: COC1-StoryMode
-  - modeId: 
-    displayName: 
-    sceneName: 
+  - modeId: 'COC2 '
+    displayName: COC2 - Networking
+    sceneName: COC2-StoryMode
   - modeId: 
     displayName: 
     sceneName: 
