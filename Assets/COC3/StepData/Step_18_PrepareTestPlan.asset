@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8774e5aac4d2941a9f6907ab180b9d, type: 3}
+  m_Name: Step_18_PrepareTestPlan
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
+  stepId: Step_18_PrepareTestPlan
+  instructionText: "LO3.1 - PREPARE THE TEST PLAN\n\nA technician writes down what
+    will be tested and what counts as a pass BEFORE testing, so nothing is skipped
+    and the result is not decided after the fact.\n\nYour plan for this job:\n\n 
+    1. Shared folder reachable from the client by UNC path\n  2. Shared printer prints
+    a test page from the client\n  3. Redirected Documents folder points at the server\n 
+    4. Remote Desktop connects from the client\n  5. Connectivity confirmed by ping\n\nEach
+    one is performed on CLIENT01, because a service that has only been checked on
+    the server has not been tested at all.\n\nTap NEXT to begin testing."
+  screenshotImage: {fileID: 0}
+  stepType: 0
+  expectedIP: 
+  expectedSubnetMask: 
+  expectedGateway: 
+  textFieldLabel: Value
+  textFieldExpectedValue: 
+  textFieldCaseSensitive: 0
+  pointsForCorrect: 5
+  pointsPenaltyForMistake: 0

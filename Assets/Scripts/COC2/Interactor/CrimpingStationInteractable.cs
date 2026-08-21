@@ -14,18 +14,18 @@ namespace CSSSimulation.Networking
 
         public override void Interact()
         {
-            // If a cable type selector is set up, show it first  it's responsible for
-            // calling CrimpingViewController.EnterCrimpingView() itself once the player
-            // picks. Otherwise, fall back to the old behavior of entering the view right
-            // away (CrimpingViewController itself still decides whether to show the
-            // "no tool" warning once the player is actually looking at the station).
+            // If a cable type selector is set up, show it first - it's responsible for
+            // calling StrippingViewController.EnterStrippingView() itself once the player
+            // picks. Otherwise, fall back to entering stripping right away (CrimpingViewController
+            // still decides whether to show the "no tool" warning, via StrippingViewController
+            // reusing WarnIfNoTool() before letting the player in).
             if (cableTypeSelection != null)
             {
                 cableTypeSelection.Open();
             }
-            else if (CrimpingViewController.Instance != null)
+            else if (StrippingViewController.Instance != null)
             {
-                CrimpingViewController.Instance.EnterCrimpingView();
+                StrippingViewController.Instance.EnterStrippingView();
             }
         }
     }

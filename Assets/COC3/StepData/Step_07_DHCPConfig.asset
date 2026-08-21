@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8774e5aac4d2941a9f6907ab180b9d, type: 3}
+  m_Name: Step_07_DHCPConfig
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
+  stepId: Step_07_DHCPConfig
+  instructionText: 'Configure the DHCP scope that will serve the lab clients.
+
+
+    In
+    the New Scope Wizard, enter the starting address of the pool, the subnet mask,
+    and the router address handed out with each lease.
+
+
+    Note the pool starts
+    well clear of 192.168.10.10 - a scope must never overlap a static address.'
+  screenshotImage: {fileID: 0}
+  stepType: 1
+  expectedIP: 192.168.10.100
+  expectedSubnetMask: 255.255.255.0
+  expectedGateway: 192.168.10.1
+  textFieldLabel: Value
+  textFieldExpectedValue: 
+  textFieldCaseSensitive: 0
+  pointsForCorrect: 25
+  pointsPenaltyForMistake: 5

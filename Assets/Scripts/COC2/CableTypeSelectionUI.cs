@@ -127,11 +127,12 @@ namespace CSSSimulation.Networking
             IsOpen = false;
             if (panel != null) panel.SetActive(false);
 
-            // CrimpingViewController.EnterCrimpingView() -> SetCrimpingViewActive(true)
-            // sets Cursor.lockState = None itself, so no cursor handling needed here 
-            // it's just picking up where Open() left off.
-            if (CrimpingViewController.Instance != null)
-                CrimpingViewController.Instance.EnterCrimpingView();
+            // StrippingViewController.EnterStrippingView() -> SetStrippingViewActive(true)
+            // sets Cursor.lockState = None itself, so no cursor handling needed here -
+            // it's just picking up where Open() left off. Goes to the stripping view first
+            // now, not straight into the pin-arranging crimping view.
+            if (StrippingViewController.Instance != null)
+                StrippingViewController.Instance.EnterStrippingView();
         }
     }
 }

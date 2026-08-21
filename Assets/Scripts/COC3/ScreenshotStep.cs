@@ -38,9 +38,36 @@ public class ScreenshotStep : MonoBehaviour
 
     private CanvasGroup canvasGroup;
 
-    private void Awake()
+    /// <summary>
+    /// The panel's CanvasGroup, fetched on first use instead of cached in Awake().
+    ///
+    /// WHY THIS IS A PROPERTY AND NOT AN Awake() CACHE:
+    /// Unity only runs Awake() on a GameObject that is active IN THE HIERARCHY.
+    /// A step panel that is switched off in the Inspector - or whose PARENT is
+    /// switched off, which is easy to miss because the panel itself still reads
+    /// activeSelf = true - never receives an Awake(). COC3Manager.StartActivity()
+    /// then calls Hide() on all 30 steps, and every such panel threw a
+    /// NullReferenceException on the very first frame.
+    ///
+    /// Resolving it lazily removes the trap entirely: the reference is looked up
+    /// the first time Show() or Hide() actually needs it, active or not.
+    /// </summary>
+    private CanvasGroup Group
     {
-        canvasGroup = GetComponent<CanvasGroup>();
+        get
+        {
+            if (canvasGroup == null)
+            {
+                canvasGroup = GetComponent<CanvasGroup>();
+
+                // [RequireComponent] guarantees one exists on anything created
+                // through the Inspector, but a panel built purely from script
+                // could still be missing it - add it rather than throw.
+                if (canvasGroup == null)
+                    canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+            return canvasGroup;
+        }
     }
 
     /// <summary>
@@ -55,7 +82,22 @@ public class ScreenshotStep : MonoBehaviour
             return;
         }
 
-        if (screenshotDisplay != null) screenshotDisplay.sprite = stepData.screenshotImage;
+        // The null check on screenshotImage is deliberate, and it is what lets you
+        // assign screenshots BY HAND on each panel.
+        //
+        // Originally this line was an unconditional assignment:
+        //     screenshotDisplay.sprite = stepData.screenshotImage;
+        // which meant that whenever the StepData's field was empty, the panel's own
+        // sprite was overwritten with NOTHING the instant the step was shown - so a
+        // screenshot dropped straight onto the panel's Image silently disappeared.
+        //
+        // The rule is now:
+        //     StepData has a sprite  -> the asset wins (swap content without touching the scene)
+        //     StepData is empty      -> whatever you placed on the panel is left alone
+        // so both workflows work, and you can mix them panel by panel.
+        if (screenshotDisplay != null && stepData.screenshotImage != null)
+            screenshotDisplay.sprite = stepData.screenshotImage;
+
         if (instructionLabel != null) instructionLabel.text = stepData.instructionText;
 
         if (ipInputField != null) ipInputField.text = string.Empty;
@@ -78,17 +120,17 @@ public class ScreenshotStep : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
-        canvasGroup.alpha = 1f;
-        canvasGroup.interactable = true;
-        canvasGroup.blocksRaycasts = true;
+        Group.alpha = 1f;
+        Group.interactable = true;
+        Group.blocksRaycasts = true;
     }
 
     /// <summary>Hides this step panel (used when moving to the next/previous step).</summary>
     public void Hide()
     {
-        canvasGroup.alpha = 0f;
-        canvasGroup.interactable = false;
-        canvasGroup.blocksRaycasts = false;
+        Group.alpha = 0f;
+        Group.interactable = false;
+        Group.blocksRaycasts = false;
         gameObject.SetActive(false);
     }
 

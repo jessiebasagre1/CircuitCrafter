@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8774e5aac4d2941a9f6907ab180b9d, type: 3}
+  m_Name: Step_35_ServiceReport
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
+  stepId: Step_35_ServiceReport
+  instructionText: "LO3.3 - PREPARE AND COMPLETE THE REPORT\n\nDocument the completed
+    job on the service report form:\n\n  - Server name and IP configuration\n  -
+    Roles installed and the domain created\n  - Accounts, groups and share permissions\n 
+    - Printer and folder redirection settings\n  - Result of each of the five tests
+    from your test plan\n  - Date, technician name, and supervisor's signature\n\nAn
+    undocumented job is an incomplete job - the report is what the client and the
+    assessor actually receive.\n\nTap NEXT to see your final score."
+  screenshotImage: {fileID: 0}
+  stepType: 0
+  expectedIP: 
+  expectedSubnetMask: 
+  expectedGateway: 
+  textFieldLabel: Value
+  textFieldExpectedValue: 
+  textFieldCaseSensitive: 0
+  pointsForCorrect: 5
+  pointsPenaltyForMistake: 0

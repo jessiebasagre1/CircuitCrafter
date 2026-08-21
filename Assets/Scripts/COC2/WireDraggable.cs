@@ -43,13 +43,15 @@ namespace CSSSimulation.Networking
             homeParent = transform.parent;
         }
 
-        /// <summary>Unity calls this automatically when this object's collider is clicked  no extra setup needed.</summary>
-        void OnMouseDown()
-        {
-            TryBeginDrag();
-        }
-
-        /// <summary>Also callable directly if you end up building a custom click/raycast system later.</summary>
+        /// <summary>
+        /// Entry point for starting a drag. Deliberately NOT wired to OnMouseDown  that's a
+        /// legacy callback tied to Input.mousePosition, which goes dead on mobile the moment
+        /// anything in the scene sets Input.simulateMouseWithTouches = false (see
+        /// Mobile/PointerInput.cs for the full story; COC1 hit this exact bug with
+        /// PCPartItem/CableConnector before PartClickDetector fixed it). Instead,
+        /// WireDragController raycasts under the pointer itself every frame (mouse OR touch,
+        /// via PointerInput) while nothing is being dragged, and calls this directly - same
+        /// shape as PartClickDetector.HandleClick() -> PCPartItem.TryBeginDrag().</summary>
         public void TryBeginDrag()
         {
             if (IsLocked) return; // cable's already crimped -- nothing more to rearrange
@@ -69,11 +71,18 @@ namespace CSSSimulation.Networking
 
             // On touch devices the same tap can simultaneously register as a UI press
             // (mobile crimp/exit button, invisible touch-look panel over the crimping
-            // view, etc) AND a physics hit on this wire, since OnMouseDown doesn't know
+            // view, etc) AND a physics hit on this wire, since a 3D raycast doesn't know
             // about uGUI. Bail if the pointer is over UI so a button tap can't also yank
-            // a wire loose.
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-                return;
+            // a wire loose. The parameterless IsPointerOverGameObject() only ever checks
+            // the mouse pointer - on touch it needs the active finger's ID or it silently
+            // reports false while a button is being tapped, same class of bug OnMouseDown had.
+            if (EventSystem.current != null)
+            {
+                bool overUI = Input.touchCount > 0
+                    ? EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)
+                    : EventSystem.current.IsPointerOverGameObject();
+                if (overUI) return;
+            }
 
             // If this wire is already seated in a slot, vacate it first.
             if (HomeSlot != null)

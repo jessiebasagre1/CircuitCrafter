@@ -1,11 +1,11 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 namespace CSSSimulation.Networking
 {
     /// <summary>
     /// Scene-local equivalent of DragController, scoped to this networking/crimping scene.
     /// Same overall shape as DragController (singleton, raycast + hover highlight, resolve
-    /// on mouse-up) but with no hotbar step — wires just move directly in 3D world space
+    /// on mouse-up) but with no hotbar step ï¿½ wires just move directly in 3D world space
     /// while dragged, since watching the wire travel into the correct pin is the point.
     ///
     /// Add one of these to a GameObject in the crimping scene and assign worldCamera +
@@ -23,6 +23,11 @@ namespace CSSSimulation.Networking
         [Tooltip("Layer(s) that WirePinSlot colliders live on.")]
         public LayerMask slotLayerMask;
         public float slotRaycastDistance = 100f;
+        [Tooltip("Layer(s) that WireDraggable colliders live on. Defaults to Everything so this " +
+                 "works with no extra setup; narrow it to a dedicated 'Wire' layer (same idea as " +
+                 "slotLayerMask) if loose wires ever need to be excluded from other raycasts.")]
+        public LayerMask wireLayerMask = ~0;
+        public float wireRaycastDistance = 100f;
 
         WireDraggable draggedWire;
         WireIdentity draggedIdentity;
@@ -39,16 +44,29 @@ namespace CSSSimulation.Networking
         {
             draggedWire = wire;
             draggedIdentity = wire.GetComponent<WireIdentity>();
-            // Camera-facing plane through the wire's current position — moving the mouse
+            // Camera-facing plane through the wire's current position ï¿½ moving the mouse
             // slides the wire around on this plane, keeping it at a consistent depth.
             dragPlane = new Plane(-worldCamera.transform.forward, wire.transform.position);
         }
 
         void Update()
         {
-            if (draggedWire == null) return;
+            // A dialog covering the screen (e.g. the "no tool yet" warning) shouldn't let a
+            // stray tap underneath it start a new drag - same guard PlayerInteractor uses.
+            if (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen) return;
 
-            Ray ray = worldCamera.ScreenPointToRay(Input.mousePosition);
+            if (draggedWire == null)
+            {
+                // Nothing being dragged yet: watch for the initial tap/click ourselves instead
+                // of relying on WireDraggable.OnMouseDown(), which goes dead on mobile the
+                // moment Input.simulateMouseWithTouches is off (see PointerInput.cs). This
+                // mirrors PartClickDetector's raycast-on-PointerInput.Down pattern from COC1.
+                if (PointerInput.Down)
+                    TryBeginDragUnderPointer();
+                return;
+            }
+
+            Ray ray = worldCamera.ScreenPointToRay(PointerInput.Position);
             if (dragPlane.Raycast(ray, out float distance))
             {
                 draggedWire.transform.position = ray.GetPoint(distance);
@@ -56,8 +74,21 @@ namespace CSSSimulation.Networking
 
             UpdateHoverHighlight();
 
-            if (Input.GetMouseButtonUp(0))
+            if (PointerInput.Up)
                 ResolveDrop();
+        }
+
+        /// <summary>Raycasts for a WireDraggable under the pointer (mouse or touch, via
+        /// PointerInput) and hands off to its own TryBeginDrag() - which still applies the
+        /// locked/no-tool/over-UI checks, so this is purely "what did the player tap on".</summary>
+        void TryBeginDragUnderPointer()
+        {
+            Ray ray = worldCamera.ScreenPointToRay(PointerInput.Position);
+            if (!Physics.Raycast(ray, out RaycastHit hit, wireRaycastDistance, wireLayerMask))
+                return;
+
+            WireDraggable wire = hit.collider.GetComponentInParent<WireDraggable>();
+            wire?.TryBeginDrag();
         }
 
         void UpdateHoverHighlight()
@@ -80,7 +111,7 @@ namespace CSSSimulation.Networking
         /// <summary>Raycasts for a WirePinSlot under the cursor that would actually accept the dragged wire right now.</summary>
         WirePinSlot FindValidSlotUnderCursor()
         {
-            Ray ray = worldCamera.ScreenPointToRay(Input.mousePosition);
+            Ray ray = worldCamera.ScreenPointToRay(PointerInput.Position);
             if (!Physics.Raycast(ray, out RaycastHit hit, slotRaycastDistance, slotLayerMask))
                 return null;
 

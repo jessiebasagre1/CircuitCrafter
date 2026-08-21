@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8774e5aac4d2941a9f6907ab180b9d, type: 3}
+  m_Name: Step_26_TestRedirectionClient
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
+  stepId: Step_26_TestRedirectionClient
+  instructionText: 'LO3.1 - Test 3. Confirm the policy took effect.
+
+
+    Sign in
+    to CLIENT01 as student01 - a domain account, which only works because the client
+    is a domain member. Open Documents > Properties > Location and check it now points
+    at the server.'
+  screenshotImage: {fileID: 0}
+  stepType: 3
+  expectedIP: 
+  expectedSubnetMask: 
+  expectedGateway: 
+  textFieldLabel: Value
+  textFieldExpectedValue: 
+  textFieldCaseSensitive: 0
+  pointsForCorrect: 10
+  pointsPenaltyForMistake: 2

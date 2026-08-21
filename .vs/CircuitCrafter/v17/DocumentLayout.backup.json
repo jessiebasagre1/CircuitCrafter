@@ -3,44 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scenes\\editor\\coc3scenebuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\scenes\\editor\\coc3scenebuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\coc3dialogblueprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc3dialogblueprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\screenshotstepdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotstepdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\feedbackmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\feedbackmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3scoremanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3scoremanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3progressmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3progressmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\pingsimulation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\pingsimulation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\networkconfigvalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\networkconfigvalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\screenshotinteraction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotinteraction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\coc3dialogbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc3dialogbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -50,129 +22,46 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "COC3SceneBuilder.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scenes\\Editor\\COC3SceneBuilder.cs",
-              "RelativeDocumentMoniker": "Assets\\Scenes\\Editor\\COC3SceneBuilder.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scenes\\Editor\\COC3SceneBuilder.cs",
-              "RelativeToolTip": "Assets\\Scenes\\Editor\\COC3SceneBuilder.cs",
-              "ViewState": "AgIAAEgCAAAAAAAAAAAIwFoCAAAGAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "COC3DialogBuilder.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBuilder.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC3DialogBuilder.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBuilder.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC3DialogBuilder.cs",
+              "ViewState": "AgIAAHMBAAAAAAAAAAAAAIIBAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-19T08:35:48.637Z",
+              "WhenOpened": "2026-08-21T01:28:07.02Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "ScreenshotInteraction.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotInteraction.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotInteraction.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotInteraction.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotInteraction.cs",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAIwB0AAAABAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "COC3DialogBlueprint.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBlueprint.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC3DialogBlueprint.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBlueprint.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC3DialogBlueprint.cs",
+              "ViewState": "AgIAAH8EAAAAAAAAAAAAAI8EAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:30.699Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "PingSimulation.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\PingSimulation.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\PingSimulation.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\PingSimulation.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\PingSimulation.cs",
-              "ViewState": "AgIAAC4AAAAAAAAAAAAIwEAAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:29.629Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "NetworkConfigValidator.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\NetworkConfigValidator.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\NetworkConfigValidator.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\NetworkConfigValidator.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\NetworkConfigValidator.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAIwCIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:28.687Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "COC3ScoreManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3ScoreManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3ScoreManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3ScoreManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3ScoreManager.cs",
-              "ViewState": "AgIAACAAAAAAAAAAAAAIwDIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:27.686Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "FeedbackManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\FeedbackManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\FeedbackManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\FeedbackManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\FeedbackManager.cs",
-              "ViewState": "AgIAACcAAAAAAAAAAAA9wDEAAAA3AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:26.707Z"
+              "WhenOpened": "2026-08-21T01:28:02.836Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "ScreenshotStep.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "ViewState": "AgIAAJcAAAAAAAAAAAA9wKQAAAApAAAAAAAAAA==",
+              "Title": "COC3WinWidgets.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "ViewState": "AgIAAK8CAAAAAAAAAAAqwMICAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:25.586Z",
+              "WhenOpened": "2026-08-21T01:27:48.617Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ScreenshotStepData.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "ViewState": "AgIAADQAAAAAAAAAAAAIwEYAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:24.482Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "COC3ProgressManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3ProgressManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3ProgressManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3ProgressManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3ProgressManager.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAIwCcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:23.642Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "COC3Manager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "ViewState": "AgIAAJwAAAAAAAAAAAAIwK4AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-18T22:17:22.565Z"
             }
           ]
         }
