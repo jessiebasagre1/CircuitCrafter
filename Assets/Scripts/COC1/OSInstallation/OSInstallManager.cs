@@ -31,7 +31,23 @@ public class OSInstallManager : MonoBehaviour
         Installing,
         Reboot,
         FirstBoot,
-        Complete
+        Complete,
+
+        // APPENDED, NEVER INSERTED.
+        // These values are serialised by ORDINAL on every OSInstallStageData asset,
+        // so inserting one in the middle would silently re-point every existing asset
+        // at the wrong stage. Appending keeps 0-9 meaning exactly what they always did.
+        //
+        // The order the install actually RUNS in comes from the stages LIST on this
+        // component, not from this enum - RunSequence walks the list by index. So a new
+        // stage slots anywhere in the sequence just by where you place it in that list.
+        BiosSetup,
+        ProductKey,
+        EditionSelect,
+        LicenseTerms,
+        InstallType,
+        RegionKeyboard,
+        AccountSetup
     }
 
     [Header("Stage Data (in order)")]
@@ -288,9 +304,36 @@ public class OSInstallManager : MonoBehaviour
 
             if (stageData.requiresUserInput)
             {
-                _waitingForUserInput = true;
-                while (_waitingForUserInput)
-                    yield return null;
+                // Choices used to be accepted unconditionally: SubmitUserChoice stored the
+                // text and the sequence moved on, so picking "Upgrade" instead of "Custom",
+                // or booting from the hard disk instead of the USB, passed silently. That is
+                // fine for a free choice like language, but wrong for the ones with a
+                // defensible answer - and those are exactly what an assessor watches.
+                //
+                // A stage now only advances when its correctChoice matches (or when it is
+                // left empty, which keeps every existing asset behaving as before). A wrong
+                // pick is recorded as a mistake and the learner chooses again, the same way
+                // a wrong answer works in COC 3.
+                while (true)
+                {
+                    _waitingForUserInput = true;
+                    while (_waitingForUserInput)
+                        yield return null;
+
+                    if (string.IsNullOrEmpty(stageData.correctChoice)) break;
+
+                    if (string.Equals(SelectedChoice, stageData.correctChoice,
+                                      StringComparison.OrdinalIgnoreCase)) break;
+
+                    COC1AssessmentManager.ReportMistake(
+                        $"OS setup - {stageData.stage}: chose '{SelectedChoice}' " +
+                        $"instead of '{stageData.correctChoice}'.", stageData);
+
+                    // ignoreSuppression: this is corrective feedback, not a tutorial, so it
+                    // must still appear while an assessment has tutorials switched off.
+                    if (stageData.wrongChoiceDialog != null && DialogManager.Instance != null)
+                        DialogManager.Instance.ShowDialog(stageData.wrongChoiceDialog, null, true);
+                }
             }
             else
             {

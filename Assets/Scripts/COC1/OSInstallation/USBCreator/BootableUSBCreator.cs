@@ -37,6 +37,15 @@ public class BootableUSBCreator : MonoBehaviour
     [Tooltip("Shown if the selected drive isn't currently plugged into a USB port.")]
     [SerializeField] private DialogSequence driveNotPluggedWarning;
 
+    [Header("Answer checking")]
+    [Tooltip("The image this job order calls for, e.g. the Windows 10 Pro asset. The other entries in " +
+             "Available Images then act as distractors: picking one is recorded as a mistake and the " +
+             "write is refused. Leave EMPTY to accept any image, which is how this behaved before.")]
+    [SerializeField] private ISOImageData requiredImage;
+
+    [Tooltip("Shown when the learner picks an image other than Required Image.")]
+    [SerializeField] private DialogSequence wrongImageWarning;
+
     public ISOImageData[] AvailableImages => availableImages;
     public USBDriveItem[] AvailableDrives => availableDrives;
 
@@ -98,6 +107,24 @@ public class BootableUSBCreator : MonoBehaviour
         {
             if (driveNotPluggedWarning != null && DialogManager.Instance != null)
                 DialogManager.Instance.ShowDialog(driveNotPluggedWarning);
+            return false;
+        }
+
+        // The ISO dropdown used to accept anything: writing Ubuntu to the drive and then
+        // installing "Windows" from it passed without comment. Reading the job order and
+        // picking the right image is part of the task, so it is now graded like any other
+        // choice - refused, explained, and counted as a mistake in assessment mode.
+        if (requiredImage != null && _selectedImage != requiredImage)
+        {
+            COC1AssessmentManager.ReportMistake(
+                $"Bootable USB: selected '{_selectedImage.displayName}' instead of " +
+                $"'{requiredImage.displayName}', which is the image on the job order.", this);
+
+            if (wrongImageWarning != null && DialogManager.Instance != null)
+                DialogManager.Instance.ShowDialog(wrongImageWarning, null, true);
+            else
+                Debug.LogWarning($"[BootableUSBCreator] Wrong image selected: {_selectedImage.displayName}", this);
+
             return false;
         }
 

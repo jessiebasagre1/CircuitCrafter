@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebc623e747768c34cbb102afa090f010, type: 3}
+  m_Name: RS_04_RunInstaller
+  m_EditorClassIdentifier: Assembly-CSharp::RufusSetupStepData
+  stepId: run_installer
+  drawnScreen: DownloadsBar
+  background: {fileID: 0}
+  instruction: The download is finished. Click the downloaded file to run it.
+  kind: 0
+  hotspot:
+    serializedVersion: 2
+    x: 0.74583334
+    y: 0.14074074
+    width: 0.22708334
+    height: 0.055555556
+  hotspotLabel: 
+  showHotspotOutline: 1
+  decoyHotspot:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
+  decoyLabel: 
+  inputRect:
+    serializedVersion: 2
+    x: 0.08
+    y: 0.06
+    width: 0.72
+    height: 0.05
+  goRect:
+    serializedVersion: 2
+    x: 0.82
+    y: 0.06
+    width: 0.08
+    height: 0.05
+  correctUrl: rufus.ie
+  alsoAccept: []
+  urlPlaceholder: Search or type a web address
+  duration: 3
+  progressRect:
+    serializedVersion: 2
+    x: 0.3
+    y: 0.55
+    width: 0.4
+    height: 0.04
+  progressLabel: Downloading...
+  educationalDialog: {fileID: 11400000, guid: 778f29b8882846248a09b77eabf16d5a, type: 2}
+  wrongDialog: {fileID: 0}
+  hint: It appears in the downloads bar along the bottom of the browser.

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07cd177819404dd48b269f285ef2f21a, type: 3}
+  m_Name: DRV_03_Audio
+  m_EditorClassIdentifier: Assembly-CSharp::ChecklistItemData
+  itemTaskId: install_driver_audio
+  displayName: Audio driver (Realtek High Definition Audio)
+  description: Onboard sound. Until this is installed the tray shows a red cross
+    on the speaker icon and no playback device exists.
+  icon: {fileID: 0}
+  duration: 3
+  prerequisiteTaskIds:
+  - install_driver_motherboard
+  blockedHint: Install the chipset driver first - the audio controller is still an
+    unknown device on the PCI bus.
+  blockedDialog: {fileID: 11400000, guid: 4d9a94ed9fc3536479bd7f3f123f386c, type: 2}
+  educationalDialog: {fileID: 0}

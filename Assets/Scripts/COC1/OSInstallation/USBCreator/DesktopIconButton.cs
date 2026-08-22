@@ -29,7 +29,31 @@ public class DesktopIconButton : MonoBehaviour
     [Tooltip("Optional -- e.g. a padlock icon shown over this button while gate is locked.")]
     [SerializeField] private GameObject lockedOverlay;
 
+    [Tooltip("Hide this icon completely until the gate unlocks, instead of showing it greyed out. " +
+             "Right for a program that is not installed yet - an uninstalled app has no desktop " +
+             "shortcut at all. REQUIRES a DesktopIconVisibility component on the desktop panel " +
+             "above this icon; see the note on IsUnlocked below for why this component cannot do " +
+             "it alone.")]
+    [SerializeField] private bool hideWhenLocked;
+
     private Button _button;
+
+    /// <summary>
+    /// Whether this icon should vanish rather than grey out while locked. Read by
+    /// DesktopIconVisibility on the desktop panel.
+    /// </summary>
+    public bool HideWhenLocked => hideWhenLocked;
+
+    /// <summary>
+    /// This icon's gate condition, exposed so the desktop panel can decide whether to show it.
+    ///
+    /// WHY THE PANEL HAS TO DO IT AND NOT THIS COMPONENT.
+    /// A GameObject that switches ITSELF off can never switch itself back on: nothing on an
+    /// inactive object runs, so its OnEnable never fires again and Refresh() is never called.
+    /// Something that stays active has to own the decision, and the desktop panel is the
+    /// natural owner - it is enabled every time the learner comes back to the desktop.
+    /// </summary>
+    public bool IsUnlocked => gate.IsUnlocked();
 
     private void Awake()
     {
@@ -57,6 +81,17 @@ public class DesktopIconButton : MonoBehaviour
         bool unlocked = gate.IsUnlocked();
         if (_button != null) _button.interactable = unlocked;
         if (lockedOverlay != null) lockedOverlay.SetActive(!unlocked);
+
+        // Deliberately does NOT touch this object's own active state, even when hideWhenLocked
+        // is set. Hiding itself would work exactly once and then strand the icon off forever.
+        // Warn loudly instead if the component that CAN do it is missing, because a shortcut
+        // that silently never comes back is a miserable thing to chase.
+        if (hideWhenLocked && GetComponentInParent<DesktopIconVisibility>() == null)
+        {
+            Debug.LogWarning($"[DesktopIconButton] '{name}' has Hide When Locked ticked, but there " +
+                             "is no DesktopIconVisibility on any parent. Add one to the desktop " +
+                             "panel, or this icon will stay visible while locked.", this);
+        }
     }
 
     public void OpenTarget()

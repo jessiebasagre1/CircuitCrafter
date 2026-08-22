@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07cd177819404dd48b269f285ef2f21a, type: 3}
+  m_Name: DRV_02_Display
+  m_EditorClassIdentifier: Assembly-CSharp::ChecklistItemData
+  itemTaskId: install_driver_display
+  displayName: Display / graphics driver
+  description: Replaces Microsoft Basic Display Adapter. Without it the screen is
+    stuck at a low resolution and cannot drive a second monitor.
+  icon: {fileID: 0}
+  duration: 4
+  prerequisiteTaskIds:
+  - install_driver_motherboard
+  blockedHint: Install the chipset driver first - Windows still lists this card as
+    "Microsoft Basic Display Adapter".
+  blockedDialog: {fileID: 11400000, guid: ae9139d9055d45042902cf6734bbf429, type: 2}
+  educationalDialog: {fileID: 0}

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 /// <summary>
 /// Data-driven definition of a single OS install stage.
@@ -30,6 +30,13 @@ public class OSInstallStageData : ScriptableObject
     [Tooltip("Options shown in a dropdown for this stage, e.g. \"English\", \"Filipino\" for LanguageSelect. Leave empty if this stage uses Partition Options below instead, or falls back to a plain Continue button.")]
     public string[] userChoices;
 
+    [Header("Answer Checking (only used when Requires User Input is true)")]
+    [Tooltip("The option from User Choices that is CORRECT. Leave empty to accept whatever the learner picks - right for genuinely free choices like language, wrong for choices with a defensible answer like the boot device or the installation type.")]
+    public string correctChoice = "";
+
+    [Tooltip("Shown when the learner picks the wrong option. They stay on this stage and choose again, exactly like a wrong answer in COC 3.")]
+    public DialogSequence wrongChoiceDialog;
+
     [Header("Partition Options (only used on the PartitionSelect stage)")]
     [Tooltip("Starting disk layout shown in the interactive partition table. Leave empty for stages other than PartitionSelect.")]
     public PartitionOption[] partitionOptions;
@@ -48,7 +55,7 @@ public class PartitionOption
     public float freeSpaceGB = 256f;
     public PartitionKind kind = PartitionKind.Unallocated;
 
-    [Tooltip("Runtime-only in practice — leave false on the asset. New/Format/Delete during play mutate a copy of this data, never the asset itself.")]
+    [Tooltip("Runtime-only in practice ï¿½ leave false on the asset. New/Format/Delete during play mutate a copy of this data, never the asset itself.")]
     public bool isFormatted = false;
 }
 

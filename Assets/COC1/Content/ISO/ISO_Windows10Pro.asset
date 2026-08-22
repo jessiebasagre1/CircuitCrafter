@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28d85c4cba3d10d4b9127dcd93e1c23e, type: 3}
+  m_Name: ISO_Windows10Pro
+  m_EditorClassIdentifier: Assembly-CSharp::ISOImageData
+  displayName: Windows 10 Pro 64-bit (22H2)
+  fileSizeLabel: 5.4 GB
+  icon: {fileID: 0}
+  installStages:
+  - {fileID: 11400000, guid: 7cd86b38cafe4bf4fb99b0692136ef90, type: 2}
+  - {fileID: 11400000, guid: ed34a7ba626f61b4c9603aa8b9a877f5, type: 2}
+  - {fileID: 11400000, guid: 3693113e11b8b5f408346648f39121c7, type: 2}
+  - {fileID: 11400000, guid: 6ed8bd2b811c5e141ba649a0cfedbf84, type: 2}
+  - {fileID: 11400000, guid: ac146f1956697be4b8cec09c54be7067, type: 2}
+  - {fileID: 11400000, guid: 43a0c7a1848fed8459daec2bd329993d, type: 2}
+  - {fileID: 11400000, guid: 4959662921b510d44972dcd3772f9ebd, type: 2}
+  - {fileID: 11400000, guid: 7122894bdd0ee464c8c92a106a8d6dd6, type: 2}
+  - {fileID: 11400000, guid: 5082cb95442ee304bbaf62ffd4a8b63d, type: 2}
+  - {fileID: 11400000, guid: 84bd338bcbec6a548b687ce0ad857bca, type: 2}
+  - {fileID: 11400000, guid: 64b9c3e056984f94a9fc5b7ce063f95c, type: 2}
+  - {fileID: 11400000, guid: 67fe6f41e7118f848ad921adab499143, type: 2}
+  - {fileID: 11400000, guid: e28c01b6c170f9746a22973fab02cdc4, type: 2}
+  - {fileID: 11400000, guid: 40f94ad9c0c7f8b40a8e7b6cb2379d07, type: 2}
+  - {fileID: 11400000, guid: 8f9a9d2a4e89f5e49a3b637e58d2d76b, type: 2}
+  - {fileID: 11400000, guid: 5c9cfc1163ed6a942809b351b1d09040, type: 2}
+  - {fileID: 11400000, guid: 52d45a446ab130c4db99f8e2c3f3b74c, type: 2}

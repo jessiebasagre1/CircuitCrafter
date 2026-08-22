@@ -3,16 +3,44 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\coc3dialogblueprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc3dialogblueprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\coc1\\coc1panelbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc1\\coc1panelbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\coc3dialogbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc3dialogbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\coc1desktopscreens.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\coc1desktopscreens.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\editor\\coc1\\coc1canvasclickfixer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc1\\coc1canvasclickfixer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\manager\\uiclickprobe.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\uiclickprobe.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\editor\\coc1\\coc1winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc1\\coc1winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\editor\\coc1\\coc1rufussetupbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\coc1\\coc1rufussetupbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\interaction\\mouselook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\interaction\\mouselook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\interaction\\playermovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\interaction\\playermovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -27,41 +55,123 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "COC3DialogBuilder.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBuilder.cs",
-              "RelativeDocumentMoniker": "Assets\\Editor\\COC3DialogBuilder.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBuilder.cs",
-              "RelativeToolTip": "Assets\\Editor\\COC3DialogBuilder.cs",
-              "ViewState": "AgIAAHwAAAAAAAAAAAAhwIYAAAAzAAAAAAAAAA==",
+              "Title": "COC1DesktopScreens.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\COC1DesktopScreens.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\COC1DesktopScreens.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\COC1DesktopScreens.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\COC1DesktopScreens.cs",
+              "ViewState": "AgIAANECAAAAAAAAAAAIwOMCAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-21T01:28:07.02Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-22T05:07:14.428Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "COC3DialogBlueprint.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBlueprint.cs",
-              "RelativeDocumentMoniker": "Assets\\Editor\\COC3DialogBlueprint.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC3DialogBlueprint.cs",
-              "RelativeToolTip": "Assets\\Editor\\COC3DialogBlueprint.cs",
-              "ViewState": "AgIAABYCAAAAAAAAAAAhwCACAAAtAAAAAAAAAA==",
+              "Title": "COC1PanelBuilder.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1PanelBuilder.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC1\\COC1PanelBuilder.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1PanelBuilder.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC1\\COC1PanelBuilder.cs",
+              "ViewState": "AgIAAGgEAAAAAAAAAAAIwHIEAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-21T01:28:02.836Z",
+              "WhenOpened": "2026-08-22T01:04:02.125Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "COC3WinWidgets.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
-              "ViewState": "AgIAAK8CAAAAAAAAAAAqwMICAAAGAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "UIClickProbe.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\UIClickProbe.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\UIClickProbe.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\UIClickProbe.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\UIClickProbe.cs",
+              "ViewState": "AgIAAKsAAAAAAAAAAAAQwLYAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-21T01:27:48.617Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-22T00:28:06.824Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "COC1CanvasClickFixer.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1CanvasClickFixer.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC1\\COC1CanvasClickFixer.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1CanvasClickFixer.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC1\\COC1CanvasClickFixer.cs",
+              "ViewState": "AgIAAEECAAAAAAAAAAAAAE0CAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-22T00:16:00.247Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "COC1WinWidgets.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1WinWidgets.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC1\\COC1WinWidgets.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1WinWidgets.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC1\\COC1WinWidgets.cs",
+              "ViewState": "AgIAAMsCAAAAAAAAAAAAANgCAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T23:49:30.993Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "PlayerMovement.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\PlayerMovement.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Interaction\\PlayerMovement.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\PlayerMovement.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\Interaction\\PlayerMovement.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAAAEwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T22:59:15.258Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MouseLook.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\MouseLook.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Interaction\\MouseLook.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\MouseLook.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\Interaction\\MouseLook.cs",
+              "ViewState": "AgIAADgAAAAAAAAAAAAAAEsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T22:59:09.327Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "COC1RufusSetupBuilder.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1RufusSetupBuilder.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\COC1\\COC1RufusSetupBuilder.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\COC1\\COC1RufusSetupBuilder.cs",
+              "RelativeToolTip": "Assets\\Editor\\COC1\\COC1RufusSetupBuilder.cs",
+              "ViewState": "AgIAAFoDAAAAAAAAAAAAAGQDAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T22:58:58.928Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "RufusSetupView.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
+              "ViewState": "AgIAAHEBAAAAAAAAAAAAAIQBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T22:58:52.254Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "RufusSetupManager.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
+              "ViewState": "AgIAADsBAAAAAAAAAAAAAE4BAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-21T22:58:48.553Z"
             }
           ]
         }

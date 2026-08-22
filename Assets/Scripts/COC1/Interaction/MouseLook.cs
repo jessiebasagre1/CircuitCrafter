@@ -31,6 +31,11 @@ public class MouseLook : MonoBehaviour
 
     void Update()
     {
+        // Same lock PlayerMovement respects. Without it the camera keeps spinning to mouse
+        // movement while the learner is typing into a station panel, which is disorienting
+        // even though the mouse is barely moving.
+        if (PlayerInputLock.IsLocked) return;
+
         // PC mouse axis - only read when no touch is active. On touch
         // devices, Unity can synthesize "Mouse X"/"Mouse Y" from ANY finger
         // movement on screen (via simulateMouseWithTouches and/or the input

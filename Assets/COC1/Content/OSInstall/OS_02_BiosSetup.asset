@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6f4793af169834186847100a9a184d, type: 3}
+  m_Name: OS_02_BiosSetup
+  m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
+  stage: 10
+  displayText: "BIOS SETUP UTILITY  -  Boot\n\nBoot Option Priorities\n  Boot Option
+    #1   [ ? ]\n\nSet the device the PC should try FIRST. The Windows installer is
+    on the flash drive you prepared at the reference PC.\n\nF10 = Save & Exit"
+  duration: 2
+  requiresRebootAnimation: 0
+  educationalDialog: {fileID: 11400000, guid: cbee89fe580c7f44ca36abe217a5f1bd, type: 2}
+  requiresUserInput: 1
+  userChoices:
+  - 'USB Flash Drive (UEFI: SanDisk Cruzer 16GB)'
+  - Windows Boot Manager (240GB SSD)
+  - Network Boot (PXE) - Realtek PXE B03 D00
+  - CD/DVD Drive (empty)
+  correctChoice: 'USB Flash Drive (UEFI: SanDisk Cruzer 16GB)'
+  wrongChoiceDialog: {fileID: 11400000, guid: fe641c3b628cfe24eaec24ec6f92a7c0, type: 2}
+  partitionOptions: []

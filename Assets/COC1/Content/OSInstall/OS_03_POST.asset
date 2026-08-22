@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6f4793af169834186847100a9a184d, type: 3}
+  m_Name: OS_03_POST
+  m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
+  stage: 1
+  displayText: 'Power-On Self-Test
+
+
+    CPU        : Intel(R) Core(TM) i5  @ 3.00GHz
+
+    Memory    
+    : 8192MB  OK
+
+    SATA Port 0: 240GB SSD
+
+    USB Device : SanDisk Cruzer 16GB
+
+
+    Booting
+    from USB...'
+  duration: 2.5
+  requiresRebootAnimation: 0
+  educationalDialog: {fileID: 0}
+  requiresUserInput: 0
+  userChoices: []
+  correctChoice: 
+  wrongChoiceDialog: {fileID: 0}
+  partitionOptions: []

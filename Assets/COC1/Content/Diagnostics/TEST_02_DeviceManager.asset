@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b34e88f013c0dd419dd7e06ed910d5d, type: 3}
+  m_Name: TEST_02_DeviceManager
+  m_EditorClassIdentifier: Assembly-CSharp::DiagnosticTestData
+  testName: Device Manager - no unknown devices
+  description: Walks the device tree looking for a yellow warning triangle.
+  duration: 3
+  prerequisiteTaskIds:
+  - install_driver_motherboard
+  - install_driver_display
+  - install_driver_audio
+  - install_driver_network
+  failureHint: Device Manager still shows a device with a yellow warning triangle.
+    Open Device Manager and install the driver that is missing.

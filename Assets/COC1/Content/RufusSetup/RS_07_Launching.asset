@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebc623e747768c34cbb102afa090f010, type: 3}
+  m_Name: RS_07_Launching
+  m_EditorClassIdentifier: Assembly-CSharp::RufusSetupStepData
+  stepId: launching
+  drawnScreen: Splash
+  background: {fileID: 0}
+  instruction: Starting Rufus...
+  kind: 2
+  hotspot:
+    serializedVersion: 2
+    x: 0.4
+    y: 0.45
+    width: 0.2
+    height: 0.07
+  hotspotLabel: 
+  showHotspotOutline: 1
+  decoyHotspot:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
+  decoyLabel: 
+  inputRect:
+    serializedVersion: 2
+    x: 0.08
+    y: 0.06
+    width: 0.72
+    height: 0.05
+  goRect:
+    serializedVersion: 2
+    x: 0.82
+    y: 0.06
+    width: 0.08
+    height: 0.05
+  correctUrl: rufus.ie
+  alsoAccept: []
+  urlPlaceholder: Search or type a web address
+  duration: 1.5
+  progressRect:
+    serializedVersion: 2
+    x: 0.39583334
+    y: 0.5555556
+    width: 0.20833333
+    height: 0.022222223
+  progressLabel: Starting Rufus...
+  educationalDialog: {fileID: 0}
+  wrongDialog: {fileID: 0}
+  hint: 

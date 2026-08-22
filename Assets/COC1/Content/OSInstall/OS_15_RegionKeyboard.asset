@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6f4793af169834186847100a9a184d, type: 3}
+  m_Name: OS_15_RegionKeyboard
+  m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
+  stage: 15
+  displayText: 'Let''s start with region. Is this right?
+
+
+    ...and is this the
+    right keyboard layout?'
+  duration: 2
+  requiresRebootAnimation: 0
+  educationalDialog: {fileID: 11400000, guid: e2300879e18bf6a41a88af9eee4d359b, type: 2}
+  requiresUserInput: 1
+  userChoices:
+  - Philippines - US keyboard layout
+  - United States - US keyboard layout
+  - Philippines - Dvorak keyboard layout
+  correctChoice: Philippines - US keyboard layout
+  wrongChoiceDialog: {fileID: 11400000, guid: eb66c2f5672b32c45a9b45d605562c8c, type: 2}
+  partitionOptions: []

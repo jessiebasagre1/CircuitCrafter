@@ -17,6 +17,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        // Freeze while a station panel has the keyboard. Legacy Input axes read the keyboard
+        // directly and do not care that a TMP_InputField has focus, so typing "rufus.ie" into
+        // the browser's address bar walked the player backwards on the 's' and strafed on
+        // the 'a'.
+        if (PlayerInputLock.IsLocked) return;
+
         // Freeze all movement/input while a tutorial dialog is open,
         // and for the one frame it just closed (so the same spacebar
         // press that closed it doesn't also trigger a jump).

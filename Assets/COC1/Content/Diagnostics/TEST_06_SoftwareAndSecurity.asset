@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b34e88f013c0dd419dd7e06ed910d5d, type: 3}
+  m_Name: TEST_06_SoftwareAndSecurity
+  m_EditorClassIdentifier: Assembly-CSharp::DiagnosticTestData
+  testName: Application and security check
+  description: Launches each installed application once, and confirms Windows Update
+    and the antivirus report a healthy, up-to-date status.
+  duration: 3
+  prerequisiteTaskIds:
+  - install_app_software
+  - install_updates
+  failureHint: Applications or patches are still missing. Finish the Software Center
+    and Windows Update lists, then run diagnostics again.

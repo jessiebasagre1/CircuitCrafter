@@ -29,6 +29,19 @@ public static class SystemConfigTaskIds
     public const string InstallDriverAudio = "install_driver_audio";
     public const string InstallDriverDisplay = "install_driver_display";
 
+    // Individual application-software items. Same pattern as the driver ids
+    // above: each ChecklistItemData asset gets one of these as its itemTaskId,
+    // and also reports a step to the shared InstallAppSoftware group id.
+    public const string InstallAppBrowser = "install_app_browser";
+    public const string InstallAppOffice = "install_app_office";
+    public const string InstallAppAntivirus = "install_app_antivirus";
+    public const string InstallAppUtilities = "install_app_utilities";
+
+    // Individual update/patch items.
+    public const string InstallUpdateCumulative = "install_update_cumulative";
+    public const string InstallUpdateSecurity = "install_update_security";
+    public const string InstallUpdateDefender = "install_update_defender";
+
     // Step 4: Test the computer.
     public const string TestComputer = "test_computer";
 

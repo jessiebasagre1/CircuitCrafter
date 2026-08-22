@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6f4793af169834186847100a9a184d, type: 3}
+  m_Name: OS_09_InstallType
+  m_EditorClassIdentifier: Assembly-CSharp::OSInstallStageData
+  stage: 14
+  displayText: 'Which type of installation do you want?
+
+
+    Upgrade  -  keeps files,
+    settings and applications. Only available when Setup is started from inside a
+    working Windows.
+
+
+    Custom   -  installs a clean copy. This drive is bare.'
+  duration: 2
+  requiresRebootAnimation: 0
+  educationalDialog: {fileID: 11400000, guid: 826175a1fe311d6428da8adb80eb4091, type: 2}
+  requiresUserInput: 1
+  userChoices:
+  - 'Upgrade: Install Windows and keep files, settings, and applications'
+  - 'Custom: Install Windows only (advanced)'
+  correctChoice: 'Custom: Install Windows only (advanced)'
+  wrongChoiceDialog: {fileID: 11400000, guid: 9fab782d8f52cf14ea39358df9bbdec4, type: 2}
+  partitionOptions: []

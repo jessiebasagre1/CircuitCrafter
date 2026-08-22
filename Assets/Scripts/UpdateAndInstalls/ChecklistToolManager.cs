@@ -48,6 +48,10 @@ public class ChecklistToolManager : MonoBehaviour
     public event Action<ChecklistItemData> OnItemInstallComplete;
     public event Action OnAllItemsComplete; // fires once, the run that finishes the last remaining item
 
+    /// <summary>Fired when BeginInstall is refused because the item's prerequisites are not
+    /// installed yet. string = the item's blockedHint, for UI that wants to show it inline.</summary>
+    public event Action<ChecklistItemData, string> OnItemBlocked;
+
     private bool _allCompleteFired;
 
     private void Start()
@@ -107,8 +111,61 @@ public class ChecklistToolManager : MonoBehaviour
             return false;
         }
 
+        // Order used to be unenforced: any item in the list could be installed at any time, so
+        // installing the display driver before the chipset driver passed silently. On a real
+        // bench that is the classic mistake -- Windows names the device wrongly until the
+        // chipset INF is in, so the rest go on top of a guess. An item now refuses to install
+        // until every id in its prerequisiteTaskIds is complete.
+        string missing;
+        if (!PrerequisitesMet(item, out missing))
+        {
+            string reason = string.IsNullOrEmpty(item.blockedHint)
+                ? $"'{missing}' must be installed first."
+                : item.blockedHint;
+
+            COC1AssessmentManager.ReportMistake(
+                $"{item.displayName}: installed out of order - {reason}", item);
+
+            // ignoreSuppression: corrective feedback, not a tutorial, so it must still appear
+            // while an assessment has tutorial dialogs switched off.
+            if (item.blockedDialog != null && DialogManager.Instance != null)
+                DialogManager.Instance.ShowDialog(item.blockedDialog, null, true);
+            else
+                Debug.LogWarning($"[ChecklistToolManager] {item.displayName} blocked: {reason}", item);
+
+            OnItemBlocked?.Invoke(item, reason);
+            return false;
+        }
+
         StartCoroutine(InstallRoutine(item));
         return true;
+    }
+
+    /// <summary>True when every prerequisite task on this item is already complete. Also true
+    /// when the item lists no prerequisites at all, which is how every existing asset behaves.</summary>
+    public bool PrerequisitesMet(ChecklistItemData item, out string missingTaskId)
+    {
+        missingTaskId = null;
+        if (item == null || item.prerequisiteTaskIds == null || item.prerequisiteTaskIds.Length == 0)
+            return true;
+
+        foreach (var id in item.prerequisiteTaskIds)
+        {
+            if (string.IsNullOrEmpty(id)) continue;
+            if (TaskManager.Instance == null || !TaskManager.Instance.IsTaskComplete(id))
+            {
+                missingTaskId = id;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>Convenience overload for UI that only needs the yes/no.</summary>
+    public bool PrerequisitesMet(ChecklistItemData item)
+    {
+        string _;
+        return PrerequisitesMet(item, out _);
     }
 
     private IEnumerator InstallRoutine(ChecklistItemData item)

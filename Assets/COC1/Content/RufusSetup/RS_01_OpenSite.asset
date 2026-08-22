@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebc623e747768c34cbb102afa090f010, type: 3}
+  m_Name: RS_01_OpenSite
+  m_EditorClassIdentifier: Assembly-CSharp::RufusSetupStepData
+  stepId: open_site
+  drawnScreen: Browser_NewTab
+  background: {fileID: 0}
+  instruction: Open the official Rufus website. Type the address in the address bar
+    and press Enter.
+  kind: 1
+  hotspot:
+    serializedVersion: 2
+    x: 0.4
+    y: 0.45
+    width: 0.2
+    height: 0.07
+  hotspotLabel: 
+  showHotspotOutline: 1
+  decoyHotspot:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
+  decoyLabel: 
+  inputRect:
+    serializedVersion: 2
+    x: 0.083333336
+    y: 0.048148148
+    width: 0.7708333
+    height: 0.037037037
+  goRect:
+    serializedVersion: 2
+    x: 0.8645833
+    y: 0.048148148
+    width: 0.0625
+    height: 0.037037037
+  correctUrl: rufus.ie
+  alsoAccept:
+  - rufus.ie/downloads
+  urlPlaceholder: Search or type a web address
+  duration: 3
+  progressRect:
+    serializedVersion: 2
+    x: 0.3
+    y: 0.55
+    width: 0.4
+    height: 0.04
+  progressLabel: Downloading...
+  educationalDialog: {fileID: 11400000, guid: 1093d4a0578c0c045bcfab79bbaef845, type: 2}
+  wrongDialog: {fileID: 11400000, guid: d686dfeea96361e448d32dc59edb912d, type: 2}
+  hint: Rufus is an Irish project. Its official site ends in .ie, not .com.

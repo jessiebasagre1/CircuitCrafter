@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b34e88f013c0dd419dd7e06ed910d5d, type: 3}
+  m_Name: TEST_04_Audio
+  m_EditorClassIdentifier: Assembly-CSharp::DiagnosticTestData
+  testName: Audio playback and microphone
+  description: Plays a test tone through the front and rear jacks and checks the
+    recording device.
+  duration: 2
+  prerequisiteTaskIds:
+  - install_driver_audio
+  failureHint: No playback device found. Install the audio driver.

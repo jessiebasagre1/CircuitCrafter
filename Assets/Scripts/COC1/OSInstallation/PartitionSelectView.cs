@@ -6,11 +6,11 @@ using System.Collections.Generic;
 /// <summary>
 /// Interactive partition table for the PartitionSelect stage: radio-button
 /// rows, New/Format/Delete acting on whichever row is selected, and a Next
-/// button that only proceeds once a formatted primary partition is chosen —
+/// button that only proceeds once a formatted primary partition is chosen -
 /// teaches that you can't install onto raw unallocated space or an
 /// unformatted partition.
 ///
-/// Works off a runtime copy of OSInstallStageData.partitionOptions — New/
+/// Works off a runtime copy of OSInstallStageData.partitionOptions - New/
 /// Format/Delete during play never touch the asset itself, so replaying the
 /// stage (or a different playthrough) always starts from the same layout.
 ///
@@ -48,7 +48,7 @@ public class PartitionSelectView : MonoBehaviour
         if (nextButton != null) nextButton.onClick.AddListener(OnNextClicked);
     }
 
-    /// <summary>Call when entering the PartitionSelect stage — resets the
+    /// <summary>Call when entering the PartitionSelect stage - resets the
     /// table to the stage asset's starting layout.</summary>
     public void Populate(OSInstallStageData stage)
     {
@@ -168,11 +168,17 @@ public class PartitionSelectView : MonoBehaviour
         if (p.kind != PartitionKind.Primary)
         {
             SetError("Create a partition here before continuing.");
+            COC1AssessmentManager.ReportMistake(
+                "Partition step: tried to install onto unallocated space. Click New to create a partition first.",
+                this);
             return;
         }
         if (!p.isFormatted)
         {
             SetError("Format this partition before continuing.");
+            COC1AssessmentManager.ReportMistake(
+                "Partition step: tried to install onto an unformatted partition. Click Format first.",
+                this);
             return;
         }
 

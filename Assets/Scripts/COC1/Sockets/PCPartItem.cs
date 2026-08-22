@@ -130,6 +130,11 @@ public class PCPartItem : MonoBehaviour
                 Debug.Log($"{name}: can't drag � must remove '{blocker.name}' (step {blocker.removalOrderStep}) first.", this);
                 if (outOfOrderDialog != null)
                     DialogManager.Instance.ShowDialog(outOfOrderDialog);
+                // ASSESSMENT: removing parts out of order is a procedural error, so it is
+                // recorded as a mistake. No-ops entirely outside assessment mode.
+                COC1AssessmentManager.ReportMistake(
+                    $"Removed '{name}' out of order - '{blocker.name}' must come off first.", this);
+
                 return;
             }
         }
@@ -140,6 +145,13 @@ public class PCPartItem : MonoBehaviour
             Debug.Log($"{name}: can't drag � {blockReason}", this);
             if (blockedWarningDialog != null)
                 DialogManager.Instance.ShowDialog(blockedWarningDialog);
+            // ASSESSMENT: this is the single place both of the mistakes we grade surface.
+            // CableGatedPartItem returns "'X' is still plugged in" and RAMPartItem returns
+            // "'Y' is still closed", so one call covers dragging a part with its cable still
+            // attached AND dragging RAM with its retention lock shut - no per-part components
+            // and no duplicated rules. No-ops entirely outside assessment mode.
+            COC1AssessmentManager.ReportMistake($"Tried to remove '{name}' - {blockReason}", this);
+
             return;
         }
 

@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebc623e747768c34cbb102afa090f010, type: 3}
+  m_Name: RS_02_DownloadLink
+  m_EditorClassIdentifier: Assembly-CSharp::RufusSetupStepData
+  stepId: download_link
+  drawnScreen: RufusSite
+  background: {fileID: 21300000, guid: e7c118c7c178dd9498d5a1098f9b383b, type: 3}
+  instruction: Scroll to the Download section and click the latest release, rufus-4.4.exe.
+  kind: 0
+  hotspot:
+    serializedVersion: 2
+    x: 0.19479166
+    y: 0.41296297
+    width: 0.20833333
+    height: 0.037037037
+  hotspotLabel: Click Here
+  showHotspotOutline: 1
+  decoyHotspot:
+    serializedVersion: 2
+    x: 0.43229166
+    y: 0.67407405
+    width: 0.13541667
+    height: 0.05925926
+  decoyLabel: advert download button
+  inputRect:
+    serializedVersion: 2
+    x: 0.08
+    y: 0.06
+    width: 0.72
+    height: 0.05
+  goRect:
+    serializedVersion: 2
+    x: 0.82
+    y: 0.06
+    width: 0.08
+    height: 0.05
+  correctUrl: rufus.ie
+  alsoAccept: []
+  urlPlaceholder: Search or type a web address
+  duration: 3
+  progressRect:
+    serializedVersion: 2
+    x: 0.3
+    y: 0.55
+    width: 0.4
+    height: 0.04
+  progressLabel: Downloading...
+  educationalDialog: {fileID: 11400000, guid: 5eb5aa0591d252948a472ce154a4f79c, type: 2}
+  wrongDialog: {fileID: 11400000, guid: 84cf18e13ce268843b7ef3f57e41e9a4, type: 2}
+  hint: The real download is the file name in the version table. The big green button
+    is inside a block labelled Advertisement.
