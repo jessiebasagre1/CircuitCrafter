@@ -2467,6 +2467,8 @@ MonoBehaviour:
   referencePort: {fileID: 155309728}
   noSelectionWarning: {fileID: 11400000, guid: cb78b3a582469a64c8f9212fa29e1825, type: 2}
   driveNotPluggedWarning: {fileID: 11400000, guid: b87bdd4f455e9a04285d4943bb94c614, type: 2}
+  requiredImage: {fileID: 0}
+  wrongImageWarning: {fileID: 0}
 --- !u!114 &194942180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2553,7 +2555,7 @@ MonoBehaviour:
   resumeButton: {fileID: 1254856011}
   mainMenuButton: {fileID: 2040424936}
   cameraSettingsUI: {fileID: 1392181657}
-  mainMenuSceneName: MainMenu
+  mainMenuSceneName: MainMenu-Scratch
   freezeTimeWhilePaused: 1
 --- !u!114 &194942185
 MonoBehaviour:
@@ -3166,7 +3168,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 7, y: 168.30006}
+  m_AnchoredPosition: {x: 7, y: 168.30013}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &225729630
@@ -5676,6 +5678,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!114 &388877629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8052,6 +8055,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!114 &527235460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11783,6 +11787,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!114 &860974133
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18380,6 +18385,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!114 &1318052358
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23242,6 +23248,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!222 &1631010551
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26433,6 +26440,7 @@ MonoBehaviour:
     requireOSInstallComplete: 0
     lockedMessage: {fileID: 0}
   lockedOverlay: {fileID: 0}
+  hideWhenLocked: 0
 --- !u!114 &1908190400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28725,7 +28733,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1120700168}
   m_Direction: 2
   m_Value: -0.0000003626569
-  m_Size: 0.43899998
+  m_Size: 0.43896514
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

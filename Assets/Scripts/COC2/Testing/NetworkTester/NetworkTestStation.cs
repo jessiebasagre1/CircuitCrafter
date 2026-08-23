@@ -1,0 +1,320 @@
+// NetworkTestStation.cs
+using System.Collections;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using CSSSimulation.Interaction;
+
+namespace CSSSimulation.Networking
+{
+    /// <summary>
+    /// The network testing bench. Walk up with a crimped cable in your pocket, press E, the camera
+    /// moves in, the cable appears at the tester, you plug it in, and your pass/fail animation plays.
+    ///
+    /// Whether it passes is NOT random and NOT a setting - it's read from the pinout the player
+    /// actually crimped, via CableTestAnalyzer. A correctly built cable passes; a miswired one fails
+    /// and the readout says why.
+    ///
+    /// Setup:
+    ///   1. Put this on your tester bench object, with a trigger Collider for the interaction range.
+    ///   2. Assign playerCamera and testerCamera.
+    ///   3. Assign stationCableVisual - the cable model sitting at the tester. It stays hidden until
+    ///      the player arrives carrying one.
+    ///   4. Assign testerAnimator and fill in the three trigger names to match your Animator.
+    ///   5. Fill playerControlScripts the same way your other view controllers do.
+    ///   6. Set promptText to something like "Press E to test cable".
+    ///
+    /// Everything else is optional.
+    /// </summary>
+    [RequireComponent(typeof(Collider))]
+    public class NetworkTestStation : Interactable
+    {
+        public static NetworkTestStation Instance { get; private set; }
+
+        [Header("Cameras")]
+        public Camera playerCamera;
+        [Tooltip("Close-up on the tester.")]
+        public Camera testerCamera;
+
+        [Header("Cable at the tester")]
+        [Tooltip("The cable model at the tester bench. Hidden until the player arrives carrying the " +
+                 "crimped cable, so it looks like they put it down.")]
+        public GameObject stationCableVisual;
+
+        [Header("Plugging in")]
+        [Tooltip("The draggable RJ45 end. Assign this and the player drags the plug into the socket, " +
+                 "COC1 CableConnector style, and the test starts the moment it seats. Leave empty to " +
+                 "fall back to the simpler click-the-cable behaviour below.")]
+        public TesterCablePlug cablePlug;
+
+        [Tooltip("Only used when Cable Plug is empty. Tick to let the player click the cable anywhere; " +
+                 "untick to drive it purely from a UI button wired to PlugIn().")]
+        public bool clickCableToPlug = true;
+
+        [Header("Animation")]
+        [Tooltip("The Animator holding your plug-in and pass/fail clips.")]
+        public Animator testerAnimator;
+        [Tooltip("Trigger for the 'cable goes into the socket' clip. Clear to skip straight to the result.")]
+        public string plugInTrigger = "PlugIn";
+        [Tooltip("Seconds the plug-in clip runs for.")]
+        public float plugInLength = 1f;
+        public string passTrigger = "TestPass";
+        public string failTrigger = "TestFail";
+        [Tooltip("Seconds the pass/fail clip runs for, before the result text and events fire.")]
+        public float resultLength = 2f;
+
+        [Header("Player control")]
+        [Tooltip("Same array you filled in on your other view controllers.")]
+        public MonoBehaviour[] playerControlScripts;
+
+        [Header("UI")]
+        [Tooltip("Shown while in the tester view - e.g. 'Click the cable to plug it in'.")]
+        public GameObject testerUI;
+        [Tooltip("Optional. Shows PASS/FAIL and, on a failure, what's actually wrong with the cable.")]
+        public TMP_Text resultText;
+        public Color passColor = new Color(0.15f, 0.8f, 0.3f);
+        public Color failColor = new Color(0.9f, 0.25f, 0.2f);
+
+        [Header("Mobile")]
+        public GameObject[] mobileControlsToHide;
+        [Tooltip("Shown only in the tester view - e.g. a Plug In button and a Back button.")]
+        public GameObject[] mobileTesterControls;
+
+        [Header("Dialog (optional)")]
+        [Tooltip("Shown if the player walks up without a crimped cable.")]
+        public DialogSequence noCableDialog;
+
+        [Header("Task (optional)")]
+        public string taskId = "test_cable";
+        public bool reportOnlyOnPass = true;
+
+        [Header("Events")]
+        [Tooltip("Fires once the result animation finishes: true if the cable passed.")]
+        public UnityEvent<bool> OnTestResult;
+
+        public bool InTesterView { get; private set; }
+        public bool IsTesting { get; private set; }
+        public bool HasTested { get; private set; }
+
+        Renderer[] cableRenderers;
+
+        void Awake()
+        {
+            Instance = this;
+            SetTesterViewActive(false);
+        }
+
+        void Start()
+        {
+            // Subscribed in Start so the plug has finished its own Awake first.
+            if (cablePlug != null) cablePlug.OnPlugged += HandlePlugSeated;
+        }
+
+        void OnDestroy()
+        {
+            if (cablePlug != null) cablePlug.OnPlugged -= HandlePlugSeated;
+        }
+
+        void HandlePlugSeated()
+        {
+            PlugIn();
+        }
+
+        // ------------------------------------------------------------------
+        // Entering / leaving
+        // ------------------------------------------------------------------
+
+        public override void Interact()
+        {
+            if (InTesterView) return;
+
+            if (CableInventory.Instance == null || !CableInventory.Instance.HasCable)
+            {
+                if (noCableDialog != null && DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
+                    DialogManager.Instance.ShowDialog(noCableDialog);
+                else
+                    Debug.Log("[NetworkTestStation] The player isn't carrying a crimped cable yet.", this);
+                return;
+            }
+
+            SetTesterViewActive(true);
+        }
+
+        /// <summary>Wire to a mobile Back button.</summary>
+        public void RequestExit()
+        {
+            if (!InTesterView || IsTesting) return;
+            SetTesterViewActive(false);
+        }
+
+        void Update()
+        {
+            if (!InTesterView || IsTesting) return;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                SetTesterViewActive(false);
+                return;
+            }
+
+            // The drag path drives itself - TesterCablePlug fires OnPlugged the moment it seats,
+            // so there's nothing to poll here.
+            if (cablePlug != null) return;
+
+            if (!HasTested && clickCableToPlug && PointerInput.Down && PointerOverCable())
+                PlugIn();
+        }
+
+        /// <summary>Picks off the cable's VISIBLE bounds rather than a collider - no colliders to set
+        /// up, and it can't go out of sync with where the mesh is drawn.</summary>
+        bool PointerOverCable()
+        {
+            if (stationCableVisual == null || testerCamera == null) return false;
+
+            if (cableRenderers == null || cableRenderers.Length == 0)
+                cableRenderers = stationCableVisual.GetComponentsInChildren<Renderer>(true);
+
+            Ray ray = testerCamera.ScreenPointToRay(PointerInput.Position);
+            foreach (var renderer in cableRenderers)
+            {
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                if (renderer.bounds.IntersectRay(ray)) return true;
+            }
+            return false;
+        }
+
+        // ------------------------------------------------------------------
+        // The test
+        // ------------------------------------------------------------------
+
+        /// <summary>Wire a "Plug In" button's OnClick to this, or let the player click the cable.</summary>
+        public void PlugIn()
+        {
+            if (!InTesterView || IsTesting || HasTested) return;
+            StartCoroutine(TestRoutine());
+        }
+
+        IEnumerator TestRoutine()
+        {
+            IsTesting = true;
+            if (testerUI != null) testerUI.SetActive(false);
+            if (resultText != null) resultText.text = "";
+
+            // The cable is in the tester now, not in the player's pocket.
+            if (CableInventory.Instance != null) CableInventory.Instance.Consume();
+
+            if (testerAnimator != null && !string.IsNullOrEmpty(plugInTrigger))
+            {
+                testerAnimator.ResetTrigger(plugInTrigger);
+                testerAnimator.SetTrigger(plugInTrigger);
+                yield return new WaitForSeconds(plugInLength);
+            }
+
+            bool passed = EvaluateCable(out string summary);
+
+            string trigger = passed ? passTrigger : failTrigger;
+            if (testerAnimator != null && !string.IsNullOrEmpty(trigger))
+            {
+                testerAnimator.ResetTrigger(trigger);
+                testerAnimator.SetTrigger(trigger);
+            }
+
+            yield return new WaitForSeconds(resultLength);
+
+            if (resultText != null)
+            {
+                resultText.text = summary;
+                resultText.color = passed ? passColor : failColor;
+            }
+
+            if (!string.IsNullOrEmpty(taskId) && TaskManager.Instance != null)
+            {
+                if (!reportOnlyOnPass || passed)
+                    TaskManager.Instance.ReportProgress(taskId);
+            }
+
+            Debug.Log($"[NetworkTestStation] Cable test {(passed ? "PASSED" : "FAILED")}. {summary}", this);
+
+            HasTested = true;
+            IsTesting = false;
+            OnTestResult?.Invoke(passed);
+        }
+
+        /// <summary>Reads the pinout the player actually crimped and judges it. No randomness.</summary>
+        bool EvaluateCable(out string summary)
+        {
+            var station = CrimpingStationController.Instance;
+            if (station == null)
+            {
+                summary = "No crimping station found - can't read the cable.";
+                return false;
+            }
+
+            WireColor[] endOne = station.GetCrimpedArrangement(1);
+            WireColor[] endTwo = station.GetCrimpedArrangement(2);
+
+            if (endOne == null || endTwo == null)
+            {
+                summary = "This cable hasn't been crimped on both ends.";
+                return false;
+            }
+
+            CableTestReport report = CableTestAnalyzer.Analyze(endOne, endTwo, station.targetCableType);
+
+            summary = report.Passed
+                ? "PASS - all 8 conductors correct."
+                : "FAIL - " + CableTestAnalyzer.FailureHint(report);
+
+            return report.Passed;
+        }
+
+        /// <summary>Clears the station so another cable can be tested. Wire to a Retry button.</summary>
+        public void ResetStation()
+        {
+            StopAllCoroutines();
+            IsTesting = false;
+            HasTested = false;
+            if (resultText != null) resultText.text = "";
+            if (cablePlug != null)
+            {
+                cablePlug.Unplug();
+                cablePlug.enabled = InTesterView;
+            }
+        }
+
+        // ------------------------------------------------------------------
+
+        void SetTesterViewActive(bool active)
+        {
+            InTesterView = active;
+
+            if (playerCamera != null) playerCamera.gameObject.SetActive(!active);
+            if (testerCamera != null) testerCamera.gameObject.SetActive(active);
+
+            // The cable only appears once the player brings one, so it reads as them putting it down.
+            if (stationCableVisual != null) stationCableVisual.SetActive(active);
+
+            // Draggable only while the close-up is open, so the plug can't be grabbed from across the room.
+            if (cablePlug != null) cablePlug.enabled = active && !HasTested;
+
+            foreach (var script in playerControlScripts)
+            {
+                if (script != null) script.enabled = !active;
+            }
+
+            if (testerUI != null) testerUI.SetActive(active && !HasTested);
+
+            foreach (var obj in mobileControlsToHide)
+            {
+                if (obj != null) obj.SetActive(!active);
+            }
+            foreach (var obj in mobileTesterControls)
+            {
+                if (obj != null) obj.SetActive(active);
+            }
+
+            Cursor.lockState = active ? CursorLockMode.None : CursorLockMode.Locked;
+            Cursor.visible = active;
+        }
+    }
+}

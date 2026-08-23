@@ -5622,7 +5622,7 @@ MonoBehaviour:
   resumeButton: {fileID: 1254856011}
   mainMenuButton: {fileID: 2040424936}
   cameraSettingsUI: {fileID: 1392181657}
-  mainMenuSceneName: MainMenu
+  mainMenuSceneName: MainMenu_Scratch
   freezeTimeWhilePaused: 1
 --- !u!114 &194942185
 MonoBehaviour:

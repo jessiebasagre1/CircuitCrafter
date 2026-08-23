@@ -4,33 +4,47 @@ using UnityEngine.Events;
 namespace CSSSimulation.Networking
 {
     /// <summary>
-    /// The missing "finish" step for the crimping minigame. WireDragController/WirePinSlot/
-    /// ConnectorEnd handle arranging wires; this is what actually crimps the cable once both
-    /// ends are arranged, checks them against the target CableTypeSO, locks the wires so a
-    /// finished cable can't be pulled apart again, and reports completion to TaskManager.
+    /// The "finish" step for the crimping minigame. WireDragController/WirePinSlot/ConnectorEnd
+    /// handle arranging wires; this owns what happens once an end is arranged - locking that
+    /// end's wires when it gets crimped, remembering the exact pinout that was crimped so the
+    /// cable tester can read it back later, and reporting completion to TaskManager.
+    ///
+    /// WHAT CHANGED FROM THE EARLIER VERSION
+    /// -------------------------------------
+    /// 1. Crimping is now PER END. The player crimps End 1, then End 2, by dragging the crimping
+    ///    tool onto each connector (CrimpToolCrimpDraggable -> CrimpToolCrimpController). This
+    ///    script no longer does the crimping itself; it listens for OnEndCrimpComplete and does
+    ///    the bookkeeping (lock wires, snapshot pinout, fire events).
+    /// 2. A wrong arrangement is no longer auto-rejected by default. autoCheckMode now defaults
+    ///    to FeedbackOnly, so a miswired cable CAN be crimped - which is the whole point of
+    ///    having a cable tester afterwards. Set it back to ReturnWiresWhenWrong for the old
+    ///    behaviour, or Off to remove the hint entirely (hardest, best for assessment).
+    /// 3. CrimpedArrangement snapshots. Once an end is crimped its 8-colour pin order is frozen
+    ///    here, so CableTesterController can build a wiremap from what was ACTUALLY crimped
+    ///    rather than re-reading live slot state.
     ///
     /// Setup:
     ///   1. Add this to the crimping station object (alongside/near CrimpingViewController).
     ///   2. Assign endOne + endTwo (the two ConnectorEnd components on this cable's housings).
-    ///   3. Assign targetCableType (the CableTypeSO the player is meant to build, e.g. a
-    ///      straight-through T568B/T568B or a crossover for this task). This now also
-    ///      doubles as a fallback/default  if you've added CableTypeSelectionUI, it will
-    ///      overwrite this at runtime via SetTargetCableType() once the player picks.
-    ///   4. Assign taskId to match whatever you RegisterTask()'d for this module in TaskManager
-    ///      (e.g. "crimp_cable"), or leave blank if this station isn't gated behind a task.
-    ///   5. Wire the physical crimping tool's click (or the "C" key / mobile Crimp button) to
-    ///      RequestCrimp(). OnCrimpResult(bool) fires either way so you can show a success/fail
-    ///      dialog line via DialogManager, matching how ConnectorEnd.OnValidated is used.
-    ///
-    /// Auto-check on completion: separately from the manual crimp step above, the moment
-    /// both ends have all 8 pins filled, OnWirePlaced() (called by WireDraggable.SnapIntoSlot)
-    /// automatically checks the order against targetCableType and logs correct/wrong right
-    /// away. A wrong arrangement sends every wire back to the tray so the player can retry 
-    /// this is just early feedback though, it doesn't lock/crimp anything. The player still
-    /// needs to use the crimping tool (RequestCrimp) once it's correct to actually finish.
+    ///   3. Assign targetCableType (the CableTypeSO the player is meant to build). Overwritten
+    ///      at runtime by CableTypeSelectionUI.SetTargetCableType() once the player picks.
+    ///   4. Assign taskId to match whatever you RegisterTask()'d in TaskManager, or leave blank.
+    ///   5. Pick an autoCheckMode - see the tooltip on that field.
     /// </summary>
     public class CrimpingStationController : MonoBehaviour
     {
+        /// <summary>What happens the moment both ends are fully arranged, BEFORE the player
+        /// reaches for the crimping tool.</summary>
+        public enum AutoCheckMode
+        {
+            [Tooltip("No hint at all. The player crimps whatever they arranged and only finds out at the tester.")]
+            Off,
+            [Tooltip("Log/fire OnAutoCheckResult so a subtle hint can show, but leave the wires alone - a wrong cable can still be crimped and will fail the tester.")]
+            FeedbackOnly,
+            [Tooltip("Original behaviour: a wrong arrangement sends every wire back to the tray so only a correct cable can ever be crimped.")]
+            ReturnWiresWhenWrong
+        }
+
         public static CrimpingStationController Instance { get; private set; }
 
         [Header("Connector Ends")]
@@ -39,53 +53,102 @@ namespace CSSSimulation.Networking
 
         [Header("Target")]
         [Tooltip("The cable the player is meant to build for this task. Both ends are checked against this. " +
-                 "Acts as a default/fallback  overwritten at runtime if CableTypeSelectionUI.SetTargetCableType() is used.")]
+                 "Acts as a default/fallback - overwritten at runtime if CableTypeSelectionUI.SetTargetCableType() is used.")]
         public CableTypeSO targetCableType;
+
+        [Header("Auto-check")]
+        [Tooltip("What happens the moment both ends are fully arranged. FeedbackOnly is the default now, " +
+                 "so a miswired cable can actually be crimped and then caught by the cable tester.")]
+        public AutoCheckMode autoCheckMode = AutoCheckMode.FeedbackOnly;
 
         [Header("Task Reporting (optional)")]
         [Tooltip("Matches a taskId already registered with TaskManager.RegisterTask(). Leave blank to skip.")]
         public string taskId = "crimp_cable";
 
         [Header("Input")]
-        [Tooltip("Keyboard shortcut for the crimping tool while in the close-up crimping view (desktop only).")]
+        [Tooltip("Keyboard shortcut that crimps the next ready end without dragging the tool (desktop convenience). " +
+                 "It still plays the full crimp animation - it just skips the drag.")]
         public KeyCode crimpKey = KeyCode.C;
 
         [Header("Events")]
-        [Tooltip("Fired every time RequestCrimp() runs: true if both ends matched the target cable and the cable is now locked, false if the arrangement was wrong (nothing gets locked, player can keep adjusting).")]
+        [Tooltip("Fired once BOTH ends are crimped: true if the finished cable matches the target type, false if it's miswired. " +
+                 "Note this is now informational only - nothing is blocked, the tester is where the player finds out.")]
         public UnityEvent<bool> OnCrimpResult;
 
-        [Tooltip("Fired the moment both ends are fully wired and get auto-checked: true if the order was correct, false if the wires just got sent back to the tray. Separate from OnCrimpResult  this fires before the player even reaches for the crimping tool.")]
+        [Tooltip("Fired the moment both ends are fully wired and get auto-checked (unless autoCheckMode is Off): " +
+                 "true if the order was correct. Fires BEFORE the player reaches for the crimping tool.")]
         public UnityEvent<bool> OnAutoCheckResult;
 
-        [Tooltip("Fired whenever SetTargetCableType() runs (i.e. whenever the player picks Straight-Through " +
-                 "or Crossover in CableTypeSelectionUI). Lets read-only UI like CrimpingGuideUI refresh " +
-                 "itself without this controller needing to know that UI exists.")]
+        [Tooltip("Fired with the end number (1 or 2) each time an end finishes being crimped. " +
+                 "Handy for a 'End 1 done - now do End 2' prompt.")]
+        public UnityEvent<int> OnEndCrimped;
+
+        [Tooltip("Fired whenever SetTargetCableType() runs. Lets read-only UI like CrimpingGuideUI refresh itself.")]
         public UnityEvent<CableTypeSO> OnTargetCableTypeChanged;
 
-        public bool IsCrimped { get; private set; }
+        /// <summary>True once BOTH ends have been crimped. (Previously this meant 'crimped AND correct' -
+        /// it now just means the physical crimping is finished, correct or not.)</summary>
+        public bool IsCrimped => endOneCrimped && endTwoCrimped;
+
+        /// <summary>Fired once both ends are crimped. TestingViewController subscribes to this to
+        /// take over the stage, the same way StrippingViewController subscribes to
+        /// CrimpToolStripController.OnStripComplete.</summary>
+        public System.Action OnBothEndsCrimped;
+
+        bool endOneCrimped;
+        bool endTwoCrimped;
+
+        // The pin order each end was actually crimped with, frozen at crimp time. Index 0 = pin 1.
+        WireColor[] crimpedEndOne;
+        WireColor[] crimpedEndTwo;
 
         void Awake()
         {
             Instance = this;
         }
 
+        void Start()
+        {
+            // Subscribed in Start (not Awake) so CrimpToolCrimpController.Instance is guaranteed
+            // to be set regardless of script execution order - same reasoning as
+            // StrippingViewController's subscription to CrimpToolStripController.
+            if (CrimpToolCrimpController.Instance != null)
+            {
+                CrimpToolCrimpController.Instance.OnEndCrimpComplete += HandleEndCrimpComplete;
+            }
+            else
+            {
+                Debug.LogWarning("[CrimpingStationController] No CrimpToolCrimpController in the scene - " +
+                                 "the crimp animation won't be able to report finished ends back here.", this);
+            }
+        }
+
+        void OnDestroy()
+        {
+            if (CrimpToolCrimpController.Instance != null)
+                CrimpToolCrimpController.Instance.OnEndCrimpComplete -= HandleEndCrimpComplete;
+        }
+
         void Update()
         {
-            // Only listen for the keyboard shortcut while actually in the crimping view,
-            // same guard CrimpingViewController itself uses for Escape.
+            // Only listen for the shortcut while actually in the crimping view, same guard
+            // CrimpingViewController uses for Escape.
             bool inCrimpingView = CrimpingViewController.Instance != null && CrimpingViewController.Instance.InCrimpingView;
             if (inCrimpingView && Input.GetKeyDown(crimpKey))
                 RequestCrimp();
         }
 
+        // ------------------------------------------------------------------
+        // Cable type
+        // ------------------------------------------------------------------
+
         /// <summary>Called by CableTypeSelectionUI once the player picks Straight-Through or
-        /// Crossover for this attempt. Also resets any previous crimped/locked state so a
-        /// fresh attempt with a newly-chosen cable type always starts unlocked.</summary>
+        /// Crossover. Also fully resets the station so a fresh attempt starts unlocked.</summary>
         public void SetTargetCableType(CableTypeSO cableType)
         {
             if (cableType == null)
             {
-                Debug.LogWarning("[CrimpingStationController] SetTargetCableType() called with null  ignoring.", this);
+                Debug.LogWarning("[CrimpingStationController] SetTargetCableType() called with null - ignoring.", this);
                 return;
             }
 
@@ -96,35 +159,36 @@ namespace CSSSimulation.Networking
             OnTargetCableTypeChanged?.Invoke(targetCableType);
         }
 
-        /// <summary>Called by WireDraggable.SnapIntoSlot() every time a wire lands in a slot.
-        /// Once both ends are fully filled, this immediately checks the order and gives
-        /// feedback  correct arrangements are left in place (ready for the player to
-        /// crimp), wrong ones get sent straight back to the tray.</summary>
+        // ------------------------------------------------------------------
+        // Arranging
+        // ------------------------------------------------------------------
+
+        /// <summary>Called by WireDraggable.SnapIntoSlot() every time a wire lands in a slot.</summary>
         public void OnWirePlaced()
         {
-            if (IsCrimped) return; // already finished, don't second-guess a locked cable
+            if (IsCrimped) return; // finished cable, don't second-guess it
 
             if (endOne == null || endTwo == null)
             {
-                Debug.LogWarning("[CrimpingStationController] endOne or endTwo isn't assigned in the Inspector  can't auto-check.", this);
+                Debug.LogWarning("[CrimpingStationController] endOne or endTwo isn't assigned - can't auto-check.", this);
                 return;
             }
 
-            // Diagnostic  shows how many of each end's 8 slots actually registered as
-            // filled. If a wire looks visually seated but this count doesn't reach 8,
-            // check that WireIdentity.endNumber on that wire matches this end's endNumber.
-            Debug.Log($"[CrimpingStationController] Wire placed  End 1: {endOne.FilledCount()}/8, End 2: {endTwo.FilledCount()}/8.");
+            // Diagnostic - if a wire looks visually seated but this count doesn't reach 8, check
+            // that WireIdentity.endNumber on that wire matches the ConnectorEnd's endNumber.
+            Debug.Log($"[CrimpingStationController] Wire placed - End 1: {endOne.FilledCount()}/8, End 2: {endTwo.FilledCount()}/8.");
 
-            if (!endOne.IsFullyArranged() || !endTwo.IsFullyArranged()) return; // still missing wires, nothing to check yet
+            if (!endOne.IsFullyArranged() || !endTwo.IsFullyArranged()) return;
 
-            AutoValidateArrangement();
+            if (autoCheckMode != AutoCheckMode.Off)
+                AutoValidateArrangement();
         }
 
         void AutoValidateArrangement()
         {
             if (targetCableType == null)
             {
-                Debug.LogWarning("[CrimpingStationController] All pins filled but no targetCableType assigned  can't auto-check.", this);
+                Debug.LogWarning("[CrimpingStationController] All pins filled but no targetCableType assigned - can't auto-check.", this);
                 return;
             }
 
@@ -134,68 +198,151 @@ namespace CSSSimulation.Networking
 
             if (success)
             {
-                Debug.Log($"[CrimpingStationController] Wire order correct for {targetCableType.displayName}! Ready to crimp.");
+                Debug.Log($"[CrimpingStationController] Wire order correct for {targetCableType.displayName}. Ready to crimp.");
             }
             else
             {
-                Debug.Log($"[CrimpingStationController] Wire order incorrect for {targetCableType.displayName}  " +
-                          $"End 1 {(oneOk ? "OK" : "wrong")}, End 2 {(twoOk ? "OK" : "wrong")}. Sending wires back.");
-                endOne.ReturnAllWiresHome();
-                endTwo.ReturnAllWiresHome();
+                Debug.Log($"[CrimpingStationController] Wire order incorrect for {targetCableType.displayName} - " +
+                          $"End 1 {(oneOk ? "OK" : "wrong")}, End 2 {(twoOk ? "OK" : "wrong")}.");
+
+                if (autoCheckMode == AutoCheckMode.ReturnWiresWhenWrong)
+                {
+                    Debug.Log("[CrimpingStationController] autoCheckMode is ReturnWiresWhenWrong - sending wires back.");
+                    endOne.ReturnAllWiresHome();
+                    endTwo.ReturnAllWiresHome();
+                }
             }
 
             OnAutoCheckResult?.Invoke(success);
         }
 
-        /// <summary>Wire this to the crimping tool's click and/or the mobile Crimp button's OnClick.</summary>
-        public void RequestCrimp()
-        {
-            if (IsCrimped) return; // already done, nothing to re-check
+        // ------------------------------------------------------------------
+        // Crimping (per end)
+        // ------------------------------------------------------------------
 
-            if (endOne == null || endTwo == null || targetCableType == null)
+        /// <summary>True when this end has all 8 pins seated and hasn't been crimped yet.
+        /// CrimpToolCrimpController asks this before letting a crimp animation start, so the
+        /// "is this legal yet" rule lives in exactly one place.</summary>
+        public bool CanCrimpEnd(int endNumber)
+        {
+            ConnectorEnd end = GetEnd(endNumber);
+            if (end == null) return false;
+            if (IsEndCrimped(endNumber)) return false;
+            return end.IsFullyArranged();
+        }
+
+        public bool IsEndCrimped(int endNumber) => endNumber == 1 ? endOneCrimped : endTwoCrimped;
+
+        /// <summary>The 8-colour pin order this end was crimped with (index 0 = pin 1), or null
+        /// if it hasn't been crimped. This is what CableTesterController builds its wiremap from.</summary>
+        public WireColor[] GetCrimpedArrangement(int endNumber) => endNumber == 1 ? crimpedEndOne : crimpedEndTwo;
+
+        /// <summary>Called by CrimpToolCrimpController.OnEndCrimpComplete once that end's clip finishes.
+        /// Also safe to call directly if you ever need to crimp an end without the animation.</summary>
+        public void CrimpEnd(int endNumber)
+        {
+            ConnectorEnd end = GetEnd(endNumber);
+            if (end == null)
             {
-                Debug.LogError("[CrimpingStationController] endOne, endTwo, and targetCableType must all be assigned.", this);
+                Debug.LogError($"[CrimpingStationController] No ConnectorEnd assigned for end {endNumber}.", this);
                 return;
             }
 
-            bool oneOk = endOne.CheckCompletion(targetCableType);
-            bool twoOk = endTwo.CheckCompletion(targetCableType);
-            bool success = oneOk && twoOk;
+            if (IsEndCrimped(endNumber)) return;
 
-            // Cable-type-aware result log  makes it obvious during testing whether the
-            // wiring was checked (and passed/failed) against Straight-Through or Crossover.
-            if (success)
-            {
-                Debug.Log($"[CrimpingStationController] Correct! Cable matches {targetCableType.displayName}.");
-            }
-            else
-            {
-                Debug.Log($"[CrimpingStationController] Incorrect  End 1 {(oneOk ? "OK" : "wrong")}, " +
-                          $"End 2 {(twoOk ? "OK" : "wrong")} for {targetCableType.displayName}.");
-            }
+            // Freeze the pinout BEFORE locking, so the tester reads exactly what got crimped.
+            WireColor[] snapshot = end.GetArrangement();
+            if (endNumber == 1) { crimpedEndOne = snapshot; endOneCrimped = true; }
+            else { crimpedEndTwo = snapshot; endTwoCrimped = true; }
 
-            if (success)
-            {
-                IsCrimped = true;
-                endOne.LockAllWires(true);
-                endTwo.LockAllWires(true);
+            // Locked wires can't be dragged back out - a crimped connector is permanent, right
+            // or wrong. That's what makes the tester meaningful.
+            end.LockAllWires(true);
 
-                if (!string.IsNullOrEmpty(taskId) && TaskManager.Instance != null)
-                    TaskManager.Instance.ReportProgress(taskId);
-            }
+            Debug.Log($"[CrimpingStationController] End {endNumber} crimped and locked.", this);
+            OnEndCrimped?.Invoke(endNumber);
 
-            OnCrimpResult?.Invoke(success);
+            if (IsCrimped)
+                HandleBothEndsCrimped();
         }
 
-        /// <summary>Resets the station so the player can try again  clears the crimped/locked
-        /// state without touching whatever's currently seated in the slots. Wire to a "Redo"
-        /// button if you want to let players retry after a wrong crimp, rather than only ever
-        /// blocking further presses until they fix the wires themselves.</summary>
+        void HandleEndCrimpComplete(int endNumber)
+        {
+            CrimpEnd(endNumber);
+        }
+
+        void HandleBothEndsCrimped()
+        {
+            bool matchesTarget = EvaluateAgainstTarget();
+
+            Debug.Log(matchesTarget
+                ? $"[CrimpingStationController] Both ends crimped and the cable matches {targetCableType?.displayName}."
+                : "[CrimpingStationController] Both ends crimped, but the pinout does NOT match the target cable. " +
+                  "The tester will show where.");
+
+            // The crimping TASK is done either way - the player physically crimped the cable.
+            // Whether it works is the tester's task to report.
+            if (!string.IsNullOrEmpty(taskId) && TaskManager.Instance != null)
+                TaskManager.Instance.ReportProgress(taskId);
+
+            OnCrimpResult?.Invoke(matchesTarget);
+            OnBothEndsCrimped?.Invoke();
+        }
+
+        /// <summary>Compares the crimped pinouts against targetCableType. Read-only - it doesn't
+        /// change any state, so UI can call it freely.</summary>
+        public bool EvaluateAgainstTarget()
+        {
+            if (targetCableType == null || crimpedEndOne == null || crimpedEndTwo == null) return false;
+            return targetCableType.ValidateEnd(1, crimpedEndOne) && targetCableType.ValidateEnd(2, crimpedEndTwo);
+        }
+
+        /// <summary>Convenience shortcut wired to the crimpKey and the mobile Crimp button: crimps
+        /// the next end that's ready, without needing the drag. Still plays the full animation.</summary>
+        public void RequestCrimp()
+        {
+            int next = NextCrimpableEnd();
+            if (next == 0)
+            {
+                Debug.Log("[CrimpingStationController] Nothing to crimp - either both ends are done, " +
+                          "or the next end still has empty pins.", this);
+                return;
+            }
+
+            if (CrimpToolCrimpController.Instance != null)
+                CrimpToolCrimpController.Instance.TryDropOnCrimpAnchor(next);
+            else
+                CrimpEnd(next); // no animation rig in the scene - crimp instantly rather than dead-ending
+        }
+
+        /// <summary>Lowest-numbered end that's fully arranged and not yet crimped, or 0 if there isn't one.</summary>
+        public int NextCrimpableEnd()
+        {
+            if (CanCrimpEnd(1)) return 1;
+            if (CanCrimpEnd(2)) return 2;
+            return 0;
+        }
+
+        // ------------------------------------------------------------------
+        // Reset
+        // ------------------------------------------------------------------
+
+        /// <summary>Full reset so the player can start a fresh cable - unlocks both ends, clears the
+        /// crimped snapshots, and rewinds the crimp animation rig. Wire this to a "Redo" button.</summary>
         public void ResetStation()
         {
-            IsCrimped = false;
+            endOneCrimped = false;
+            endTwoCrimped = false;
+            crimpedEndOne = null;
+            crimpedEndTwo = null;
+
             if (endOne != null) endOne.LockAllWires(false);
             if (endTwo != null) endTwo.LockAllWires(false);
+
+            if (CrimpToolCrimpController.Instance != null)
+                CrimpToolCrimpController.Instance.ResetForReplay();
         }
+
+        ConnectorEnd GetEnd(int endNumber) => endNumber == 1 ? endOne : endNumber == 2 ? endTwo : null;
     }
 }
