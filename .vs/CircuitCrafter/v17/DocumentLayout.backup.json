@@ -3,12 +3,32 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc2\\interactor\\playerinteractor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\interactor\\playerinteractor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\stageloop\\coc2procedurereset.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\stageloop\\coc2procedurereset.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\stageloop\\coc2stagedialogs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\stageloop\\coc2stagedialogs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3stationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3stationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\mainmenu\\campaignmenucontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\mainmenu\\campaignmenucontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\crimpdragdiagnostics.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -43,6 +63,67 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "PlayerInteractor.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Interactor\\PlayerInteractor.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Interactor\\PlayerInteractor.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Interactor\\PlayerInteractor.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC2\\Interactor\\PlayerInteractor.cs",
+              "ViewState": "AgIAAEAAAAAAAAAAAAAIwFIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-24T12:55:27.68Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "COC2ProcedureReset.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2ProcedureReset.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\StageLoop\\COC2ProcedureReset.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2ProcedureReset.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC2\\StageLoop\\COC2ProcedureReset.cs",
+              "ViewState": "AgIAAEoBAAAAAAAAAAAIwFUBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-24T12:07:25.419Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "COC2StageDialogs.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "ViewState": "AgIAAIgBAAAAAAAAAAAIwJcBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-24T11:45:13.292Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "COC3StationController.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "ViewState": "AgIAAHcBAAAAAAAAAAAIwIMBAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-24T10:47:22.215Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "CampaignMenuController.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\MainMenu\\CampaignMenuController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\MainMenu\\CampaignMenuController.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\MainMenu\\CampaignMenuController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\MainMenu\\CampaignMenuController.cs",
+              "ViewState": "AgIAALcAAAAAAAAAAAAIwMIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-23T05:09:44.292Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "NetworkTestStation.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
@@ -50,24 +131,23 @@
               "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
               "ViewState": "AgIAAC0BAAAAAAAAAAAIwDYBAAA1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-23T00:57:53.723Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-08-23T00:57:53.723Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "CrimpedCablePickup.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
               "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
               "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
-              "ViewState": "AgIAAHAAAAAAAAAAAAAAAHoAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAJwAAAAAAAAAAAAIwKUAAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-08-23T00:46:14.524Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 8,
               "Title": "CrimpToolCrimpDraggable.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\CrimpToolCrimpDraggable.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\CrimpToolCrimpDraggable.cs",
@@ -79,7 +159,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 7,
               "Title": "CrimpDragDiagnostics.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\CrimpDragDiagnostics.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\CrimpDragDiagnostics.cs",
@@ -91,7 +171,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 9,
               "Title": "CrimpToolCrimpController.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\CrimpToolCrimpController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\CrimpToolCrimpController.cs",
@@ -103,7 +183,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 10,
               "Title": "CrimpingViewController.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Interactor\\CrimpingViewController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Interactor\\CrimpingViewController.cs",
@@ -115,7 +195,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 11,
               "Title": "CrimpingStationController.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Interactor\\CrimpingStationController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Interactor\\CrimpingStationController.cs",

@@ -277,8 +277,38 @@ public class COC3StationController : MonoBehaviour
 
         if (useWaypoint && hideWaypointWhileUsing && active) ClearWaypoint();
 
-        Cursor.lockState = active ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible = active;
+        ApplyCursorMode(active);
+    }
+
+    /// <summary>
+    /// Free the cursor inside a step view, capture it again for walking - on desktop only.
+    ///
+    /// WHY THE PLATFORM GUARD
+    /// This method is called from Awake() with active=false, so on a mobile target it used to
+    /// lock the cursor the instant the scene opened. On a phone that is harmless, because
+    /// Cursor.lockState does nothing there. In the EDITOR it is not harmless: the Editor is a
+    /// desktop application whatever the build target, so the lock takes effect - and a locked
+    /// cursor makes Input.mousePosition stop tracking and report the screen centre.
+    ///
+    /// The EventSystem feeds that position to the raycaster, so EVERY UI click lands dead
+    /// centre of the screen. A virtual joystick in the corner can never be reached, which
+    /// reads as "the joystick is broken" rather than "the pointer is pinned". Opening the
+    /// pause menu appears to fix it only because that unlocks the cursor.
+    ///
+    /// MouseLook.Start() already guards its own lock exactly this way. This brings the two
+    /// into line, so switching the build target to Android is enough to test the touch
+    /// controls with a mouse.
+    /// </summary>
+    private static void ApplyCursorMode(bool inStepView)
+    {
+#if UNITY_ANDROID || UNITY_IOS
+        // Nothing to lock on touch, and locking it in the Editor breaks on-screen controls.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+#else
+        Cursor.lockState = inStepView ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = inStepView;
+#endif
     }
 
     // ==================================================================

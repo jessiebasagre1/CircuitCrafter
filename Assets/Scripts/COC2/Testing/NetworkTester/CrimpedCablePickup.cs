@@ -35,7 +35,7 @@ namespace CSSSimulation.Networking
 
         [Tooltip("Optional. Switched OFF when the finished cable appears on the table - put the crimping " +
                  "station's own connector objects here so the player doesn't see the same cable in two " +
-                 "places at once.")]
+                 "places at once. Switched back ON by ResetForReplay() after a failed test.")]
         public GameObject[] hideWhenAvailable;
 
         [Header("Availability")]
@@ -47,6 +47,7 @@ namespace CSSSimulation.Networking
         public bool IsAvailable { get; private set; }
 
         Collider trigger;
+        bool subscribed;
 
         void Awake()
         {
@@ -72,13 +73,20 @@ namespace CSSSimulation.Networking
 
             // Already finished (e.g. the player crimped, wandered off, and came back).
             if (station.IsCrimped) SetAvailable(true);
-            else station.OnBothEndsCrimped += HandleCrimpingFinished;
+            else Subscribe(station);
         }
 
         void OnDestroy()
         {
-            if (CrimpingStationController.Instance != null)
+            if (CrimpingStationController.Instance != null && subscribed)
                 CrimpingStationController.Instance.OnBothEndsCrimped -= HandleCrimpingFinished;
+        }
+
+        void Subscribe(CrimpingStationController station)
+        {
+            if (subscribed || station == null) return;
+            station.OnBothEndsCrimped += HandleCrimpingFinished;
+            subscribed = true;
         }
 
         void HandleCrimpingFinished()
@@ -127,6 +135,41 @@ namespace CSSSimulation.Networking
             if (cableVisual != null) cableVisual.SetActive(false);
 
             gameObject.SetActive(false); // "goes into the pocket", same as the crimping tool
+        }
+
+        /// <summary>
+        /// Puts this pickup back to how it was before the player ever crimped anything, so the
+        /// whole procedure can be run again. Called by COC2ProcedureReset after a failed test.
+        ///
+        /// Three things have to be undone, and it's the third one that's easy to miss: Interact()
+        /// deactivates this GameObject, and an inactive object's trigger never fires, so without
+        /// re-activating it the "Press E" prompt would never come back even once the cable had
+        /// been re-crimped.
+        ///
+        /// Safe to call on an inactive GameObject - a plain public method still runs, it's only
+        /// coroutines and Invoke() that need an active object.
+        /// </summary>
+        public void ResetForReplay()
+        {
+            SetAvailable(false);
+
+            // The station's own connector meshes went off when the finished cable appeared. The
+            // player is about to build that cable again, so they have to come back.
+            if (hideWhenAvailable != null)
+            {
+                foreach (var obj in hideWhenAvailable)
+                {
+                    if (obj != null) obj.SetActive(true);
+                }
+            }
+
+            gameObject.SetActive(true);
+
+            // Start() only subscribed if the station wasn't already crimped when the scene loaded.
+            // Re-check here so a pickup that started life on an already-finished station still
+            // hears about the NEXT crimp.
+            if (requireCrimpingFinished)
+                Subscribe(CrimpingStationController.Instance);
         }
     }
 }
