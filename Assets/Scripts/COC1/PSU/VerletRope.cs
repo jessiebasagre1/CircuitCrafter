@@ -35,6 +35,18 @@ public class VerletRope : MonoBehaviour
     public LayerMask collisionMask;
     public float collisionRadius = 0.01f;
 
+    [Header("Time")]
+    [Tooltip("Leave OFF for COC1 - the PSU harness should freeze with the rest of the game when " +
+             "something pauses it.\n\n" +
+             "Turn ON for any cable the player can drag while the game is paused - COC2's patch " +
+             "cords, where ESC unlocks the cursor and stops time at the same moment.\n\n" +
+             "Unity does not call FixedUpdate AT ALL while Time.timeScale is 0. A rope pinned there " +
+             "stops tracking its anchors, while a drag driven from Update keeps running - so the " +
+             "plug travels and the cord stays behind, then snaps to it the instant time resumes. " +
+             "With this on the simulation runs from Update on unscaled time, so it follows the plug " +
+             "no matter who paused the game.")]
+    public bool useUnscaledTime = false;
+
     [Header("Rendering")]
     public float cableRadius = 0.008f;
     [Range(3, 12)] public int radialSegments = 6;
@@ -129,13 +141,27 @@ public class VerletRope : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (useUnscaledTime) return;          // Update() is driving it instead
+        Simulate(Time.fixedDeltaTime);
+    }
+
+    void Update()
+    {
+        if (!useUnscaledTime) return;         // FixedUpdate() is driving it instead
+        // Clamped because an editor hitch or a loading stall can hand back a huge unscaled delta,
+        // which would fling the rope across the scene in one step.
+        Simulate(Mathf.Min(Time.unscaledDeltaTime, 0.05f));
+    }
+
+    private void Simulate(float dt)
+    {
         if (points == null) return;
 
         // Endpoints track the live anchor transforms every step.
         points[0] = startAnchor.position;
         points[segCount - 1] = endAnchor.position;
 
-        Integrate();
+        Integrate(dt);
         for (int i = 0; i < constraintIterations; i++)
             SatisfyConstraints();
 
@@ -143,9 +169,9 @@ public class VerletRope : MonoBehaviour
             ResolveCollisions();
     }
 
-    private void Integrate()
+    private void Integrate(float dt)
     {
-        float dtSq = Time.fixedDeltaTime * Time.fixedDeltaTime;
+        float dtSq = dt * dt;
         for (int i = 1; i < segCount - 1; i++)
         {
             Vector3 current = points[i];
@@ -202,6 +228,19 @@ public class VerletRope : MonoBehaviour
     void LateUpdate()
     {
         if (points == null) return;
+
+        // Update-driven mode only: the drag script and this one both run in Update, and script
+        // order decides which goes first. If the rope simulated before the plug moved, its end
+        // point would be one frame stale - a small but visible lag that reads as the cord
+        // "chasing" the plug. Re-pin here, after every Update in the frame has run, so the ends
+        // are exactly on the anchors at the moment the mesh is built.
+        // FixedUpdate-driven ropes are left alone: COC1's behaviour is unchanged.
+        if (useUnscaledTime && startAnchor != null && endAnchor != null)
+        {
+            points[0] = startAnchor.position;
+            points[segCount - 1] = endAnchor.position;
+        }
+
         BuildTubeMesh();
     }
 

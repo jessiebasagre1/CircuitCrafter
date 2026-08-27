@@ -35,7 +35,9 @@ namespace CSSSimulation.Networking
     /// </summary>
     public class COC2StageDialogs : MonoBehaviour
     {
-        enum Stage { None, Stripping, Wiring, Crimping, Testing }
+        enum Stage { None, Stripping, Wiring, Crimping, Testing, PatchPanel }
+
+        const int StageCount = 6;
 
         public static COC2StageDialogs Instance { get; private set; }
 
@@ -149,6 +151,39 @@ namespace CSSSimulation.Networking
         };
 
         // ------------------------------------------------------------------
+        // Stage 5 - Patch panel
+        // ------------------------------------------------------------------
+
+        [Header("Stage 5 - Patch panel")]
+        public DialogSequence patchPanelAsset;
+        [TextArea(2, 6)]
+        public string[] patchPanelLines =
+        {
+            "Stage 5 of 5: terminating the run onto a patch panel.",
+
+            "A patch panel is the fixed end of structured cabling. Every permanent cable run in the " +
+            "building comes back to a rack and terminates here - not on a plug, but on an IDC block. " +
+            "IDC stands for Insulation Displacement Contact.",
+
+            "That's the difference between the two halves of this competency. A PATCH CORD is short, " +
+            "flexible, stranded, and gets an RJ45 crimped on each end - that's the cable you just " +
+            "built. A HORIZONTAL RUN is permanent and solid-core, and gets punched down at both ends: " +
+            "patch panel at the rack, wall outlet at the desk.",
+
+            "The punch-down tool does two jobs in one stroke. It presses the conductor into the IDC " +
+            "contact, whose blades slice through the insulation to reach the copper, and it trims the " +
+            "tail flush. Never do this with a screwdriver - it seats the wire without cutting it and " +
+            "leaves a whisker that can short to its neighbour.",
+
+            "The panel is printed with both colour codes, T568A and T568B. Pick whichever the rest of " +
+            "the installation uses and stay on it. Mixing standards between the panel and the outlet " +
+            "is how you build a crossover by accident.",
+
+            "Place all eight conductors into their positions, then drag the punch-down tool onto the " +
+            "panel to seat them."
+        };
+
+        // ------------------------------------------------------------------
         // Results
         // ------------------------------------------------------------------
 
@@ -182,6 +217,33 @@ namespace CSSSimulation.Networking
             "rebuild the cable from the jacket up - so that's exactly what we're going to do.",
 
             "Back to stripping. Take your time with the colour order this run."
+        };
+
+        [Header("Result - PATCH PANEL")]
+        [Tooltip("Shown when the punch-down follows the standard.")]
+        [TextArea(2, 6)]
+        public string[] panelPassLines =
+        {
+            "All eight conductors follow the standard, seated in their contacts and trimmed flush. " +
+            "That port is ready to patch.",
+
+            "And that's both halves of installing network cables: a crimped patch cord, and a " +
+            "punched-down permanent run."
+        };
+        [Tooltip("Shown when it doesn't. The offending positions are inserted between these lines " +
+                 "and the closing ones.")]
+        [TextArea(2, 6)]
+        public string[] panelFailLines =
+        {
+            "That termination wouldn't pass inspection."
+        };
+        [TextArea(2, 6)]
+        public string[] panelFailClosingLines =
+        {
+            "Punched-down conductors get cut out and re-dressed, and you lose an inch of cable every " +
+            "time you do it - which is why the colour code gets checked before the tool comes out.",
+
+            "The conductors are back in the tray. Work the panel's printed code position by position."
         };
 
         // ------------------------------------------------------------------
@@ -220,8 +282,8 @@ namespace CSSSimulation.Networking
         // ------------------------------------------------------------------
 
         Stage currentStage = Stage.None;
-        readonly bool[] shown = new bool[5]; // indexed by (int)Stage
-        DialogSequence[] cache = new DialogSequence[5];
+        readonly bool[] shown = new bool[StageCount]; // indexed by (int)Stage
+        DialogSequence[] cache = new DialogSequence[StageCount];
         bool resultHandled;
         bool testerWasTested;
 
@@ -307,6 +369,13 @@ namespace CSSSimulation.Networking
         /// single frame where two views overlap during a hand-off resolves to the new one.</summary>
         Stage DetectStage()
         {
+            // The punch-down stage. This used to read PatchPanelStation, which drove the 3D panel
+            // directly; the stage now lives on its own set with its own camera, so it is
+            // PunchDownStation that owns the view. Nothing else about stage 5 changed - the
+            // briefing, the pass copy and the fail copy below are all still used as they were.
+            if (PunchDownStation.Instance != null && PunchDownStation.Instance.InStageView)
+                return Stage.PatchPanel;
+
             if (NetworkTestStation.Instance != null && NetworkTestStation.Instance.InTesterView)
                 return Stage.Testing;
 
@@ -356,6 +425,7 @@ namespace CSSSimulation.Networking
                 case Stage.Wiring: return wiringAsset;
                 case Stage.Crimping: return crimpingAsset;
                 case Stage.Testing: return testingAsset;
+                case Stage.PatchPanel: return patchPanelAsset;
                 default: return null;
             }
         }
@@ -368,8 +438,49 @@ namespace CSSSimulation.Networking
                 case Stage.Wiring: return wiringLines;
                 case Stage.Crimping: return crimpingLines;
                 case Stage.Testing: return testingLines;
+                case Stage.PatchPanel: return patchPanelLines;
                 default: return null;
             }
+        }
+
+        // ------------------------------------------------------------------
+        // Patch panel result
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Called by PunchDownStation once a punch-down has been judged. The station supplies the
+        /// reason because it judges against a WireStandardSO, not a CableTypeSO - a patch panel
+        /// doesn't care what's on the far end, only that it follows the standard the installation
+        /// uses.
+        ///
+        /// onClosed runs when the player finishes reading, which is what drives the panel reset.
+        /// It is always invoked, even when there is no DialogManager, so the station can never
+        /// stall waiting on a popup that never appeared.
+        /// </summary>
+        public void ShowPanelResult(bool passed, string reason, System.Action onClosed)
+        {
+            var sequence = ScriptableObject.CreateInstance<DialogSequence>();
+
+            if (passed)
+            {
+                AddLines(sequence, panelPassLines);
+            }
+            else
+            {
+                AddLines(sequence, panelFailLines);
+                if (includeFailureReason && !string.IsNullOrEmpty(reason)) AddLine(sequence, reason);
+                AddLines(sequence, panelFailClosingLines);
+            }
+
+            // A failed panel sends the player round this stage again, so the briefing should be
+            // allowed to reappear if they've asked for replays.
+            if (!passed && replayTutorialsOnRetry) shown[(int)Stage.PatchPanel] = false;
+
+            // Same reason currentStage is cleared on a cable-test retry: the stage is about to
+            // change underneath us and must register as a fresh entry, not "no change".
+            if (!passed) currentStage = Stage.None;
+
+            Show(sequence, onClosed);
         }
 
         // ------------------------------------------------------------------
@@ -395,17 +506,7 @@ namespace CSSSimulation.Networking
             if (passed) HandlePass();
             else HandleFail();
         }
-        /// <summary>Clears the remembered verdict so the NEXT attempt's pass/fail dialog fires again.
-        /// Called by COC2BothCablesGate after it winds the procedure back for the second cable type.</summary>
-        public void ResetForNextAttempt(bool replayTutorials)
-        {
-            resultHandled = false;
-            testerWasTested = false;
-            currentStage = Stage.None;
 
-            if (replayTutorials)
-                for (int i = 0; i < shown.Length; i++) shown[i] = false;
-        }
         void HandlePass()
         {
             OnTestPassed?.Invoke();
@@ -424,12 +525,34 @@ namespace CSSSimulation.Networking
             Show(sequence, restartAutomaticallyOnFail ? (System.Action)Restart : null);
         }
 
-        void Restart()
+        /// <summary>
+        /// Winds this component's own memory back so the player can go round again: the test result
+        /// is un-handled, the tester is re-armed, and the stage briefings are allowed to reappear.
+        ///
+        /// This is the DIALOG half of a retry and nothing else. It deliberately does NOT call
+        /// COC2ProcedureReset - anything driving its own retry (a gate moving the player from the
+        /// first cable to the second, a Try Again button, a stage that resets only itself) already
+        /// owns that decision and would get a double reset if this made it too. Restart() below is
+        /// the version that does both, and it is what a failed cable test uses.
+        ///
+        /// Uses the Replay Tutorials On Retry setting from the Inspector.
+        /// </summary>
+        public void ResetForNextAttempt()
+        {
+            ResetForNextAttempt(replayTutorialsOnRetry);
+        }
+
+        /// <summary>
+        /// As above, but decides about the briefings at the call site instead of reading the
+        /// Inspector - for a caller that wants them replayed on a full restart but suppressed when
+        /// the player is only repeating one stage.
+        /// </summary>
+        public void ResetForNextAttempt(bool replayTutorials)
         {
             resultHandled = false;
             testerWasTested = false;
 
-            if (replayTutorialsOnRetry)
+            if (replayTutorials)
             {
                 for (int i = 0; i < shown.Length; i++) shown[i] = false;
             }
@@ -437,6 +560,11 @@ namespace CSSSimulation.Networking
             // The stage the player was in has gone away underneath us; clear it so the stripping
             // view registers as a fresh entry rather than "no change since last frame".
             currentStage = Stage.None;
+        }
+
+        void Restart()
+        {
+            ResetForNextAttempt(replayTutorialsOnRetry);
 
             if (procedureReset != null)
             {

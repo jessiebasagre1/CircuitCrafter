@@ -187,34 +187,7 @@ namespace CSSSimulation.Networking
             }
         }
 
-        /// <summary>
-        /// COC2 has TWO independent testing rigs and this only wound back one of them.
-        ///
-        /// NetworkTestStation is the animated station: its own plug, its own Animator, its own
-        /// HasTested flag. The bench tester is the two-unit LED rig, where CableTesterPlugController
-        /// owns the plugs sitting in the jacks and CableTesterController owns the LED walk.
-        ///
-        /// Nothing in the project called CableTesterPlugController.ResetPlugs() or
-        /// CableTesterController.ResetTester() - they existed and were never reached. So a plug
-        /// left seated in the end-1 jack STAYED seated through a restart: the next run began with
-        /// end 1 apparently already crimped and already plugged in, and TryDropOnJack refused to
-        /// re-seat it because jack.seated was still true.
-        /// </summary>
         void RewindTester()
-        {
-            RewindStationTester();
-            RewindBenchTester();
-
-            // The cable is neither in the pocket nor in a tester any more - it's about to be
-            // rebuilt from scratch.
-            //
-            // Deliberately out here rather than inside RewindStationTester: it used to sit behind
-            // that method's `tester == null` early return, so a scene using only the bench tester
-            // never cleared the inventory and the player kept a phantom finished cable.
-            if (CableInventory.Instance != null) CableInventory.Instance.Consume();
-        }
-
-        void RewindStationTester()
         {
             var tester = NetworkTestStation.Instance;
             if (tester == null) return;
@@ -234,20 +207,10 @@ namespace CSSSimulation.Networking
             }
 
             if (tester.resultText != null) tester.resultText.text = "";
-        }
 
-        void RewindBenchTester()
-        {
-            // PLUGS FIRST. jack.seated is what gates a re-plug, and CablePlugDraggable.ResetToHome()
-            // is only ever called from here - leave it and the RJ45 prop stays sitting in the jack
-            // for the rest of the session.
-            if (CableTesterPlugController.Instance != null)
-                CableTesterPlugController.Instance.ResetPlugs();
-
-            // Then the tester itself: stops any running LED walk, drops LastReport, switches every
-            // LED off and clears the result readout.
-            if (CableTesterController.Instance != null)
-                CableTesterController.Instance.ResetTester();
+            // The cable is neither in the pocket nor in the tester any more - it's about to be
+            // rebuilt from scratch.
+            if (CableInventory.Instance != null) CableInventory.Instance.Consume();
         }
 
         void RearmCablePickup()
@@ -322,10 +285,8 @@ namespace CSSSimulation.Networking
                     break;
 
                 case RestartEntry.ReturnToPlayer:
-                    // Via CursorControl, not Cursor directly: capturing the cursor on a mobile
-                    // build target pins Input.mousePosition to the screen centre in the Editor and
-                    // the on-screen joystick stops responding. CursorControl no-ops on touch.
-                    CursorControl.Capture();
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
                     break;
             }
         }

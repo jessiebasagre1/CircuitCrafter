@@ -26,6 +26,10 @@ namespace CSSSimulation.Networking
         public string crimpTaskId = "crimp_cable";
         [Tooltip("Must match CableTesterController.taskId.")]
         public string testTaskId = "test_cable";
+        [Tooltip("Must match PunchDownStation.taskId. Clear it if you're not running the punch " +
+                 "down stage. Note PunchDownStation also GATES itself on testTaskId being " +
+                 "complete, so that one has to stay registered either way.")]
+        public string patchPanelTaskId = "punch_patch_panel";
 
         [Header("Steps")]
         [Tooltip("How many crimps count as the crimping task. 1 = the task completes when the whole " +
@@ -33,6 +37,9 @@ namespace CSSSimulation.Networking
         public int crimpSteps = 1;
         [Tooltip("How many passing tests count as the testing task.")]
         public int testSteps = 1;
+        [Tooltip("How many correctly terminated ports count as the patch panel task. Raise this if " +
+                 "you add more ports later - PunchDownStation reports once per passing punch-down.")]
+        public int patchPanelSteps = 1;
 
         void Start()
         {
@@ -49,7 +56,11 @@ namespace CSSSimulation.Networking
             if (!string.IsNullOrEmpty(testTaskId))
                 TaskManager.Instance.RegisterTask(testTaskId, Mathf.Max(1, testSteps));
 
-            Debug.Log($"[COC2TaskSetup] Registered '{crimpTaskId}' and '{testTaskId}' with TaskManager.");
+            if (!string.IsNullOrEmpty(patchPanelTaskId))
+                TaskManager.Instance.RegisterTask(patchPanelTaskId, Mathf.Max(1, patchPanelSteps));
+
+            Debug.Log($"[COC2TaskSetup] Registered '{crimpTaskId}', '{testTaskId}' and " +
+                      $"'{patchPanelTaskId}' with TaskManager.");
         }
     }
 }
