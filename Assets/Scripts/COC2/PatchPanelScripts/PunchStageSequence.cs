@@ -56,6 +56,15 @@ namespace CSSSimulation.Networking
                  "Ignored when Conductor Sets has entries.")]
         public Transform conductorGroup;
 
+        [Tooltip("Keep each cable's conductors hidden until that port comes up.\n\n" +
+                 "Ports already TERMINATED stay visible - the work the player has done does not " +
+                 "disappear behind them. Only the ports still to come are hidden, so the panel " +
+                 "fills up as the job progresses.\n\n" +
+                 "It switches renderers, not GameObjects: a hidden conductor is also un-grabbable, " +
+                 "because the pick test skips renderers that are off. Only meaningful with " +
+                 "Conductor Sets filled in.")]
+        public bool hideUntilTurn = true;
+
         [Header("Ports")]
         [Range(1, 8)] public int portCount = 8;
 
@@ -132,6 +141,31 @@ namespace CSSSimulation.Networking
             if (logResult)
                 Debug.LogWarning("[PunchStageSequence] Port " + (index + 1) + " will be terminated " +
                                  "with '" + set.name + "' (" + found.Length + " conductors).", this);
+        }
+
+        /// <summary>
+        /// Everything up to and including the current port is on screen; everything after it is
+        /// hidden.
+        ///
+        /// The "up to AND INCLUDING" is the part that matters - a finished port keeps its eight
+        /// conductors sitting terminated in the block, so the panel visibly fills up as the job
+        /// goes on. Hiding those too would erase the player's work every time they moved along.
+        /// </summary>
+        void ApplyVisibility()
+        {
+            if (conductorSets == null) return;
+
+            for (int i = 0; i < conductorSets.Length; i++)
+            {
+                Transform set = conductorSets[i];
+                if (set == null) continue;
+
+                bool visible = i <= CurrentPort;
+                foreach (var c in set.GetComponentsInChildren<PunchStageConductor>(true))
+                {
+                    if (c != null) c.SetVisible(visible);
+                }
+            }
         }
 
         void RecaptureConductorHomes()
@@ -262,6 +296,10 @@ namespace CSSSimulation.Networking
         {
             CurrentPort = Mathf.Clamp(index, 0, portCount - 1);
 
+            // Retries belong to the port being worked, not to the whole visit - so a player who
+            // needed three goes at port 2 starts port 3 on attempt one.
+            if (board != null) board.BeginNewPort();
+
             if (pinGroup == null)
             {
                 Debug.LogWarning("[PunchStageSequence] Pin Group is empty, so the markers stay on " +
@@ -278,6 +316,7 @@ namespace CSSSimulation.Networking
             if (UsingSets)
             {
                 SwapToSet(CurrentPort);
+                if (hideUntilTurn) ApplyVisibility();
             }
             else if (conductorGroup != null && measured)
             {
@@ -312,6 +351,7 @@ namespace CSSSimulation.Networking
                 }
                 GoToPort(0);
                 if (board != null) board.ResetStage();
+                if (hideUntilTurn) ApplyVisibility();
             }
             else
             {

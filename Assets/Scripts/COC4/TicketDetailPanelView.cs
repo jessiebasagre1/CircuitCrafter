@@ -1,0 +1,122 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using TMPro;
+
+/// <summary>
+/// Detail panel shown when a ticket row is clicked. Displays the ticket's
+/// title/description and lets the player start it, then travel to the site.
+/// Same idea as ServiceReportView, but for a single selected ticket instead
+/// of a fixed checklist.
+///
+/// "Go to Site" is interactable once the ticket is InProgress OR Diagnosed
+/// (the player may need a second visit to actually apply the fix after
+/// diagnosing it) -- it loads the ticket's target scene via
+/// RepairTicketMode.Begin(ticket) + SceneManager.LoadScene(), same
+/// LoadScene convention as PauseMenuController/MenuNavigator.
+/// </summary>
+public class TicketDetailPanelView : MonoBehaviour
+{
+    [SerializeField] private GameObject panelRoot;
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private TMP_Text statusText;
+    [SerializeField] private Button startButton;
+
+    [Tooltip("Enabled once the ticket is InProgress or Diagnosed. Loads the ticket's Scene Name.")]
+    [SerializeField] private Button goToSiteButton;
+
+    [SerializeField] private TicketManager manager;
+
+    private TicketData _current;
+
+    public void Show(TicketData ticket, TicketStatus status)
+    {
+        _current = ticket;
+
+        if (panelRoot != null) panelRoot.SetActive(true);
+        if (titleText != null) titleText.text = ticket.title;
+        if (descriptionText != null) descriptionText.text = ticket.description;
+
+        Refresh(status);
+    }
+
+    public void Hide()
+    {
+        _current = null;
+        if (panelRoot != null) panelRoot.SetActive(false);
+    }
+
+    private void Refresh(TicketStatus status)
+    {
+        if (statusText != null)
+        {
+            statusText.text = status switch
+            {
+                TicketStatus.Open => "Open",
+                TicketStatus.InProgress => "In Progress",
+                TicketStatus.Diagnosed => "Diagnosed - repair pending",
+                TicketStatus.Resolved => "Resolved",
+                _ => status.ToString()
+            };
+        }
+
+        if (startButton != null)
+        {
+            startButton.interactable = status == TicketStatus.Open;
+            startButton.onClick.RemoveAllListeners();
+            startButton.onClick.AddListener(HandleStartClicked);
+        }
+
+        if (goToSiteButton != null)
+        {
+            // Once diagnosed, the player may still need to return and apply the fix.
+            goToSiteButton.interactable = status == TicketStatus.InProgress || status == TicketStatus.Diagnosed;
+            goToSiteButton.onClick.RemoveAllListeners();
+            goToSiteButton.onClick.AddListener(HandleGoToSiteClicked);
+        }
+    }
+
+    private void HandleGoToSiteClicked()
+    {
+        if (_current == null) return;
+
+        if (string.IsNullOrEmpty(_current.sceneName))
+        {
+            Debug.LogWarning($"[TicketDetailPanelView] Ticket '{_current.ticketId}' has no Scene Name set -- add one in its TicketData asset.");
+            return;
+        }
+
+        // Defensive reset: Time.timeScale is a global engine setting that survives
+        // SceneManager.LoadScene. A dialog earlier in this panel may have paused the game via
+        // DialogManager's pauseGameWhileOpen, and leaving it at 0 here freezes the target
+        // scene's own intro dialog/animations before they even start.
+        Time.timeScale = 1f;
+
+        // A ticket already sitting at Diagnosed means this is a return visit to apply a fix
+        // that was correctly diagnosed on an earlier trip -- tell RepairTicketMode so it
+        // doesn't reset IsDiagnosed and force the (now auto-popup) diagnostic panel on the
+        // player again for something they already got right.
+        bool alreadyDiagnosed = manager != null && manager.GetStatus(_current) == TicketStatus.Diagnosed;
+
+        RepairTicketMode.Begin(_current, alreadyDiagnosed);
+        SceneManager.LoadScene(_current.sceneName);
+    }
+
+    private void HandleStartClicked()
+    {
+        if (_current == null || manager == null) return;
+
+        var ticket = _current;
+        manager.StartTicket(ticket);
+
+        if (ticket.briefingDialog != null && DialogManager.Instance != null)
+        {
+            DialogManager.Instance.ShowDialog(ticket.briefingDialog, () => Refresh(manager.GetStatus(ticket)));
+        }
+        else
+        {
+            Refresh(manager.GetStatus(ticket));
+        }
+    }
+}

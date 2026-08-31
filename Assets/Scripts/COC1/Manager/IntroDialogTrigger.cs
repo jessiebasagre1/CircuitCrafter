@@ -26,12 +26,29 @@ public class IntroDialogTrigger : MonoBehaviour
 
         if (introDialog != null)
         {
+            // Free the cursor and lock player movement/look while the intro plays -- same
+            // pattern as this project's other full-screen panels (TicketDiagnosticPanelView,
+            // COC4StationController). Without this, nothing stops MouseLook from spinning the
+            // camera to any mouse movement made while the player is just trying to read.
+            PlayerInputLock.Acquire();
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
             DialogManager.Instance.ShowDialog(introDialog, OnIntroFinished);
         }
     }
 
     private void OnIntroFinished()
     {
+        PlayerInputLock.Release();
+
+        // Only re-lock if nothing else (another dialog, a station) still needs the cursor free.
+        if (!PlayerInputLock.IsLocked)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
         if (pcTarget != null && WaypointIndicator.Instance != null)
         {
             WaypointIndicator.Instance.SetTarget(pcTarget);

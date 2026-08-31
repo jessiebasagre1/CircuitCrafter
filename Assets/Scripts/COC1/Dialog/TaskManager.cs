@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,10 +22,23 @@ public class TaskManager : MonoBehaviour, ISaveable
         Instance = this;
     }
 
-    /// <summary>Call once at the start of a level/scene to define a task and how many steps it needs.</summary>
+    /// <summary>Call once at the start of a level/scene to define a task and how many steps it needs.
+    /// If the task is already registered (e.g. a save was restored before this ran), the
+    /// required step count is updated in place instead of being ignored -- otherwise a task's
+    /// required count could get permanently stuck at whatever value an old save captured,
+    /// even after the scene's own setup script asks for a different one. isComplete is
+    /// re-derived from the (unchanged) current progress against the new required count, so a
+    /// task that only *looked* finished under the old count correctly reopens if it isn't
+    /// actually finished under the new one.</summary>
     public void RegisterTask(string taskId, int requiredSteps)
     {
-        if (tasks.ContainsKey(taskId)) return;
+        if (tasks.TryGetValue(taskId, out TaskProgress existing))
+        {
+            existing.required = requiredSteps;
+            existing.isComplete = existing.current >= existing.required;
+            tasks[taskId] = existing;
+            return;
+        }
         tasks[taskId] = new TaskProgress(requiredSteps);
     }
 
@@ -40,7 +53,7 @@ public class TaskManager : MonoBehaviour, ISaveable
         {
             progress.isComplete = true;
             tasks[taskId] = progress;
-            Debug.Log($"[TaskManager] '{taskId}' COMPLETED — firing OnTaskCompleted"); // temporary
+            Debug.Log($"[TaskManager] '{taskId}' COMPLETED ï¿½ firing OnTaskCompleted"); // temporary
             OnTaskCompleted?.Invoke(taskId);
         }
         else
@@ -53,7 +66,7 @@ public class TaskManager : MonoBehaviour, ISaveable
         tasks.TryGetValue(taskId, out TaskProgress p) && p.isComplete;
 
     // ---------------------------------------------------------------
-    // ISaveable — lets SaveManager persist/restore task progress with no
+    // ISaveable ï¿½ lets SaveManager persist/restore task progress with no
     // changes needed on its end.
     // ---------------------------------------------------------------
 
@@ -85,7 +98,7 @@ public class TaskManager : MonoBehaviour, ISaveable
         foreach (var entry in wrapper.items)
         {
             // Rebuilds the entry directly (including required) rather than
-            // relying on RegisterTask having already run first — this way
+            // relying on RegisterTask having already run first ï¿½ this way
             // restore works correctly regardless of whether RegisterTask
             // calls happen before or after LoadSave() in your scene's
             // startup order.

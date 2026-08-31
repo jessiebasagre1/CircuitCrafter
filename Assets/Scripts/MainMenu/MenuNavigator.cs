@@ -24,6 +24,19 @@ using UnityEngine;
 /// from the TOP section of the dropdown - the static-parameter section. A GameObject slot
 /// appears under it; drag the screen you want in there. The lower "Dynamic GameObject" section
 /// is the wrong one: it has no slot and passes nothing.
+///
+/// EXIT CONFIRMATION
+/// This is a popup, not a screen - do NOT add Exit Confirm Panel to the Screens list. It sits
+/// on top of whatever screen is currently showing (e.g. the main menu stays visible behind it)
+/// instead of replacing it. Assign the panel below, wire the Exit button's OnClick to
+/// MenuNavigator > Quit as before, then on the panel wire Yes to MenuNavigator > ConfirmQuit
+/// and No to MenuNavigator > CancelQuit. Quit shows the popup AND locks the screen behind it
+/// (via an auto-added CanvasGroup) so its buttons can't be clicked or tabbed to until the
+/// player answers; CancelQuit unlocks it again. For best results also give the popup its own
+/// full-screen background Image with Raycast Target on, sitting as the last sibling under the
+/// Canvas so it visually covers everything - the CanvasGroup lock is the safety net if that
+/// background doesn't quite cover the whole screen. Leave Exit Confirm Panel empty if you want
+/// Quit to close the game immediately with no prompt, e.g. for a quick test build.
 /// </summary>
 public class MenuNavigator : MonoBehaviour
 {
@@ -33,6 +46,13 @@ public class MenuNavigator : MonoBehaviour
 
     [Tooltip("The screen shown when the scene opens - your title screen with the Start button.")]
     [SerializeField] private GameObject firstScreen;
+
+    [Header("Exit Confirmation")]
+    [Tooltip("A popup shown over the current screen when Exit is pressed, with Yes/No choices. " +
+             "Do NOT add this to the Screens list above - it is not one of the mutually exclusive " +
+             "screens, it overlays whichever one is already showing. Leave empty to skip the " +
+             "prompt and quit immediately.")]
+    [SerializeField] private GameObject exitConfirmPanel;
 
     [Header("Housekeeping")]
     [Tooltip("Free and show the mouse cursor when the menu opens. Leave this ON: MouseLook locks " +
@@ -47,6 +67,11 @@ public class MenuNavigator : MonoBehaviour
     [Tooltip("Clear any assessment run still marked as active. Reaching the menu means the run " +
              "is over - without this, a Story Mode launch afterwards would start in assessment.")]
     [SerializeField] private bool endAssessmentOnStart = true;
+
+    [Tooltip("Clear all COC4 ticket progress for the session. Reaching the menu means COC4 should " +
+             "start fresh next time it's entered, like a new assignment sheet, rather than resuming " +
+             "whichever tickets were left resolved/in-progress from a previous visit.")]
+    [SerializeField] private bool clearTicketProgressOnStart = true;
 
     /// <summary>The screen currently on show. Read-only, for anything that wants to ask.</summary>
     public GameObject Current { get; private set; }
@@ -71,7 +96,17 @@ public class MenuNavigator : MonoBehaviour
         // graded one.
         if (endAssessmentOnStart) AssessmentMode.End();
 
+        // Same reasoning as AssessmentMode above: TicketSessionState is a static that
+        // survives LoadScene, which is what lets a ticket correctly stay Resolved through a
+        // Hub -> repair-site scene -> Hub round trip -- but reaching the Main Menu means this
+        // COC4 session is over, and the next one should start every ticket fresh.
+        if (clearTicketProgressOnStart) TicketSessionState.Clear();
+
         WarnAboutNesting();
+
+        // The popup should never be the thing greeting the player on scene load, no matter what
+        // state it was left in while editing the scene.
+        if (exitConfirmPanel != null) exitConfirmPanel.SetActive(false);
 
         history.Clear();
         Current = null;
@@ -116,8 +151,61 @@ public class MenuNavigator : MonoBehaviour
         Apply(previous);
     }
 
-    /// <summary>Wire the Exit button here.</summary>
+    /// <summary>
+    /// Wire the Exit button here. If an Exit Confirm Panel is assigned, this pops it up over
+    /// whatever screen is currently showing and locks that screen so its buttons can't be
+    /// clicked (or tabbed to) while the popup is up - the actual quit happens in ConfirmQuit().
+    /// With no panel assigned, this quits immediately instead.
+    /// </summary>
     public void Quit()
+    {
+        if (exitConfirmPanel != null)
+        {
+            SetScreenInteractable(Current, false);
+            exitConfirmPanel.SetActive(true);
+            return;
+        }
+
+        DoQuit();
+    }
+
+    /// <summary>Wire the exit prompt's Yes button here.</summary>
+    public void ConfirmQuit()
+    {
+        DoQuit();
+    }
+
+    /// <summary>
+    /// Wire the exit prompt's No button here. Hides the popup and unlocks the screen behind it -
+    /// it was never switched off, only made unclickable, so there's nothing to restore beyond that.
+    /// </summary>
+    public void CancelQuit()
+    {
+        if (exitConfirmPanel != null) exitConfirmPanel.SetActive(false);
+        SetScreenInteractable(Current, true);
+    }
+
+    /// <summary>
+    /// Adds a CanvasGroup to the screen if it doesn't have one yet, then uses it to lock the
+    /// screen out. interactable=false stops its Buttons/Toggles/etc firing (and stops keyboard
+    /// or gamepad navigation landing on them); blocksRaycasts=false lets clicks that land outside
+    /// the popup pass through to nothing instead of hitting the menu underneath. This is on top
+    /// of - not instead of - putting the popup's own background Image (with Raycast Target on)
+    /// over the full screen; the CanvasGroup is what still protects you if that background is
+    /// ever resized to something smaller than the whole canvas.
+    /// </summary>
+    private void SetScreenInteractable(GameObject screen, bool value)
+    {
+        if (screen == null) return;
+
+        var group = screen.GetComponent<CanvasGroup>();
+        if (group == null) group = screen.AddComponent<CanvasGroup>();
+
+        group.interactable = value;
+        group.blocksRaycasts = value;
+    }
+
+    private void DoQuit()
     {
         Debug.Log("[MenuNavigator] Quit requested.");
 

@@ -45,9 +45,35 @@ namespace CSSSimulation.Networking
         [Tooltip("Grows the pick area by this many world units, so a thin wire is still easy to grab.")]
         public float pickPadding = 0.008f;
 
+        [Tooltip("Multiplies Pick Padding while the input is a TOUCH.\n\n" +
+                 "A mouse cursor is a point; a fingertip covers several millimetres of screen and " +
+                 "hides what is under it. Padding tuned against a cursor makes a conductor feel " +
+                 "slippery on a phone.\n\n" +
+                 "Safe to raise: this only decides which conductors are ELIGIBLE for a press. Which " +
+                 "one actually gets picked up is settled by the board, by whichever wire the touch " +
+                 "landed nearest to on screen.")]
+        public float touchPickBoost = 2f;
+
+        [Tooltip("The other end of this wire, at the cable. FILLED IN FOR YOU by " +
+                 "PunchStageConductorRig.\n\n" +
+                 "Used to work out which conductor a touch meant. Renderer bounds are axis-aligned " +
+                 "boxes, and eight wires fanning out from one cable have boxes that overlap almost " +
+                 "completely - so 'is the pointer inside my box' cannot tell blue from its " +
+                 "neighbour. Measuring to the LINE between this end and the tip can.")]
+        public Transform fixedEnd;
+
         [Header("Feel")]
         [Tooltip("Seconds the conductor takes to ease into a pin. 0 for an instant snap.")]
         public float seatDuration = 0.12f;
+
+        [Header("Physics wire")]
+        [Tooltip("The VerletRope drawing this conductor. FILLED IN FOR YOU by " +
+                 "PunchStageConductorRig - leave it empty unless you built the wire by hand.\n\n" +
+                 "It exists so ReturnHome() can straighten the rope instantly. Without it, a " +
+                 "conductor sent home after a failed termination snaps back on its own while the " +
+                 "wire it is attached to stays strung out towards the pin, then crawls after it " +
+                 "over the next second or two - which reads as the retry not having worked.")]
+        public VerletRope rope;
 
         public bool IsDragging { get; private set; }
         /// <summary>True once seated in a pin.</summary>
@@ -125,6 +151,30 @@ namespace CSSSimulation.Networking
             renderers = rs;
         }
 
+        /// <summary>
+        /// Shows or hides this conductor's wire.
+        ///
+        /// It toggles the same renderers the pick test uses, which is the point: a hidden conductor
+        /// is also un-grabbable, because PointerOverSelf skips any renderer that is switched off.
+        /// One flag, and the wire is neither seen nor reachable - no second guard to keep in step.
+        ///
+        /// Renderers rather than the GameObject, deliberately. Deactivating the object would stop
+        /// its VerletRope simulating and, if it were done before the rig had built, would prevent
+        /// the wire being created at all.
+        /// </summary>
+        public void SetVisible(bool on)
+        {
+            if (renderers == null || renderers.Length == 0)
+            {
+                if (pickRenderers != null && pickRenderers.Length > 0) renderers = pickRenderers;
+                else renderers = GetComponentsInChildren<Renderer>(true);
+            }
+            foreach (var r in renderers)
+            {
+                if (r != null) r.enabled = on;
+            }
+        }
+
         /// <summary>The board calls this on itself, so a conductor never has to be wired by hand.</summary>
         public void Bind(PunchStageBoard owner)
         {
@@ -158,7 +208,16 @@ namespace CSSSimulation.Networking
 
             if (!IsDragging)
             {
-                if (PointerInput.Down && PointerOverSelf() && board.TryClaimDrag(this))
+                // The BOARD decides who gets picked up, not this conductor.
+                //
+                // It used to be "am I under the pointer, and can I claim the drag" - and with eight
+                // wires whose bounding boxes overlap, that meant the winner was whichever conductor
+                // Unity happened to call Update on first. Component order is arbitrary, so touching
+                // blue could pick up the wire beside it. Asking the board makes the nearest wire to
+                // the touch win every time, whatever order these run in.
+                if (PointerInput.Down &&
+                    board.ConductorForPress(PointerInput.Position) == this &&
+                    board.TryClaimDrag(this))
                     BeginDrag();
                 return;
             }
@@ -169,31 +228,75 @@ namespace CSSSimulation.Networking
             if (PointerInput.Up) EndDrag();
         }
 
-        bool PointerOverSelf()
+        /// <summary>
+        /// Is this conductor a CANDIDATE for a press at this screen point?
+        ///
+        /// A coarse test on purpose - renderer bounds are axis-aligned boxes and a fan of wires has
+        /// boxes that overlap heavily, so this will usually say yes for several conductors at once.
+        /// Narrowing that down to one is GrabScore's job, and the board's.
+        ///
+        /// Public so the board can run this over every conductor before deciding. The UI check that
+        /// used to live here has moved to the board too, so it runs once per press instead of eight
+        /// times.
+        /// </summary>
+        public bool IsPointerOverBounds(Vector2 screenPoint)
         {
-            // A tap on the tool icon can also line up with a conductor behind it, since none of this
-            // knows about uGUI. The parameterless call only checks the mouse, so touch needs the
-            // active finger's id.
-            if (EventSystem.current != null)
-            {
-                bool overUI = Input.touchCount > 0
-                    ? EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)
-                    : EventSystem.current.IsPointerOverGameObject();
-                if (overUI) return false;
-            }
+            if (board == null || board.StageCamera == null) return false;
 
             if (renderers == null || renderers.Length == 0)
                 renderers = GetComponentsInChildren<Renderer>(true);
 
-            Ray ray = board.StageCamera.ScreenPointToRay(PointerInput.Position);
+            float pad = pickPadding * (Input.touchCount > 0 ? Mathf.Max(1f, touchPickBoost) : 1f);
+
+            Ray ray = board.StageCamera.ScreenPointToRay(screenPoint);
             foreach (var r in renderers)
             {
                 if (r == null || !r.enabled || !r.gameObject.activeInHierarchy) continue;
                 Bounds b = r.bounds;
-                b.Expand(pickPadding);
+                b.Expand(pad);
                 if (b.IntersectRay(ray)) return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// How far, IN SCREEN PIXELS, this wire is from the given point. Lower wins.
+        ///
+        /// Measured to the LINE from the cable end to the tip rather than to a single point, because
+        /// the player grabs a wire anywhere along it - near the cable, halfway, at the end - and a
+        /// tip-only measurement would hand every press near the cable to whichever tip happened to
+        /// be closest, which is exactly the wrong answer.
+        ///
+        /// The line is a straight approximation of a rope that actually sags, so it is not perfect
+        /// in the middle. It does not have to be: it only has to separate eight wires from each
+        /// other, and they are far enough apart on screen that it does.
+        /// </summary>
+        public float GrabScore(Vector2 screenPoint)
+        {
+            Camera cam = board != null ? board.StageCamera : null;
+            if (cam == null) return float.MaxValue;
+
+            Vector3 tip3 = cam.WorldToScreenPoint(transform.position);
+            var tip = new Vector2(tip3.x, tip3.y);
+            if (tip3.z <= 0f) return float.MaxValue;          // behind the camera
+
+            if (fixedEnd == null) return Vector2.Distance(screenPoint, tip);
+
+            Vector3 root3 = cam.WorldToScreenPoint(fixedEnd.position);
+            if (root3.z <= 0f) return Vector2.Distance(screenPoint, tip);
+            var root = new Vector2(root3.x, root3.y);
+
+            return DistanceToSegment(screenPoint, root, tip);
+        }
+
+        static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float lenSq = ab.sqrMagnitude;
+            if (lenSq < 0.0001f) return Vector2.Distance(p, a);
+
+            float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / lenSq);
+            return Vector2.Distance(p, a + ab * t);
         }
 
         void BeginDrag()
@@ -272,6 +375,12 @@ namespace CSSSimulation.Networking
             if (!captured) return;
             if (seatRoutine != null) { StopCoroutine(seatRoutine); seatRoutine = null; }
             transform.SetPositionAndRotation(homePosition, homeRotation);
+
+            // Straighten the wire in the same frame the tip moves. The rope's points are still
+            // strung out to wherever the pin was; ForceRebuild re-lays them between the two anchors
+            // at their CURRENT positions, so the conductor and its wire arrive home together.
+            if (rope != null && rope.startAnchor != null && rope.endAnchor != null)
+                rope.ForceRebuild();
         }
 
         /// <summary>Back in the tray, unlocked, ready to be dragged again.</summary>

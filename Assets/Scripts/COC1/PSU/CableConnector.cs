@@ -176,7 +176,23 @@ public class CableConnector : MonoBehaviour
         float dist = Vector3.Distance(transform.position, socket.snapPoint.position);
         float angle = Quaternion.Angle(transform.rotation, socket.snapPoint.rotation);
         if (dist <= snapDistance && angle <= snapAngle)
+        {
             Plug(socket);
+        }
+        else
+        {
+            // DEBUG: a socket was found nearby (close enough to highlight, which uses a more
+            // generous snapDistance * 2 radius and no rotation check) but the stricter final
+            // plug thresholds weren't met. If this keeps firing right when you release the
+            // cable directly at the socket, angle is almost always the culprit: dragging only
+            // moves position (see Update() above), never rotation, so the connector keeps
+            // whatever rotation it had at rest the whole time you drag it. Fix by rotating the
+            // connector's resting transform in the editor to sit closer to snapPoint's
+            // rotation, or by raising Snap Angle if the visual mismatch is intentional.
+            Debug.Log($"[CableConnector] '{name}' near '{socket.name}' but didn't snap - " +
+                      $"distance {dist:F3} (needs <= {snapDistance:F3}), " +
+                      $"angle {angle:F1} deg (needs <= {snapAngle:F1} deg).", this);
+        }
         // else: connector is simply released mid-air/mid-case; the rope's gravity + damping
         // will let it hang naturally until picked up again.
     }

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_COC1_PSU_CableFix
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc1_psu_cable_fix
+  targetModule: 0
+  sceneName: COC1-Copy
+  title: Intermittent shutdowns
+  description: "Customer reports the unit powers off randomly, especially when running
+    demanding programs. \nSometimes it boots fine and runs for hours; other times
+    it shuts off within minutes."
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc1_psu_cable_fix
+  requiresDiagnosis: 1
+  symptomText: Unit powers off unexpectedly under load. No beep codes on a clean
+    cold boot. Reseating components sometimes "fixes it" temporarily.
+  diagnosisOptions:
+  - label: Loose or partially disconnected power cable
+    isCorrect: 1
+    feedback: "Correct. An intermittent connection under load \u2014 especially one
+      that \"temporarily\" clears after handling the case \u2014 points to a cable
+      that isn't fully seated."
+  - label: Overheating CPU
+    isCorrect: 0
+    feedback: Overheating usually shows a gradual pattern tied to load and ambient
+      temperature, not this kind of on/off inconsistency right after the case was
+      handled.
+  - label: Corrupted operating system
+    isCorrect: 0
+    feedback: "An OS fault wouldn't explain random power loss \u2014 that's a hardware-level
+      symptom."

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_COC1_RAM_Missing
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc1_ram_missing
+  targetModule: 0
+  sceneName: COC1-Copy
+  title: Won't boot, no display
+  description: "Customer reports the unit powers on (fans spin, lights on) but nothing
+    appears on screen. \nNo changes reported recently, but the case was opened for
+    \"cleaning\" last week."
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc1_ram_missing
+  requiresDiagnosis: 1
+  symptomText: 'System powers on, fans spin, no display output. POST beep code: 1
+    long, 3 short.'
+  diagnosisOptions:
+  - label: Faulty or improperly seated RAM
+    isCorrect: 1
+    feedback: "Correct. A 1-long/3-short beep pattern on most BIOS is a classic memory
+      error \u2014 check that every stick is fully seated in its slot."
+  - label: Dead power supply
+    isCorrect: 0
+    feedback: "Unlikely \u2014 a dead PSU wouldn't let the fans spin or the lights
+      come on at all"
+  - label: Faulty graphics card
+    isCorrect: 0
+    feedback: "Possible, but the specific beep pattern here points somewhere else
+      first \u2014 check memory before swapping components."

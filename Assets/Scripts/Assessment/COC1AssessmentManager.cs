@@ -357,8 +357,8 @@ public class COC1AssessmentManager : MonoBehaviour
                 : FormatTime(ElapsedSeconds);
         }
 
-        if (scoreText != null) scoreText.text = $"Score: {Score}";
-        if (mistakesText != null) mistakesText.text = $"Mistakes: {Mistakes}";
+        if (scoreText != null) scoreText.text = $"{Score}";
+        if (mistakesText != null) mistakesText.text = $"{Mistakes}";
     }
 
     private static string FormatTime(float seconds)

@@ -106,6 +106,13 @@ namespace CSSSimulation.Networking
                  "empty and one termination ends the stage, which is what you want while testing.")]
         public PunchStageSequence sequence;
 
+        [Tooltip("Optional. PHASE 2 - cross-connecting the panel to the switch.\n\n" +
+                 "With this set, finishing the last port does NOT end the visit: the camera pulls " +
+                 "back to the rack front and the player runs a patch cord from each panel port to " +
+                 "the matching switch port. Leave it empty and the station closes after the punching, " +
+                 "exactly as it did before.")]
+        public PatchCordBoard patchCords;
+
         [Header("Briefing")]
         [Tooltip("Optional. Shown the first time the player enters the stage - what an IDC block " +
                  "is, what the tool does, why the conductor is trimmed as it seats.")]
@@ -117,6 +124,23 @@ namespace CSSSimulation.Networking
         [Tooltip("Movement and look scripts, disabled while the board is open. Same array you " +
                  "filled on the other view controllers.")]
         public MonoBehaviour[] playerControlScripts;
+
+        [Header("Hiding the player")]
+        [Tooltip("Drag your PLAYER OBJECT here. Every renderer under it is switched off while the " +
+                 "stage is open, then put back exactly as it was on the way out.\n\n" +
+                 "Needed because the stage camera now looks at the REAL rack out in the environment " +
+                 "rather than a diorama off on its own - so the player is standing in shot, between " +
+                 "the camera and the panel.\n\n" +
+                 "RENDERERS, not SetActive, deliberately. Deactivating the player object would take " +
+                 "its character controller, its collider and its scripts down with it, and bringing " +
+                 "all that back in the right order on the way out is a whole class of bug this " +
+                 "avoids. Switching renderers off also removes the player's SHADOW from the shot, " +
+                 "which is the other half of the problem.")]
+        public Transform playerBody;
+
+        [Tooltip("Anything else that should disappear for the duration and is NOT under Player Body " +
+                 "- first-person arms on their own rig, a held tool, a name tag, an aiming reticle.")]
+        public GameObject[] alsoHideInStage;
 
         [Header("Mobile")]
         public GameObject[] mobileControlsToHide;
@@ -139,6 +163,10 @@ namespace CSSSimulation.Networking
 
         bool introShown;
         bool subscribed;
+
+        Renderer[] bodyRenderers;
+        bool[] bodyWasEnabled;
+        bool playerHidden;
 
         void Awake()
         {
@@ -260,6 +288,7 @@ namespace CSSSimulation.Networking
         {
             if (subscribed || board == null) return;
             board.OnFinished += HandleFinished;
+            if (patchCords != null) patchCords.OnFinished += HandlePatchCordsFinished;
             subscribed = true;
         }
 
@@ -267,6 +296,7 @@ namespace CSSSimulation.Networking
         {
             if (!subscribed || board == null) return;
             board.OnFinished -= HandleFinished;
+            if (patchCords != null) patchCords.OnFinished -= HandlePatchCordsFinished;
             subscribed = false;
         }
 
@@ -299,7 +329,52 @@ namespace CSSSimulation.Networking
             // back into the world after every port would make eight terminations unbearable.
             if (sequence != null && sequence.AdvanceOnPass()) return;
 
+            // Every port is punched, but the job is not done: the conductors dead-end in the IDC
+            // block, and nothing reaches the switch until a patch cord is run to it. Hand over to
+            // phase 2 and keep the view open. Begin() returns false if there is nothing to patch, so
+            // a station without this assigned behaves exactly as it always did.
+            if (patchCords != null && patchCords.Begin()) return;
+
             SetViewActive(false);
+        }
+
+        /// <summary>The end of phase 2 - and of the whole station.</summary>
+        void HandlePatchCordsFinished(bool passed, string reason)
+        {
+            Debug.LogWarning("[PunchDownStation] Cross-connect " + (passed ? "PASSED" : "FAILED") +
+                             ". " + reason, this);
+
+            // A failed cross-connect gets the same second chance as a failed termination: the cords
+            // come back out of the switch and the player runs them again.
+            System.Action onClosed = passed ? (System.Action)CloseStage : RetryPatchCords;
+
+            if (COC2StageDialogs.Instance != null)
+                COC2StageDialogs.Instance.ShowPanelResult(passed, passed ? null : reason, onClosed);
+            else
+                onClosed();
+        }
+
+        void RetryPatchCords()
+        {
+            if (failAction == FailAction.RestartWholeProcedure && procedureReset != null)
+            {
+                SetViewActive(false);
+                procedureReset.RestartProcedure();
+                return;
+            }
+
+            if (patchCords == null) { CloseStage(); return; }
+
+            patchCords.Retry();
+            Debug.LogWarning("[PunchDownStation] Cross-connect reset - every cord is back at the " +
+                             "panel and can be run again.", this);
+        }
+
+        /// <summary>Leaves the station. Public so the patch-cord phase can end the visit, and so a
+        /// Done button on the stage UI has something to call.</summary>
+        public void CloseStage()
+        {
+            if (InStageView) SetViewActive(false);
         }
 
         void HandleFailClosed()
@@ -312,8 +387,29 @@ namespace CSSSimulation.Networking
                 return;
             }
 
-            // Stay in the view and let them go again - the conductors are back in the tray.
-            if (board != null) board.ResetStage();
+            // Stay in the view and let them go again.
+            //
+            // With Auto Reset On Fail ticked - the default - the board has ALREADY cleared the port
+            // by the time this runs, on its own timer, whether or not this dialog was ever shown.
+            // Resetting a second time here would wipe a drag the player may already have started,
+            // so leave it alone.
+            if (board == null) return;
+
+            if (board.AutoResetsOnFail)
+            {
+                Debug.LogWarning("[PunchDownStation] Port failed. The board cleared it on its own " +
+                                 "(Auto Reset On Fail) - the player is still in the station and can " +
+                                 "punch this port again. Ports already terminated were untouched.",
+                                 this);
+                return;
+            }
+
+            // Auto Reset On Fail is off, so clearing the port is this station's job. Same effect:
+            // all eight pins emptied, this port's conductors unlocked and sent back to the cable,
+            // every wire straightened, the tool back on its hook.
+            board.ResetStage();
+            Debug.LogWarning("[PunchDownStation] Termination reset - the conductors are back on the " +
+                             "cable and this port can be punched again.", this);
         }
 
         // ------------------------------------------------------------------
@@ -339,7 +435,18 @@ namespace CSSSimulation.Networking
                 // stage camera swapped at runtime can never leave the board raycasting from a camera
                 // that isn't rendering - the single most common way a drag stage ends up dead.
                 if (board != null && stageCamera != null) board.stageCamera = stageCamera;
+
+                // Phase 2 gets the same camera, for the same reason - and a clean slate, so a player
+                // who backed out halfway through patching starts the cross-connect again rather than
+                // finding four cords already in the switch.
+                if (patchCords != null)
+                {
+                    if (stageCamera != null) patchCords.stageCamera = stageCamera;
+                    if (resetOnEnter) patchCords.ResetStage();
+                }
             }
+
+            SetPlayerVisible(!active);
 
             foreach (var script in playerControlScripts)
             {
@@ -367,6 +474,62 @@ namespace CSSSimulation.Networking
             {
                 OnStageClosed?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Takes the player out of the shot, and puts them back exactly as they were.
+        ///
+        /// The restore records what it found rather than switching everything on, because a player
+        /// rig usually has renderers that are deliberately off - a third-person body hidden in first
+        /// person, an LOD that is not showing, a held item that was put away. Blanket-enabling them
+        /// on the way out would make the player leave the station wearing things they did not have
+        /// when they walked up.
+        /// </summary>
+        void SetPlayerVisible(bool visible)
+        {
+            if (!visible)
+            {
+                if (playerHidden) return;               // already out of shot
+                playerHidden = true;
+
+                if (playerBody != null)
+                {
+                    // Collected once, then reused. Include inactive: a first-person rig routinely
+                    // parks its third-person body on a deactivated object.
+                    if (bodyRenderers == null)
+                    {
+                        bodyRenderers = playerBody.GetComponentsInChildren<Renderer>(true);
+                        bodyWasEnabled = new bool[bodyRenderers.Length];
+                    }
+
+                    for (int i = 0; i < bodyRenderers.Length; i++)
+                    {
+                        if (bodyRenderers[i] == null) continue;
+                        bodyWasEnabled[i] = bodyRenderers[i].enabled;
+                        bodyRenderers[i].enabled = false;
+                    }
+                }
+
+                foreach (var go in alsoHideInStage) { if (go != null) go.SetActive(false); }
+                return;
+            }
+
+            // Nothing was hidden, so there is nothing to restore. This matters: Awake calls
+            // SetViewActive(false), and without this guard the restore would run against an
+            // all-false record and switch the player's renderers off before the game had started.
+            if (!playerHidden) return;
+            playerHidden = false;
+
+            if (bodyRenderers != null)
+            {
+                for (int i = 0; i < bodyRenderers.Length; i++)
+                {
+                    if (bodyRenderers[i] == null) continue;
+                    bodyRenderers[i].enabled = bodyWasEnabled[i];
+                }
+            }
+
+            foreach (var go in alsoHideInStage) { if (go != null) go.SetActive(true); }
         }
 
         void ShowIntroIfDue()
@@ -448,6 +611,27 @@ namespace CSSSimulation.Networking
                     }
                 }
             }
+
+            if (playerBody == null)
+                sb.AppendLine("  - Player Body is empty. If the stage camera looks at the real rack " +
+                              "in the environment - which it does when the board has Search Roots " +
+                              "filled - the player is standing between it and the panel, and their " +
+                              "body and shadow will be in every shot. Drag the player object in.");
+
+            // The one thing that makes this stage unplayable on a phone rather than merely awkward.
+            // Exit Key needs a keyboard; a touch device has none, so without a Back button in
+            // Mobile Stage Controls the player enters the station and can never leave it.
+            if (mobileStageControls == null || mobileStageControls.Length == 0)
+                sb.AppendLine("  - Mobile Stage Controls is empty. Exit Key is " + exitKey + ", which " +
+                              "needs a keyboard - on a touch build the player would be stuck in the " +
+                              "station with no way out. Make a Back button, hook its On Click to " +
+                              "this component's RequestExit(), and put it in this list so it only " +
+                              "appears inside the stage.");
+
+            if (patchCords != null && patchCords.cameraPose == null)
+                sb.AppendLine("  - Patch Cords is assigned but its Camera Pose is empty, so when the " +
+                              "cross-connect starts the camera will stay closed in on the last " +
+                              "punched port and the switch will be off screen.");
 
             if (failAction == FailAction.RestartWholeProcedure && procedureReset == null)
                 sb.AppendLine("  - Fail Action is RestartWholeProcedure but Procedure Reset is empty, " +

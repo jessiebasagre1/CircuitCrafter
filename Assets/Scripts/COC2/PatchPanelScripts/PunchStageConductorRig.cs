@@ -173,6 +173,16 @@ namespace CSSSimulation.Networking
             conductor.color = color;
             conductor.tintFromColor = false;          // the borrowed material is already right
             conductor.SetPickRenderers(new Renderer[] { mr });
+
+            // So ReturnHome() can straighten the wire in the same frame the tip snaps back. Without
+            // this the retry after a failed termination looks broken: the conductor is home but its
+            // wire is still reaching for the pin.
+            conductor.rope = rope;
+
+            // So the board can tell this wire from the seven beside it: a press is scored against
+            // the LINE from here to the tip, which separates eight overlapping wires when their
+            // bounding boxes cannot.
+            conductor.fixedEnd = root;
             Conductor = conductor;
 
             // ---- hide the original ---------------------------------------

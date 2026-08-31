@@ -3,6 +3,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace CSSSimulation.Networking
 {
@@ -72,10 +73,46 @@ namespace CSSSimulation.Networking
                  "90 suits a 1080p view. Set 0 to switch it off and use world distance alone.")]
         public float screenSnapPixels = 90f;
 
+        [Tooltip("Treat Screen Snap Pixels as authored for Reference Screen Height and scale it to " +
+                 "whatever the device actually has.\n\n" +
+                 "LEAVE THIS ON FOR TOUCH. A raw pixel count means completely different things on " +
+                 "different screens: 90 px is about 8 mm on a 1080p monitor but under 2 mm on a " +
+                 "1440p phone - far tighter than a fingertip, so the stage that felt forgiving in " +
+                 "the editor refuses almost every drop on device. Scaling by screen height keeps the " +
+                 "tolerance the same PROPORTION of the screen, which is what the player's aim " +
+                 "actually scales with.")]
+        public bool scaleSnapToScreen = true;
+
+        [Tooltip("The screen height Screen Snap Pixels was tuned at. 1080 unless you tuned it " +
+                 "somewhere else.")]
+        public float referenceScreenHeight = 1080f;
+
         [Tooltip("When a drop finds no pin, log how close it actually got - in world units AND in " +
                  "pixels - so you can see instantly whether the numbers or the aim are at fault. " +
                  "Worth leaving on until the stage plays, then off.")]
         public bool logRefusedDrops = true;
+
+        [Header("Retrying a failed port")]
+        [Tooltip("ON: a failed termination clears itself. THIS PORT's eight conductors come back out " +
+                 "of the block, unlock, and return to the cable; the pins empty; the tool goes back " +
+                 "on its hook - and the player carries straight on from position 1 without leaving " +
+                 "the station.\n\n" +
+                 "Ports already terminated are NOT touched. A failure on port 5 costs port 5 and " +
+                 "nothing else, which is what happens on a real panel: you re-punch the port you got " +
+                 "wrong, not the whole panel.\n\n" +
+                 "OFF: the board sits on the failed result and waits for something else - the " +
+                 "station, a Try Again button - to call ResetStage().")]
+        public bool autoResetOnFail = true;
+
+        [Tooltip("Seconds to hold the failed result before clearing it, so the player sees WHICH " +
+                 "positions were wrong rather than the block emptying the instant they finish.\n\n" +
+                 "Runs on unscaled time, so it still counts down while the fail dialog has the clock " +
+                 "stopped - by the time that dialog is dismissed the port is already reset and ready.")]
+        public float autoResetDelay = 0.8f;
+
+        [Tooltip("Log each retry, with the attempt number for this port. Useful while balancing; " +
+                 "noise once it plays.")]
+        public bool logRetries = true;
 
         [Header("Where to look")]
         [Tooltip("The hierarchies the pins, conductors and panel blocks live under.\n\n" +
@@ -137,12 +174,40 @@ namespace CSSSimulation.Networking
         public bool HasFinished { get; private set; }
         public bool LastResultPassed { get; private set; }
 
+        /// <summary>True when this board clears a failed port itself. The station reads it so the
+        /// two never both reset the same failure.</summary>
+        public bool AutoResetsOnFail { get { return autoResetOnFail; } }
+
+        /// <summary>How many times the CURRENT port has been attempted. Reset to 0 whenever the
+        /// sequence moves to a new port.</summary>
+        public int PortAttempts { get; private set; }
+
+        Coroutine autoResetRoutine;
+
         /// <summary>The camera conductors are dragged in.</summary>
         public Camera StageCamera { get { return stageCamera; } }
+
+        /// <summary>
+        /// Screen Snap Pixels, corrected for the screen this is actually running on.
+        ///
+        /// Every screen-distance test goes through here rather than reading the field directly, so
+        /// the editor and a phone agree on how forgiving the stage is.
+        /// </summary>
+        public float EffectiveScreenSnap
+        {
+            get
+            {
+                if (!scaleSnapToScreen || referenceScreenHeight <= 0f) return screenSnapPixels;
+                return screenSnapPixels * (Screen.height / referenceScreenHeight);
+            }
+        }
 
         PunchStageConductor claimedBy;
         Canvas toolCanvas;
         float hintClearAt;
+
+        int pressFrame = -1;
+        PunchStageConductor pressWinner;
 
         /// <summary>Null for a Screen Space - Overlay canvas, the canvas camera otherwise. Used by
         /// the tool icon; getting it wrong is what makes a UI drag land in the wrong place.</summary>
@@ -256,6 +321,50 @@ namespace CSSSimulation.Networking
         // ------------------------------------------------------------------
         // One drag at a time
         // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Which conductor a press at this screen point should pick up - the one whose WIRE the
+        /// touch landed nearest to, not whichever component Unity happened to update first.
+        ///
+        /// This exists because renderer bounds are axis-aligned boxes. Eight wires fanning out from
+        /// one cable have boxes that overlap almost completely, so several conductors will report
+        /// "the pointer is over me" for the same press, and letting each one claim for itself makes
+        /// the winner depend on component order - which is arbitrary, and is why touching the blue
+        /// wire could pick up the one beside it.
+        ///
+        /// Computed once per frame and cached: all eight conductors ask this in the same frame, and
+        /// without the cache that is sixty-four bounds tests for one press.
+        /// </summary>
+        public PunchStageConductor ConductorForPress(Vector2 screenPoint)
+        {
+            if (pressFrame == Time.frameCount) return pressWinner;
+            pressFrame = Time.frameCount;
+            pressWinner = null;
+
+            if (conductors == null || stageCamera == null) return null;
+
+            // Once per press, not once per conductor. A tap on the tool icon can also line up with a
+            // conductor behind it, since none of this knows about uGUI; the parameterless call only
+            // checks the mouse, so touch needs the active finger's id.
+            if (EventSystem.current != null)
+            {
+                bool overUI = Input.touchCount > 0
+                    ? EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)
+                    : EventSystem.current.IsPointerOverGameObject();
+                if (overUI) return null;
+            }
+
+            float best = float.MaxValue;
+            foreach (var c in conductors)
+            {
+                if (c == null || c.IsLocked || c.IsSeated || !c.isActiveAndEnabled) continue;
+                if (!c.IsPointerOverBounds(screenPoint)) continue;
+
+                float score = c.GrabScore(screenPoint);
+                if (score < best) { best = score; pressWinner = c; }
+            }
+            return pressWinner;
+        }
 
         /// <summary>Two conductors whose pick bounds overlap would otherwise both be picked up by a
         /// single press. First one to ask wins.</summary>
@@ -423,7 +532,8 @@ namespace CSSSimulation.Networking
 
             float px;
             PunchStagePin onScreen = PinNearestOnScreen(conductor.transform.position, out px);
-            if (target == null && screenSnapPixels > 0f && onScreen != null && px <= screenSnapPixels)
+            float snapPx = EffectiveScreenSnap;
+            if (target == null && snapPx > 0f && onScreen != null && px <= snapPx)
                 target = onScreen;
 
             if (target == null && alsoAcceptRayHit) target = PinUnderScreenPoint(screenPoint);
@@ -499,7 +609,9 @@ namespace CSSSimulation.Networking
                 "sits at a different depth from the pins - raise Screen Snap Pixels, not Snap Distance.",
                 nearest == null ? "none" : "pin " + nearest.pinNumber, world, snapDistance,
                 nearestOnScreen == null ? "none" : "pin " + nearestOnScreen.pinNumber, pixels,
-                screenSnapPixels), this);
+                EffectiveScreenSnap.ToString("F0") + (scaleSnapToScreen
+                    ? " - " + screenSnapPixels + " scaled for a " + Screen.height + "px screen"
+                    : "")), this);
         }
 
         /// <summary>
@@ -514,10 +626,11 @@ namespace CSSSimulation.Networking
 
             // Same forgiveness the conductors get. The tool is a flat icon over a 3D set, so screen
             // distance is the only thing it can sensibly be judged by anyway.
-            if (screenSnapPixels <= 0f || stageCamera == null || pins == null) return null;
+            float snapPx = EffectiveScreenSnap;
+            if (snapPx <= 0f || stageCamera == null || pins == null) return null;
 
             PunchStagePin best = null;
-            float bestPx = screenSnapPixels;
+            float bestPx = snapPx;
             foreach (var p in pins)
             {
                 if (p == null) continue;
@@ -583,6 +696,7 @@ namespace CSSSimulation.Networking
             string reason;
             bool passed = Evaluate(out reason);
 
+            PortAttempts++;
             HasFinished = true;
             LastResultPassed = passed;
             acceptsInput = false;
@@ -603,6 +717,55 @@ namespace CSSSimulation.Networking
             else OnStageFailed?.Invoke();
 
             OnFinished?.Invoke(passed, reason);
+
+            // Clear the failed port ourselves rather than waiting to be told to. Nothing else has to
+            // be wired up, nothing has to close, and the player never leaves the station - which is
+            // the whole point: a mis-terminated port is re-punched on the spot, exactly as it would
+            // be on a real panel.
+            if (!passed && autoResetOnFail)
+            {
+                if (autoResetRoutine != null) StopCoroutine(autoResetRoutine);
+                autoResetRoutine = StartCoroutine(AutoResetAfterFail());
+            }
+        }
+
+        /// <summary>
+        /// Holds the failed result briefly so the player can see which positions were wrong, then
+        /// puts the port back exactly as it was before they started it.
+        ///
+        /// UNSCALED, deliberately. The fail dialog can stop the clock, and this has to keep counting
+        /// through it - so by the time the player dismisses that dialog the conductors are already
+        /// back on the cable and the block is empty, ready to go again.
+        /// </summary>
+        System.Collections.IEnumerator AutoResetAfterFail()
+        {
+            float t = 0f;
+            while (t < autoResetDelay)
+            {
+                t += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            autoResetRoutine = null;
+            ResetStage();
+
+            PunchStagePin first = ActivePin();
+            SetHint(first != null
+                ? "Try again - start from position " + first.pinNumber + "."
+                : "Try again.");
+
+            if (logRetries)
+                Debug.LogWarning("[PunchStageBoard] Port reset after a failed termination - all " +
+                                 "eight conductors are back on the cable and the block is empty. " +
+                                 "Attempt " + (PortAttempts + 1) + " on this port. Ports already " +
+                                 "terminated were not touched.", this);
+        }
+
+        /// <summary>Called by PunchStageSequence when it moves to a new block, so the attempt count
+        /// belongs to the port being worked rather than to the whole visit.</summary>
+        public void BeginNewPort()
+        {
+            PortAttempts = 0;
         }
 
         public bool Evaluate(out string reason)
@@ -715,6 +878,11 @@ namespace CSSSimulation.Networking
         [ContextMenu("Reset stage")]
         public void ResetStage()
         {
+            // Cancel a pending auto-reset. Without this, a port cleared early - by the station on
+            // entry, or by a Try Again button - would be cleared a second time a moment later, in
+            // the middle of the player's next drag.
+            if (autoResetRoutine != null) { StopCoroutine(autoResetRoutine); autoResetRoutine = null; }
+
             HasFinished = false;
             LastResultPassed = false;
             acceptsInput = true;
