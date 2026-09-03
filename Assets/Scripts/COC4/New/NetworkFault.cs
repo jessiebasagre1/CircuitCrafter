@@ -54,6 +54,14 @@ namespace CircuitCrafter.Repair
         [Tooltip("Also require the machine's own address to be a usable one. Leave on - it stops a learner 'fixing' connectivity by giving the machine an address that happens to work but breaks the rules.")]
         [SerializeField] private bool requireUsableAddress = true;
 
+        /// <summary>A misconfigured network card does not stop a computer starting,
+        /// and telling the learner it does would teach a symptom that does not
+        /// exist. The machine reaches the desktop; the trouble is waiting there.</summary>
+        protected override BootImpact DefaultBootImpact => BootImpact.BootsButFaulty;
+
+        protected override string DefaultBootSymptom =>
+            "Windows starts normally, but nothing on the network can be reached.";
+
         protected override void Inject()
         {
             if (station == null)

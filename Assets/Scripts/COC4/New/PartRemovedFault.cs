@@ -32,6 +32,15 @@ namespace CircuitCrafter.Repair
         [Tooltip("OFF (the default) means any ONE of these sockets being filled counts as fixed - the right rule for RAM, where a single seated stick boots the machine. Turn ON when every listed socket genuinely has to be filled.")]
         [SerializeField] private bool requireAllSockets;
 
+        /// <summary>Kept vague on purpose. A missing stick of RAM, a missing drive
+        /// and a missing graphics card all fail differently, and this class cannot
+        /// tell which one it is holding - so the default says only what is true of
+        /// all three, and the Boot Symptom field on the Inspector is where the real
+        /// symptom goes. Filling it in is worth the thirty seconds: "three short
+        /// beeps and no display" is a diagnosable clue, "it doesn't start" is not.</summary>
+        protected override string DefaultBootSymptom =>
+            "The computer powers up, but it never reaches Windows.";
+
         protected override void Inject()
         {
             if (partsToRemove == null || partsToRemove.Length == 0)

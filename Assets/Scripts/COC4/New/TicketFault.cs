@@ -13,10 +13,11 @@ namespace CircuitCrafter.Repair
     /// reporting. Six files for three faults, and a seventh and eighth for every
     /// fault after that.
     ///
-    /// Here a fault says only two things: how to break it, and how to tell it's
-    /// been fixed. Everything else - gating, task registration, the diagnosis
-    /// gate, progress reporting, assessment records - lives once, in
-    /// TicketFaultCoordinator. A new kind of fault is a small class, not a pair.
+    /// Here a fault says only three things: how to break it, how to tell it's
+    /// been fixed, and what the machine DOES when you press power. Everything
+    /// else - gating, task registration, the diagnosis gate, progress reporting,
+    /// assessment records - lives once, in TicketFaultCoordinator. A new kind of
+    /// fault is a small class, not a pair.
     ///
     /// WHY COMPONENTS AND NOT PURE ScriptableObject DATA
     /// The roadmap called this "faults as data". In Unity it can't quite be: a
@@ -35,6 +36,21 @@ namespace CircuitCrafter.Repair
     /// </summary>
     public abstract class TicketFault : MonoBehaviour
     {
+        /// <summary>What pressing the power button looks like with this fault present.</summary>
+        public enum BootImpact
+        {
+            /// <summary>Use whatever this kind of fault normally does. Correct for
+            /// almost every fault - only override when a particular one behaves
+            /// differently from others of its type.</summary>
+            Auto = 0,
+
+            /// <summary>The machine never reaches Windows.</summary>
+            StopsBoot = 1,
+
+            /// <summary>The machine boots fine; the problem shows up afterwards.</summary>
+            BootsButFaulty = 2,
+        }
+
         [Header("Scoping")]
         [Tooltip("Only inject this fault when this ticket is the active one, e.g. \"ticket_coc1_ram_missing\". Leave blank ONLY if this scene will never host another ticket - a repair site shared by two tickets would otherwise show both faults at once.")]
         [SerializeField] protected string activeForTicketId = "";
@@ -44,6 +60,14 @@ namespace CircuitCrafter.Repair
 
         [Tooltip("Optional. What the power-on test calls this check, e.g. \"Display output\" or \"Memory detected\". Written as the thing being TESTED, not the thing that was wrong - so the verification reads like a boot test rather than a list of faults. Falls back to Fault Summary.")]
         [SerializeField] private string verificationLabel = "";
+
+        [Header("What the machine does when powered on")]
+        [Tooltip("The SYMPTOM the learner sees on the monitor before they have fixed anything, e.g. \"The fans spin and the power light is on, but the screen stays black.\"\n\nWrite what the machine DOES, never what is wrong with it - naming the fault here hands the learner the diagnosis for free and defeats the whole exercise. Leave blank for a sensible default for this kind of fault.")]
+        [TextArea(2, 4)]
+        [SerializeField] private string bootSymptom = "";
+
+        [Tooltip("Leave on Auto unless this particular fault is unusual. Auto means: a missing part or an unplugged cable stops the machine booting, a network fault does not.")]
+        [SerializeField] private BootImpact bootImpact = BootImpact.Auto;
 
         /// <summary>True when this fault belongs to the ticket the player is
         /// currently out on. Decided in Awake, before anything reads it.</summary>
@@ -58,6 +82,26 @@ namespace CircuitCrafter.Repair
         /// <summary>What the power-on test calls this check.</summary>
         public string VerificationLabel =>
             string.IsNullOrWhiteSpace(verificationLabel) ? Summary : verificationLabel;
+
+        /// <summary>What the learner sees on the monitor. Never names the fault.</summary>
+        public string BootSymptom =>
+            string.IsNullOrWhiteSpace(bootSymptom) ? DefaultBootSymptom : bootSymptom;
+
+        /// <summary>Overridden per fault kind. A subclass knows what its own kind of
+        /// breakage looks like from the front of the machine; the Inspector field
+        /// above is there for the cases where it doesn't.</summary>
+        protected virtual string DefaultBootSymptom =>
+            "The computer does not start up correctly.";
+
+        /// <summary>Overridden per fault kind - see BootImpact.Auto.</summary>
+        protected virtual BootImpact DefaultBootImpact => BootImpact.StopsBoot;
+
+        /// <summary>True when this fault stops the machine reaching Windows at all,
+        /// as opposed to one that lets it boot and shows up afterwards. The boot
+        /// screen needs the difference: a machine with a network fault really does
+        /// reach the desktop, and pretending otherwise teaches the wrong symptom.</summary>
+        public bool PreventsBoot =>
+            (bootImpact == BootImpact.Auto ? DefaultBootImpact : bootImpact) == BootImpact.StopsBoot;
 
         // ------------------------------------------------------------------
 
