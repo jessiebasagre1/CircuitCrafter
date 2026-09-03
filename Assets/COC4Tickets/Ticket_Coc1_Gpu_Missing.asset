@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc1_Gpu_Missing
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc1_gpu_missing
+  targetModule: 0
+  sceneName: COC1-Copy
+  title: No display after the unit was moved
+  description: The PC was carried to another room. It powers on normally - fans and
+    lights are fine - but the monitor stays black. The same monitor worked before
+    the move.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc1_gpu_missing
+  requiresDiagnosis: 1
+  symptomText: System powers on. Fans and drive activity normal. No POST beep. No
+    signal on the monitor connected to the graphics card port.
+  diagnosisOptions:
+  - label: Graphics card not properly seated
+    isCorrect: 1
+    feedback: Correct. Transporting a unit is a classic cause of an expansion card
+      working loose. Reseat it fully and check the retention clip.
+  - label: Faulty monitor or video cable
+    isCorrect: 0
+    feedback: Worth ruling out and cheap to test - but the customer says the same
+      monitor worked before the move, which points inside the case.
+  - label: Failed power supply
+    isCorrect: 0
+    feedback: The fans and lights are running, so the PSU is delivering power.
+  - label: Corrupted operating system
+    isCorrect: 0
+    feedback: An OS fault still shows POST and a boot screen first. A completely
+      black display means the problem is earlier than the OS.

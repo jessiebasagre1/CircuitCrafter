@@ -620,6 +620,101 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 742367754}
   m_CullTransparentMesh: 1
+--- !u!1001 &751937095
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_Name
+      value: AssessmentManagers
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1126.3446
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00002
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1925.7646
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 751937097}
+  m_SourcePrefab: {fileID: 100100000, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+--- !u!1 &751937096 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+  m_PrefabInstance: {fileID: 751937095}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &751937097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 751937096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51c02252e070c2b49bcf0192086ca2a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.AssessmentRecorder
+  moduleId: COC4
+  stages:
+  - taskId: ticket_coc1_cpu_unseated
+    manualId: 
+    displayName: Nothing happens after internal cleaning
+    points: 50
+  - taskId: ticket_coc1_ram_missing
+    manualId: 
+    displayName: Won't boot, no display
+    points: 50
+  mistakePenalty: 10
+  perfectRunBonus: 50
+  contributeToGlobalScore: 1
+  assessmentTimeLimitSeconds: 0
+  endOnTimeUp: 1
+  beginOnStart: 1
+  finishWhenAllStagesComplete: 1
+  recordGuidedRuns: 1
 --- !u!1 &812419622
 GameObject:
   m_ObjectHideFlags: 0
@@ -804,7 +899,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0007412072}
+  m_AnchoredPosition: {x: 0, y: 0.00041637744}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1050712268
@@ -1089,6 +1184,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TicketManager
   allTickets:
+  - {fileID: 11400000, guid: cd23bff764eb72b45ab6233ac456acd2, type: 2}
+  - {fileID: 11400000, guid: a981c88402213584aac7825480535eed, type: 2}
+  - {fileID: 11400000, guid: d6db5486030f5f24a9761d945f90ff82, type: 2}
+  - {fileID: 11400000, guid: 6500b4f0cd607b1499c3f5ba1c3edbce, type: 2}
   - {fileID: 11400000, guid: c9eea3931681e304195a29c1eab54154, type: 2}
   - {fileID: 11400000, guid: e1eeaf670bc5ec44a938e7f469d4ee1d, type: 2}
 --- !u!114 &1427787054
@@ -2205,7 +2304,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1072282730}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999952
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2483,3 +2582,4 @@ SceneRoots:
   - {fileID: 295268154}
   - {fileID: 832848263}
   - {fileID: 1557111956}
+  - {fileID: 751937095}

@@ -62,6 +62,23 @@ namespace CSSSimulation.Networking
                  "no trigger collider. Set to None to switch it off.")]
         public KeyCode testEnterKey = KeyCode.F10;
 
+        [Tooltip("While the station is open, jumps straight to the next plugging phase without " +
+                 "punching anything.\n\n" +
+                 "This is the key to press when the camera does not move after the last port: it " +
+                 "runs exactly the same hand-off, and prints exactly why it did or did not take " +
+                 "over - so you find out in one second instead of terminating eight ports first. " +
+                 "Set to None to switch it off.")]
+        public KeyCode testNextPhaseKey = KeyCode.F11;
+
+        [Tooltip("TESTING ONLY. Entering the station skips the punching entirely and opens straight " +
+                 "into the first plugging phase.\n\n" +
+                 "For when you are working on the cords and do not want to terminate eight ports " +
+                 "before every test. The punch board is suspended rather than removed, so nothing " +
+                 "about the termination is changed - it simply is not asked for. It warns in the " +
+                 "Console on every Play and every entry, so it cannot ship by accident. UNTICK " +
+                 "before a real run.")]
+        public bool skipPunchingForTesting = false;
+
         [Header("Controls")]
         [Tooltip("Key that closes the board.\n\n" +
                  "Defaulted to Q rather than Escape on purpose: this project also uses Escape to " +
@@ -106,12 +123,15 @@ namespace CSSSimulation.Networking
                  "empty and one termination ends the stage, which is what you want while testing.")]
         public PunchStageSequence sequence;
 
-        [Tooltip("Optional. PHASE 2 - cross-connecting the panel to the switch.\n\n" +
-                 "With this set, finishing the last port does NOT end the visit: the camera pulls " +
-                 "back to the rack front and the player runs a patch cord from each panel port to " +
-                 "the matching switch port. Leave it empty and the station closes after the punching, " +
-                 "exactly as it did before.")]
-        public PatchCordBoard patchCords;
+        [Tooltip("Optional. The PLUGGING phases that follow the punching, IN ORDER.\n\n" +
+                 "Element 0 runs when the last port is terminated, element 1 when element 0 passes, " +
+                 "and so on - so you can chain 'panel front to switch', then 'cable plug to the " +
+                 "outlet', then 'plug into the tester', each with its own camera framing and its own " +
+                 "set of cords. Leave it empty and the station closes after the punching, exactly as " +
+                 "it did before.\n\n" +
+                 "A phase whose Begin() finds nothing to plug in is skipped rather than stalling the " +
+                 "run, so a half-built phase never traps the player in the station.")]
+        public PatchCordBoard[] patchPhases;
 
         [Header("Briefing")]
         [Tooltip("Optional. Shown the first time the player enters the stage - what an IDC block " +
@@ -163,6 +183,7 @@ namespace CSSSimulation.Networking
 
         bool introShown;
         bool subscribed;
+        int activePhase = -1;
 
         Renderer[] bodyRenderers;
         bool[] bodyWasEnabled;
@@ -193,6 +214,33 @@ namespace CSSSimulation.Networking
             }
 
             if (exitKey != KeyCode.None && Input.GetKeyDown(exitKey)) RequestExit();
+            if (testNextPhaseKey != KeyCode.None && Input.GetKeyDown(testNextPhaseKey))
+                TestBeginNextPhase();
+        }
+
+        /// <summary>Runs the same hand-off the last punched port runs, and says what happened.</summary>
+        [ContextMenu("Test: jump to the next plugging phase")]
+        public void TestBeginNextPhase()
+        {
+            if (!InStageView)
+            {
+                Debug.LogWarning("[PunchDownStation] Open the station first (press " + testEnterKey +
+                                 "), then press " + testNextPhaseKey + ".", this);
+                return;
+            }
+
+            Debug.LogWarning("[PunchDownStation] TEST - rewinding to the first plugging phase and " +
+                             "running the hand-off, as if the last port had just passed.", this);
+
+            // Rewind first. A second press would otherwise ask for the phase AFTER the one it just
+            // started - which reports that nothing took over AND leaves the run pointing past a
+            // phase that has not been played, so the real hand-off later skips it too.
+            ResetPhases();
+
+            if (BeginNextPhase()) return;
+
+            Debug.LogWarning("[PunchDownStation] ...and nothing took over. The lines above say why. " +
+                             "In a real run the station would close here.", this);
         }
 
         // ------------------------------------------------------------------
@@ -288,7 +336,7 @@ namespace CSSSimulation.Networking
         {
             if (subscribed || board == null) return;
             board.OnFinished += HandleFinished;
-            if (patchCords != null) patchCords.OnFinished += HandlePatchCordsFinished;
+            foreach (var phase in Phases()) phase.OnFinished += HandlePhaseFinished;
             subscribed = true;
         }
 
@@ -296,7 +344,7 @@ namespace CSSSimulation.Networking
         {
             if (!subscribed || board == null) return;
             board.OnFinished -= HandleFinished;
-            if (patchCords != null) patchCords.OnFinished -= HandlePatchCordsFinished;
+            foreach (var phase in Phases()) phase.OnFinished -= HandlePhaseFinished;
             subscribed = false;
         }
 
@@ -327,26 +375,120 @@ namespace CSSSimulation.Networking
             // A multi-port run is not finished just because one port is. Ask the sequence whether
             // there is another block to do, and if there is, stay where we are - dropping the player
             // back into the world after every port would make eight terminations unbearable.
-            if (sequence != null && sequence.AdvanceOnPass()) return;
+            if (sequence != null && sequence.AdvanceOnPass())
+            {
+                Debug.LogWarning("[PunchDownStation] Port passed, and the sequence has another block " +
+                                 "to do - staying on the punching. Now on port " +
+                                 (sequence.CurrentPort + 1) + ".", this);
+                return;
+            }
+
+            Debug.LogWarning("[PunchDownStation] Punching finished" +
+                             (sequence == null ? " (no sequence assigned - one port only)" : "") +
+                             ". Looking for a plugging phase to hand over to.", this);
 
             // Every port is punched, but the job is not done: the conductors dead-end in the IDC
-            // block, and nothing reaches the switch until a patch cord is run to it. Hand over to
-            // phase 2 and keep the view open. Begin() returns false if there is nothing to patch, so
-            // a station without this assigned behaves exactly as it always did.
-            if (patchCords != null && patchCords.Begin()) return;
+            // block, and nothing reaches the switch until a cord is plugged in. Hand over to the
+            // first plugging phase and keep the view open. With no phases assigned - or none that
+            // have anything to plug in - this falls straight through and the station closes exactly
+            // as it always did.
+            if (BeginNextPhase()) return;
 
             SetViewActive(false);
         }
 
         /// <summary>The end of phase 2 - and of the whole station.</summary>
-        void HandlePatchCordsFinished(bool passed, string reason)
+        /// <summary>Every assigned plugging phase, skipping empty slots.</summary>
+        System.Collections.Generic.IEnumerable<PatchCordBoard> Phases()
         {
-            Debug.LogWarning("[PunchDownStation] Cross-connect " + (passed ? "PASSED" : "FAILED") +
+            if (patchPhases == null) yield break;
+            foreach (var p in patchPhases) { if (p != null) yield return p; }
+        }
+
+        /// <summary>The phase currently being played, or null if the punching is still going.</summary>
+        PatchCordBoard CurrentPhase
+        {
+            get
+            {
+                if (patchPhases == null) return null;
+                if (activePhase < 0 || activePhase >= patchPhases.Length) return null;
+                return patchPhases[activePhase];
+            }
+        }
+
+        /// <summary>
+        /// Starts the next plugging phase that has anything to do, and reports whether one took over.
+        ///
+        /// The skip matters: a phase you have half-built - sockets placed but no plugs marked yet -
+        /// returns false from Begin(), and the run moves on to the next one instead of handing the
+        /// player a phase they cannot finish and cannot leave.
+        /// </summary>
+        bool BeginNextPhase()
+        {
+            // A phase that is ALREADY RUNNING means we are not between phases at all. Without this
+            // the search starts at activePhase + 1, skips straight past the live phase, finds
+            // nothing after it and reports that nothing took over - so the station closes on top of
+            // a phase the player was in the middle of.
+            PatchCordBoard current = CurrentPhase;
+            if (current != null && current.IsRunning)
+            {
+                Debug.LogWarning("[PunchDownStation] Phase " + activePhase + ", '" + current.phaseName +
+                                 "', is already running - staying in it.", this);
+                return true;
+            }
+
+            if (patchPhases == null || patchPhases.Length == 0)
+            {
+                Debug.LogWarning("[PunchDownStation] No plugging phases assigned. Patch Phases on " +
+                                 "this component is empty, so there is nothing to hand over to and " +
+                                 "the station closes after the punching. If you built a " +
+                                 "PatchCordBoard, drag it into element 0.", this);
+                return false;
+            }
+
+            for (int i = activePhase + 1; i < patchPhases.Length; i++)
+            {
+                if (patchPhases[i] == null)
+                {
+                    Debug.LogWarning("[PunchDownStation] Patch Phases element " + i + " is empty - " +
+                                     "skipping it.", this);
+                    continue;
+                }
+
+                if (!patchPhases[i].Begin())
+                {
+                    Debug.LogWarning("[PunchDownStation] Phase '" + patchPhases[i].phaseName +
+                                     "' declined to start - see the [PatchCordBoard] line above for " +
+                                     "the reason. Trying the next one.", this);
+                    continue;
+                }
+
+                activePhase = i;
+                Debug.LogWarning("[PunchDownStation] Handed over to phase " + i + ", '" +
+                                 patchPhases[i].phaseName + "'. The station stays open.", this);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Puts the plugging run back to the start: no phase active, every phase cleared.</summary>
+        void ResetPhases()
+        {
+            activePhase = -1;
+            foreach (var phase in Phases()) phase.ResetStage();
+        }
+
+        void HandlePhaseFinished(bool passed, string reason)
+        {
+            PatchCordBoard phase = CurrentPhase;
+            string label = phase != null ? phase.phaseName : "Plugging phase";
+
+            Debug.LogWarning("[PunchDownStation] " + label + " " + (passed ? "PASSED" : "FAILED") +
                              ". " + reason, this);
 
-            // A failed cross-connect gets the same second chance as a failed termination: the cords
-            // come back out of the switch and the player runs them again.
-            System.Action onClosed = passed ? (System.Action)CloseStage : RetryPatchCords;
+            // A failed phase gets the same second chance as a failed termination: the cords come
+            // back out and the player runs them again, without leaving the station.
+            System.Action onClosed = passed ? (System.Action)ContinueAfterPhase : RetryCurrentPhase;
 
             if (COC2StageDialogs.Instance != null)
                 COC2StageDialogs.Instance.ShowPanelResult(passed, passed ? null : reason, onClosed);
@@ -354,7 +496,13 @@ namespace CSSSimulation.Networking
                 onClosed();
         }
 
-        void RetryPatchCords()
+        void ContinueAfterPhase()
+        {
+            if (BeginNextPhase()) return;
+            CloseStage();
+        }
+
+        void RetryCurrentPhase()
         {
             if (failAction == FailAction.RestartWholeProcedure && procedureReset != null)
             {
@@ -363,11 +511,12 @@ namespace CSSSimulation.Networking
                 return;
             }
 
-            if (patchCords == null) { CloseStage(); return; }
+            PatchCordBoard phase = CurrentPhase;
+            if (phase == null) { CloseStage(); return; }
 
-            patchCords.Retry();
-            Debug.LogWarning("[PunchDownStation] Cross-connect reset - every cord is back at the " +
-                             "panel and can be run again.", this);
+            phase.Retry();
+            Debug.LogWarning("[PunchDownStation] " + phase.phaseName + " reset - every cord is back " +
+                             "where it started and can be plugged in again.", this);
         }
 
         /// <summary>Leaves the station. Public so the patch-cord phase can end the visit, and so a
@@ -436,14 +585,15 @@ namespace CSSSimulation.Networking
                 // that isn't rendering - the single most common way a drag stage ends up dead.
                 if (board != null && stageCamera != null) board.stageCamera = stageCamera;
 
-                // Phase 2 gets the same camera, for the same reason - and a clean slate, so a player
-                // who backed out halfway through patching starts the cross-connect again rather than
-                // finding four cords already in the switch.
-                if (patchCords != null)
+                // Every plugging phase gets the same camera, for the same reason - and a clean
+                // slate, so a player who backed out halfway through starts that phase again rather
+                // than finding four cords already plugged in.
+                foreach (var phase in Phases())
                 {
-                    if (stageCamera != null) patchCords.stageCamera = stageCamera;
-                    if (resetOnEnter) patchCords.ResetStage();
+                    if (stageCamera != null) phase.stageCamera = stageCamera;
                 }
+                if (resetOnEnter) ResetPhases();
+                else activePhase = -1;
             }
 
             SetPlayerVisible(!active);
@@ -469,11 +619,34 @@ namespace CSSSimulation.Networking
             {
                 OnStageOpened?.Invoke();
                 ShowIntroIfDue();
+
+                // Last, so the phase's camera move starts from a fully-opened station and nothing
+                // that runs above can overwrite the pose it flies to.
+                if (skipPunchingForTesting) SkipToPlugging();
             }
             else
             {
                 OnStageClosed?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Opens straight into the first plugging phase, as if the punching were already done.
+        ///
+        /// The punch board is SUSPENDED, not disabled or reset. Nothing about the termination is
+        /// altered - it simply is not asked for - so what you are testing is the real phase, not a
+        /// special case that only exists while this flag is ticked.
+        /// </summary>
+        void SkipToPlugging()
+        {
+            Debug.LogWarning("[PunchDownStation] SKIPPING THE PUNCHING - this is a testing setting. " +
+                             "Untick 'Skip Punching For Testing' before a real run.", this);
+
+            if (board != null) board.InputSuspended = true;
+
+            if (!BeginNextPhase())
+                Debug.LogWarning("[PunchDownStation] ...but there was no plugging phase to skip to. " +
+                                 "The lines above say why.", this);
         }
 
         /// <summary>
@@ -628,10 +801,13 @@ namespace CSSSimulation.Networking
                               "this component's RequestExit(), and put it in this list so it only " +
                               "appears inside the stage.");
 
-            if (patchCords != null && patchCords.cameraPose == null)
-                sb.AppendLine("  - Patch Cords is assigned but its Camera Pose is empty, so when the " +
-                              "cross-connect starts the camera will stay closed in on the last " +
-                              "punched port and the switch will be off screen.");
+            foreach (var phase in Phases())
+            {
+                if (phase.cameraPose == null)
+                    sb.AppendLine("  - Plugging phase '" + phase.phaseName + "' has no Camera Pose, " +
+                                  "so when it starts the camera stays wherever the previous phase " +
+                                  "left it and what the player has to plug into may be off screen.");
+            }
 
             if (failAction == FailAction.RestartWholeProcedure && procedureReset == null)
                 sb.AppendLine("  - Fail Action is RestartWholeProcedure but Procedure Reset is empty, " +
@@ -640,6 +816,11 @@ namespace CSSSimulation.Networking
             if (bypassGateForTesting)
                 Debug.LogWarning("[PunchDownStation] GATE BYPASSED. Anyone can open this station. " +
                                  "Untick 'Bypass Gate For Testing' before a graded build.", this);
+
+            if (skipPunchingForTesting)
+                Debug.LogWarning("[PunchDownStation] SKIP PUNCHING is ON. Entering this station goes " +
+                                 "straight to the plugging - the termination is never asked for. " +
+                                 "Untick 'Skip Punching For Testing' before a real run.", this);
 
             if (sb.Length == 0)
             {

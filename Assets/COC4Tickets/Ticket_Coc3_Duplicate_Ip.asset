@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc3_Duplicate_Ip
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc3_duplicate_ip
+  targetModule: 2
+  sceneName: COC3-Copy
+  title: New PC knocked the office offline
+  description: A replacement PC was set up this morning. Since then that machine
+    has no network at all, and staff say another computer keeps dropping out too.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc3_duplicate_ip
+  requiresDiagnosis: 1
+  symptomText: The workstation's IP settings look correct and match the documentation.
+    No network traffic works. Windows has reported an IP address conflict.
+  diagnosisOptions:
+  - label: Two devices are using the same IP address
+    isCorrect: 1
+    feedback: Correct. Everything looks right on both machines, which is what makes
+      this one hard - the settings are only wrong in relation to each other. Give
+      one of them a different address.
+  - label: Faulty network card in the new PC
+    isCorrect: 0
+    feedback: A dead card would not produce a conflict warning - Windows can only
+      report a conflict because the card is working and talking.
+  - label: Incorrect default gateway
+    isCorrect: 0
+    feedback: A wrong gateway breaks traffic to other networks but leaves the local
+      network working. Here nothing works at all.
+  - label: The switch has failed
+    isCorrect: 0
+    feedback: A failed switch would take out far more than two machines, and would
+      not cause a conflict warning.

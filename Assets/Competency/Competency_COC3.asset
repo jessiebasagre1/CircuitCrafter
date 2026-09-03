@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab975d03e41288b4b9cc6c3ab66dd52c, type: 3}
+  m_Name: Competency_COC3
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.CompetencyDefinition
+  moduleId: COC3
+  unitCode: 
+  unitTitle: Set up computer servers
+  outcomes:
+  - code: LO1
+    title: Set up server addressing and roles
+    criteria: Assigns a static address, installs the required server roles, and creates
+      the domain.
+    evidenceTaskIds:
+    - coc3_static_ip
+    - coc3_install_roles
+    - coc3_create_domain
+    requiredEvidenceCount: 0
+  - code: LO2
+    title: Configure users, groups and shared resources
+    criteria: Creates accounts and groups and applies share permissions appropriately.
+    evidenceTaskIds:
+    - coc3_users_groups
+    - coc3_shares
+    requiredEvidenceCount: 0
+  - code: LO3
+    title: Configure services and document the work
+    criteria: Configures printing and folder redirection, carries out the test plan,
+      and completes the report.
+    evidenceTaskIds:
+    - coc3_printer
+    - coc3_redirection
+    - coc3_test_plan
+    - coc3_service_report
+    requiredEvidenceCount: 0

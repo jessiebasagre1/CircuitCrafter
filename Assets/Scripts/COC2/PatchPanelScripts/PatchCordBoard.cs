@@ -3,139 +3,163 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 
 namespace CSSSimulation.Networking
 {
     /// <summary>
-    /// PHASE 2 of the punch-down station: cross-connecting the panel to the switch.
+    /// A PLUGGING PHASE of the punch-down station: run each cord to the port it belongs in.
     ///
-    /// WHAT IT IS. Once all eight ports are terminated, the conductors' job is done - they dead-end
-    /// in the IDC block and go no further. What links the panel to the switch is a separate patch
-    /// cord, plugged into the panel's FRONT port at one end and a switch port at the other. The panel
-    /// end is already in place on the model; the player drags the free end into the matching switch
-    /// port. Panel 1 to switch 1, panel 2 to switch 2, and so on.
+    /// WHAT IT IS AND IS NOT. This board owns no dragging, no picking and no snapping. All of that
+    /// already exists and is already tuned: PatchCord reads PointerInput, picks off renderer bounds,
+    /// finds sockets through RJ45Socket.All and drives a VerletRope between two plugs. This is only
+    /// the supervisor around it - it decides WHEN the cords are live, WHICH socket each one belongs
+    /// in, and WHETHER the finished job is right.
     ///
-    /// WHY IT LIVES IN THE SAME STATION. This is one continuous piece of work in the rack, and the
-    /// player should not be dumped back into the world between punching and patching. PunchDownStation
-    /// asks this board to Begin() the moment the last port passes, and the view simply stays open.
+    /// WHY THAT SPLIT. The cords are physical objects in the world, and the player can be looking at
+    /// them from the station or walking past them. Putting the rules in the cord would mean the cord
+    /// behaves differently depending on which stage is running, which is exactly the kind of hidden
+    /// state that makes a bug impossible to find. The cord always behaves the same; this board just
+    /// unlocks it and marks it.
     ///
-    /// ONE SHOT, NOT EIGHT. Unlike the punch phase there is no per-port choreography here - the whole
-    /// point is that the player can see the panel and the switch at the same time to run a cord
-    /// between them. So the camera pulls back to a single framing on the rack front and stays there.
-    ///
-    /// NO COLLIDERS. Same as everything else on this stage: plugs are picked from Renderer.bounds,
-    /// sockets from a radius box, and a drop is resolved by world distance, then screen distance,
-    /// then a pointer ray.
+    /// HOW IT KNOWS WHERE A CORD BELONGS, WITH NO PER-CORD SETUP. Every cord is two PatchCords under
+    /// one parent. One end is fixed - it starts plugged and stays locked; the other is the one the
+    /// player runs. The rule is simply "the free end goes to the same port number the fixed end came
+    /// from, on the equipment named in Target Group Id". So a cord whose fixed plug sits in panel 3
+    /// must reach switch 3, and nothing has to be typed in per cord.
     ///
     /// Setup:
-    ///   1. Put this on an empty child of the station called PatchCordPhase.
-    ///   2. Fill Search Roots with the roots the cords and the switch live under.
-    ///   3. Assign Camera Pose - an empty framing the rack front.
-    ///   4. Assign it to Patch Cords on PunchDownStation.
-    ///   5. Leave Sockets and Plugs empty. They are found for you.
+    ///   1. Put this on an empty child of the station.
+    ///   2. Fill Search Roots with whatever your cords live under.
+    ///   3. Set Target Group Id to the groupId of the sockets they should reach.
+    ///   4. Assign Camera Pose.
+    ///   5. Drop it into Patch Phases on PunchDownStation.
     /// </summary>
     [DefaultExecutionOrder(120)]
     public class PatchCordBoard : MonoBehaviour
     {
+        [Header("Identity")]
+        [Tooltip("What this phase is called, in the Console and in hints - 'Panel to switch', " +
+                 "'Cable to outlet'. Matters once you have more than one plugging phase, at which " +
+                 "point two boards logging the same line is thoroughly confusing.")]
+        public string phaseName = "Panel to switch";
+
+        [Tooltip("What the player is plugging into, for the hint text: 'switch port', 'outlet', " +
+                 "'tester'. Kept separate from Phase Name so the nudges read naturally.")]
+        public string socketNoun = "switch port";
+
         [Header("The view")]
-        [Tooltip("The camera the cords are dragged in. PunchDownStation hands this over on entry, so " +
-                 "you can normally leave it empty.")]
+        [Tooltip("The camera the cords are dragged in. PunchDownStation hands this over on entry, " +
+                 "and it is pushed into every supervised PatchCord's Drag Camera - so you never have " +
+                 "to keep eight Drag Camera fields in step with which view is actually rendering.")]
         public Camera stageCamera;
 
-        [Tooltip("An empty transform posed so the panel front AND the switch are both comfortably in " +
-                 "frame. The camera flies here when this phase begins.\n\n" +
-                 "Leave empty and the camera stays wherever the punch phase left it, which is close " +
-                 "in on port 8 - far too tight to run a cord.")]
+        [Tooltip("An empty posed so BOTH ends are comfortably in frame - where the cords start and " +
+                 "where they have to reach. The camera flies here when this phase begins.\n\n" +
+                 "Leave it empty and the camera stays wherever the previous phase left it, which " +
+                 "after the punching is close in on port 8 - far too tight to run a cord.")]
         public Transform cameraPose;
 
-        [Tooltip("Seconds for the pull-back to Camera Pose.")]
+        [Tooltip("Seconds for the move to Camera Pose.")]
         public float cameraMoveDuration = 1.0f;
 
-        [Header("Where to look")]
-        [Tooltip("The hierarchies the plugs and switch sockets live under - typically PatchCords and " +
-                 "Switch_24Port. Leave empty to search under this object only.")]
+        [Header("Which cords")]
+        [Tooltip("The hierarchies the cords live under - typically the parent holding PatchCord_01 " +
+                 "to _08. Leave empty to search under this object only.")]
         public Transform[] searchRoots;
 
-        [Header("Pieces (found automatically - leave empty)")]
-        public PatchCordSocket[] sockets;
-        public PatchCordPlug[] plugs;
+        [Tooltip("The FREE end of each cord is the plug whose name contains this. The other plug " +
+                 "under the same parent is the fixed end and is never unlocked.\n\n" +
+                 "Matches the naming in the patch-cord guide: Plug_A is seated at the panel, Plug_B " +
+                 "is the end the player runs. Change it if you named yours differently.")]
+        public string freePlugNameContains = "Plug_B";
+
+        [Tooltip("Found from the search roots by the name above - leave empty. Fill it only if your " +
+                 "cords are named inconsistently and you want to point at the eight plugs by hand.")]
+        public PatchCord[] freePlugs;
+
+        [Header("The target")]
+        [Tooltip("The groupId of the sockets these cords must reach - 'switch', 'router', 'outlet'. " +
+                 "Must match what you set on those RJ45Socket components.")]
+        public string targetGroupId = "switch";
+
+        [Tooltip("ON: the free end must land on the port number its own fixed end came from - panel " +
+                 "3 to switch 3. This is the whole lesson of a cross-connect, and it needs nothing " +
+                 "typed in per cord.\n\n" +
+                 "OFF: any socket in the target group will do. Right for a phase where one plug goes " +
+                 "into one tester and the numbering means nothing.")]
+        public bool matchPartnerPortNumber = true;
+
+        [Tooltip("When the fixed end is NOT plugged in - because this cord starts completely loose - " +
+                 "read the required port number off the cord's own name instead. 'PatchCord_03' " +
+                 "means port 3.\n\n" +
+                 "Without this, a cord with both ends unplugged has no number to match against and " +
+                 "ANY port in the target group is accepted, silently. Trailing digits on the cord's " +
+                 "parent object are used, so PatchCord_03, Cord 3 and Patch-3 all work.")]
+        public bool deriveNumberFromCordName = true;
 
         [Header("Rules")]
-        [Tooltip("How many cords this phase expects. Normally the same as the number of ports you " +
-                 "punched.")]
-        [Range(1, 24)] public int cordCount = 8;
+        [Tooltip("Pull every supervised plug out of its socket when the phase starts, so the player " +
+                 "does the work rather than finding it already done.\n\n" +
+                 "Untick only if the cords are already unplugged in the scene.")]
+        public bool unplugOnBegin = true;
 
-        [Tooltip("ON: a cord dropped on the wrong switch port is refused with a hint naming the " +
-                 "right one. Immediate, and it teaches the one-to-one mapping directly.\n\n" +
-                 "OFF: any free socket accepts any cord and the whole patching is judged at the end. " +
-                 "Harder, and closer to a graded assessment.")]
+        [Tooltip("How far to draw a plug back out of its jack when this phase unplugs it, along the " +
+                 "plug's own axis. Purely so an unplugged cord does not sit inside the port looking " +
+                 "plugged in. Ignored when the cord has a Home Anchor, which wins.")]
+        public float unplugOffset = 0.05f;
+
+        [Tooltip("Keep the cords locked except while this phase is running, so they cannot be pulled " +
+                 "out during the punching or while the player walks past them in the world.")]
+        public bool lockWhenIdle = true;
+
+        [Tooltip("While this phase runs, a dragged cord can only snap into sockets in Target Group " +
+                 "Id. Everything else stops being a candidate.\n\n" +
+                 "LEAVE THIS ON when the equipment sits close together. PatchCord picks its target " +
+                 "with RJ45Socket.NearestFree, which knows nothing about groups - so a cord being " +
+                 "run to the switch will snap into a router jack a couple of centimetres away, get " +
+                 "refused by the rules, and pop back out. Correct, but it reads as the cord refusing " +
+                 "to go where the player plainly put it. Filtering here means the wrong jack is " +
+                 "never offered, and the highlight never lights it up either.")]
+        public bool restrictSnapToTargetGroup = true;
+
+        [Tooltip("ON: a cord plugged into the wrong port pops straight back out with a hint naming " +
+                 "the right one. Immediate, and it teaches the mapping directly.\n\n" +
+                 "OFF: any free socket in the target group accepts any cord, and the whole job is " +
+                 "judged at the end. Harder, and closer to a graded assessment.")]
         public bool requireCorrectPort = true;
 
-        [Tooltip("ON: cords must be run 1, 2, 3... in order.\n\nOFF (default): any order, as long as " +
-                 "each lands in its matching port. Real patching has no required order.")]
-        public bool requireInOrder = false;
-
-        [Tooltip("Light up the socket a dragged cord belongs in. A good teaching aid; untick for an " +
-                 "assessment run where the player should read the labels themselves.")]
-        public bool showTargetHighlight = true;
-
-        [Header("Snapping")]
-        [Tooltip("How close (WORLD units) a released plug has to be to a socket to land in it. Set " +
-                 "against the real port spacing on your switch - the check on Play will tell you if " +
-                 "it is wrong.")]
-        public float snapDistance = 0.02f;
-
-        [Tooltip("How close, IN SCREEN PIXELS, the plug has to look to a socket. This is the " +
-                 "forgiving test and usually the one that fires, because a plug is dragged on a plane " +
-                 "through where it started - so a plug sitting right on a port on screen can still be " +
-                 "some way from it in depth.\n\n" +
-                 "Switch ports sit close together, so keep this SMALLER than you would for the punch " +
-                 "block. 45 suits a 1080p view. 0 switches it off.")]
-        public float screenSnapPixels = 45f;
-
-        [Tooltip("Treat Screen Snap Pixels as authored for Reference Screen Height and scale it to " +
-                 "whatever the device actually has.\n\n" +
-                 "LEAVE THIS ON FOR TOUCH. A raw pixel count means different things on different " +
-                 "screens - 45 px is about 4 mm on a 1080p monitor and under 1 mm on a 1440p phone, " +
-                 "which no fingertip can hit. Scaling by screen height keeps the tolerance the same " +
-                 "proportion of the screen on both.")]
-        public bool scaleSnapToScreen = true;
-
-        [Tooltip("The screen height Screen Snap Pixels was tuned at. 1080 unless you tuned it " +
-                 "somewhere else.")]
-        public float referenceScreenHeight = 1080f;
-
-        [Tooltip("Last resort: a ray from the stage camera through the pointer. Weakest of the three, " +
-                 "because the pointer is offset from the plug by however far off-centre it was grabbed.")]
-        public bool alsoAcceptRayHit = true;
-
-        [Tooltip("When a drop finds no socket, log how close it got - in world units AND pixels - so " +
-                 "one Console line separates 'the numbers are wrong' from 'the aim was wrong'.")]
-        public bool logRefusedDrops = true;
-
         [Header("On begin")]
-        [Tooltip("Switched OFF when this phase starts. Put the punch-down tool icon here - there is " +
-                 "nothing left to strike, and leaving it on screen invites a pointless drag.")]
+        [Tooltip("Switched OFF when this phase starts. The punch-down tool icon belongs here - there " +
+                 "is nothing left to strike, and leaving it on screen invites a pointless drag.")]
         public GameObject[] hideOnBegin;
 
-        [Tooltip("Switched ON when this phase starts. Anything specific to patching - a labelled " +
-                 "port map, a different instruction panel.")]
+        [Tooltip("Switched ON when this phase starts. Anything specific to this phase - a port map, " +
+                 "a different instruction panel. Leave them DISABLED in the editor.")]
         public GameObject[] showOnBegin;
 
-        [Tooltip("Disabled when this phase starts. Put PunchStageCamera here: it is still sitting in " +
-                 "its AtPort phase watching the sequence, and while it will not move on its own, " +
-                 "switching it off makes certain nothing fights this board for the camera.")]
+        [Tooltip("Disabled when this phase starts. PunchStageCamera belongs here, so nothing else " +
+                 "can fight this board for the camera.")]
         public MonoBehaviour[] disableOnBegin;
 
-        [Tooltip("Optional. Shown once when this phase begins - what a cross-connect is, why the " +
-                 "numbers have to line up, why the cord goes through the manager.")]
+        [Header("Out of shot while this phase runs")]
+        [Tooltip("Objects that block THIS phase's camera. Every renderer under each one is switched " +
+                 "off when the phase starts and switched back on the moment it passes - so the UTP " +
+                 "cables can be out of the way while the player runs the patch cords, and back in " +
+                 "place the instant they are done.\n\n" +
+                 "Different from Hide On Begin, which stays hidden for the rest of the visit. Use " +
+                 "that for the punch tool icon; use this for scenery that is only in the way for " +
+                 "one phase.\n\n" +
+                 "RENDERERS, not SetActive, deliberately. Deactivating a cable would stop its " +
+                 "VerletRope simulating and leave the rope in a strange state when it came back - " +
+                 "and it would take the object's own scripts down with it. Switching renderers off " +
+                 "also removes the object's SHADOW, which is the other half of a blocked shot.")]
+        public Transform[] hideWhileRunning;
+
+        [Tooltip("Optional. Shown once when this phase begins.")]
         public DialogSequence introDialog;
 
         [Header("Readouts (optional)")]
-        [Tooltip("'3 of 8 patched', then the verdict.")]
         public TMP_Text progressText;
-        [Tooltip("Short nudges - why a drop was refused, what to do next.")]
         public TMP_Text hintText;
         [Tooltip("Seconds a hint stays up. 0 to leave it until the next one.")]
         public float hintSeconds = 2.5f;
@@ -144,9 +168,33 @@ namespace CSSSimulation.Networking
         public Color failColor = new Color(0.9f, 0.25f, 0.2f);
         public Color progressColor = new Color(0.85f, 0.85f, 0.88f);
 
+        [Header("Diagnostics")]
+        [Tooltip("Print the roster when the phase starts, and a running count on every cord " +
+                 "successfully run.\n\n" +
+                 "Worth leaving on until the phase plays through. Without the readout TMP fields " +
+                 "assigned there is otherwise NO feedback at all, and a phase that quietly never " +
+                 "reaches its count looks identical to one that is broken.")]
+        public bool logProgress = true;
+
+        [Tooltip("Record where every plug sits in the EDITOR, then report how far it moved once " +
+                 "PatchCord.Start() seated it.\n\n" +
+                 "This catches the commonest setup mistake by a mile. A socket anchor is not a " +
+                 "marker for where a jack is - it IS the pose the plug is teleported to, position " +
+                 "AND rotation. Place the anchor by eye and every cord snaps somewhere slightly " +
+                 "wrong the instant you press Play, which looks like the cords being broken rather " +
+                 "than the anchor being off.")]
+        public bool reportStartJump = true;
+
+        [Tooltip("How far a plug may move at Start before it is reported, in world units. 0.002 is " +
+                 "2 mm - below that nobody would notice.")]
+        public float startJumpTolerance = 0.002f;
+
+        [Tooltip("How far a plug may TURN at Start before it is reported, in degrees.")]
+        public float startTurnTolerance = 2f;
+
         [Header("Task (optional)")]
-        [Tooltip("Reported to TaskManager when this phase passes. Leave empty for none. It must be " +
-                 "registered by COC2TaskSetup or nothing will listen for it.")]
+        [Tooltip("Reported to TaskManager when this phase passes. It must be registered by " +
+                 "COC2TaskSetup or nothing will listen for it.")]
         public string taskId = "";
 
         [Header("Events")]
@@ -160,40 +208,28 @@ namespace CSSSimulation.Networking
         /// <summary>Raised once every cord is in and judged. PunchDownStation subscribes to this.</summary>
         public System.Action<bool, string> OnFinished;
 
-        /// <summary>True between Begin() and the verdict.</summary>
         public bool IsRunning { get; private set; }
         public bool HasFinished { get; private set; }
         public bool LastResultPassed { get; private set; }
 
-        /// <summary>Set while the camera is flying. A drag started mid-flight would be computed from
-        /// a camera that is still moving, so the plug slides across the screen on its own.</summary>
-        public bool InputSuspended { get; set; }
-
-        public bool AcceptsInput { get { return IsRunning && !HasFinished && !InputSuspended; } }
-
-        public Camera StageCamera { get { return stageCamera; } }
-
-        /// <summary>Screen Snap Pixels, corrected for the screen this is actually running on, so the
-        /// editor and a phone agree on how forgiving the stage is.</summary>
-        public float EffectiveScreenSnap
-        {
-            get
-            {
-                if (!scaleSnapToScreen || referenceScreenHeight <= 0f) return screenSnapPixels;
-                return screenSnapPixels * (Screen.height / referenceScreenHeight);
-            }
-        }
-
-        PatchCordPlug claimedBy;
-        int pressFrame = -1;
-        PatchCordPlug pressWinner;
         Coroutine cameraRoutine;
         float hintClearAt;
         int wrongAttempts;
+        bool suppressCallback;
+
+        // Recorded in Awake - which runs before ANY Start, and therefore before PatchCord.Start()
+        // has seated anything. That ordering is the whole trick: it is the only moment the authored
+        // editor pose still exists to be compared against.
+        PatchCord[] watched;
+        Vector3[] authoredPos;
+        Quaternion[] authoredRot;
+
+        Renderer[] blockers;
+        bool[] blockerWasEnabled;
+        bool blockersHidden;
 
         // ------------------------------------------------------------------
 
-        /// <summary>Same fallback rule as PunchStageBoard: the roots you named, or this object.</summary>
         public Transform[] Roots
         {
             get
@@ -208,30 +244,99 @@ namespace CSSSimulation.Networking
             }
         }
 
-        T[] CollectAll<T>() where T : Component
-        {
-            var found = new System.Collections.Generic.List<T>();
-            foreach (var root in Roots)
-            {
-                foreach (var c in root.GetComponentsInChildren<T>(true))
-                {
-                    if (c != null && !found.Contains(c)) found.Add(c);
-                }
-            }
-            return found.ToArray();
-        }
-
         void Awake()
         {
-            if (sockets == null || sockets.Length == 0) sockets = CollectAll<PatchCordSocket>();
-            if (plugs == null || plugs.Length == 0) plugs = CollectAll<PatchCordPlug>();
+            if (freePlugs == null || freePlugs.Length == 0) freePlugs = CollectFreePlugs();
 
-            foreach (var p in plugs) { if (p != null) p.Bind(this); }
+            foreach (var p in freePlugs)
+            {
+                if (p == null) continue;
+                p.OnConnectionChanged += HandleConnectionChanged;
+                if (lockWhenIdle) p.isLocked = true;
+            }
 
-            // NOT ResetStage() here. The punch phase is what runs first, and a reset would yank every
-            // plug back to a home pose captured before the scene had finished settling.
+            RecordAuthoredPoses();
+
             IsRunning = false;
             HasFinished = false;
+        }
+
+        /// <summary>
+        /// Snapshots where every plug sits before anything has moved it.
+        ///
+        /// Both ends, not just the free one - the fixed end is the half seated against the panel,
+        /// and it is just as likely to be the one whose anchor is off.
+        /// </summary>
+        void RecordAuthoredPoses()
+        {
+            if (!reportStartJump) return;
+
+            var list = new System.Collections.Generic.List<PatchCord>();
+            foreach (var p in freePlugs)
+            {
+                if (p == null) continue;
+                if (!list.Contains(p)) list.Add(p);
+                PatchCord partner = Partner(p);
+                if (partner != null && !list.Contains(partner)) list.Add(partner);
+            }
+
+            watched = list.ToArray();
+            authoredPos = new Vector3[watched.Length];
+            authoredRot = new Quaternion[watched.Length];
+            for (int i = 0; i < watched.Length; i++)
+            {
+                authoredPos[i] = watched[i].transform.position;
+                authoredRot[i] = watched[i].transform.rotation;
+            }
+        }
+
+        /// <summary>
+        /// Reports any plug that jumped when it was seated at Start.
+        ///
+        /// A socket anchor is not a label for where a jack is - PatchCord.Plug() teleports the plug
+        /// to the anchor's world position AND rotation. So if the anchor was placed by eye, every
+        /// cord shifts the instant Play is pressed, and it reads as the cords being broken rather
+        /// than the anchor being a few millimetres and a few degrees out.
+        /// </summary>
+        void ReportStartJumps(StringBuilder sb)
+        {
+            if (!reportStartJump || watched == null) return;
+
+            for (int i = 0; i < watched.Length; i++)
+            {
+                PatchCord p = watched[i];
+                if (p == null || !p.IsPlugged) continue;
+
+                float moved = Vector3.Distance(authoredPos[i], p.transform.position);
+                float turned = Quaternion.Angle(authoredRot[i], p.transform.rotation);
+                if (moved <= startJumpTolerance && turned <= startTurnTolerance) continue;
+
+                string anchor = p.startSocket == null
+                    ? "its socket"
+                    : (p.startSocket.snapPoint != null
+                        ? p.startSocket.name + " (via its Snap Point '" + p.startSocket.snapPoint.name + "')"
+                        : p.startSocket.name);
+
+                sb.AppendLine("  - '" + p.name + "' JUMPED " + moved.ToString("F4") + " units and " +
+                              turned.ToString("F0") + "° when it seated into " + anchor + ". The " +
+                              "anchor is not where the plug was sitting in the editor.\n" +
+                              "      Fix: put the plug exactly where you want it, right-click its " +
+                              "Transform > Copy Component, then right-click the anchor's Transform > " +
+                              "Paste Component Values. The anchor IS the final pose, rotation included.");
+            }
+        }
+
+        void OnDestroy()
+        {
+            // Static state outlives this component, so a board destroyed mid-phase would leave every
+            // other group in the scene permanently unsnappable.
+            RJ45Socket.OnlyGroup = null;
+
+            if (freePlugs == null) return;
+            foreach (var p in freePlugs)
+            {
+                if (p != null) p.OnConnectionChanged -= HandleConnectionChanged;
+            }
         }
 
         void Start()
@@ -248,53 +353,405 @@ namespace CSSSimulation.Networking
             }
         }
 
+        /// <summary>
+        /// Every PatchCord under the search roots whose name marks it as the free end.
+        ///
+        /// A cord is two PatchCords under one parent. Picking by name rather than by "is it plugged
+        /// in" is deliberate: both ends start plugged in the scene, so at Awake there is nothing to
+        /// tell them apart except which one you called the free one.
+        /// </summary>
+        PatchCord[] CollectFreePlugs()
+        {
+            var found = new System.Collections.Generic.List<PatchCord>();
+            foreach (var root in Roots)
+            {
+                foreach (var c in root.GetComponentsInChildren<PatchCord>(true))
+                {
+                    if (c == null || found.Contains(c)) continue;
+                    if (!string.IsNullOrEmpty(freePlugNameContains) &&
+                        !c.name.Contains(freePlugNameContains)) continue;
+                    found.Add(c);
+                }
+            }
+            return found.ToArray();
+        }
+
+        /// <summary>The other plug on the same cord - the fixed end.</summary>
+        public static PatchCord Partner(PatchCord plug)
+        {
+            if (plug == null || plug.transform.parent == null) return null;
+            foreach (var other in plug.transform.parent.GetComponentsInChildren<PatchCord>(true))
+            {
+                if (other != null && other != plug) return other;
+            }
+            return null;
+        }
+
+        /// <summary>The port number this plug has to reach, read off its own fixed end. -1 when that
+        /// cannot be worked out - no partner, or the partner is not plugged into anything.</summary>
+        public int RequiredPort(PatchCord plug)
+        {
+            if (!matchPartnerPortNumber || plug == null) return -1;
+
+            // First choice: the socket the cord's own fixed end is sitting in. It is the truth,
+            // because it is where the cord physically comes from.
+            PatchCord partner = Partner(plug);
+            if (partner != null && partner.PluggedSocket != null)
+                return partner.PluggedSocket.portNumber;
+
+            // Fallback for a cord that starts completely loose - nothing is plugged, so there is no
+            // socket to read. The cord's own name carries the number instead.
+            if (deriveNumberFromCordName && plug.transform.parent != null)
+                return TrailingNumber(plug.transform.parent.name);
+
+            return -1;
+        }
+
+        /// <summary>The number at the end of a name: 'PatchCord_03' gives 3. -1 if it ends in
+        /// anything else.</summary>
+        public static int TrailingNumber(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return -1;
+
+            int i = s.Length - 1;
+            while (i >= 0 && char.IsDigit(s[i])) i--;
+            if (i == s.Length - 1) return -1;              // no trailing digits at all
+
+            int value;
+            return int.TryParse(s.Substring(i + 1), out value) ? value : -1;
+        }
+
+        bool IsCorrectlyPlugged(PatchCord plug)
+        {
+            if (plug == null || !plug.IsPlugged || plug.PluggedSocket == null) return false;
+            if (plug.PluggedSocket.groupId != targetGroupId) return false;
+
+            int want = RequiredPort(plug);
+            if (want < 0) return true;                       // nothing to match against
+            return plug.PluggedSocket.portNumber == want;
+        }
+
         // ------------------------------------------------------------------
-        // Starting the phase
+        // Starting
         // ------------------------------------------------------------------
 
         /// <summary>
-        /// Starts the patch-cord phase. Returns TRUE if it took over, which is what tells
-        /// PunchDownStation to keep the view open instead of dropping the player back in the world.
-        ///
-        /// Returns FALSE when there is nothing to do - no plugs in the scene, or the phase has
-        /// already been completed this visit - so a station with this assigned but not yet built
-        /// still behaves exactly as it did before.
+        /// Starts this phase. TRUE means it took over, which is what tells PunchDownStation to keep
+        /// the view open. FALSE when there is nothing to do - no cords found, or already completed
+        /// this visit - so a half-built phase is skipped rather than trapping the player.
         /// </summary>
         public bool Begin()
         {
             if (IsRunning) return true;
             if (HasFinished) return false;
-            if (plugs == null || plugs.Length == 0)
+            if (freePlugs == null || freePlugs.Length == 0)
             {
-                Debug.LogWarning("[PatchCordBoard] Begin() was called but there are no PatchCordPlug " +
-                                 "components under the search root(s), so there is nothing to patch. " +
-                                 "The station will close as it did before.", this);
+                Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' has no cords under its search " +
+                                 "root(s) whose name contains '" + freePlugNameContains + "', so " +
+                                 "there is nothing to plug in. Skipping this phase.", this);
                 return false;
             }
 
             IsRunning = true;
             wrongAttempts = 0;
-            claimedBy = null;
 
-            foreach (var s in sockets) { if (s != null) s.ResetSocket(); }
-            foreach (var p in plugs) { if (p != null) { p.ResetPlug(); p.Bind(this); } }
+            foreach (var p in freePlugs)
+            {
+                if (p == null) continue;
+
+                // The cord raycasts from whatever is in its own Drag Camera field. Handing it the
+                // live stage camera here means a camera swapped at runtime can never leave a cord
+                // picking from a camera that is not rendering - the commonest way a drag stage ends
+                // up quietly dead.
+                if (stageCamera != null) p.dragCamera = stageCamera;
+
+                if (unplugOnBegin) PullOut(p);
+                p.isLocked = false;
+            }
 
             foreach (var go in hideOnBegin) { if (go != null) go.SetActive(false); }
             foreach (var go in showOnBegin) { if (go != null) go.SetActive(true); }
             foreach (var mb in disableOnBegin) { if (mb != null) mb.enabled = false; }
+            SetBlockersHidden(true);
+
+            if (restrictSnapToTargetGroup) RJ45Socket.OnlyGroup = targetGroupId;
 
             MoveCameraToPose();
             RefreshUI();
-            SetHint("Run each patch cord from the panel to the matching switch port.");
+            SetHint("Run each cord to the matching " + socketNoun + ".");
 
             OnPhaseBegan?.Invoke();
 
             if (introDialog != null && DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
                 DialogManager.Instance.ShowDialog(introDialog);
 
-            Debug.LogWarning("[PatchCordBoard] Patch-cord phase started - " + plugs.Length +
-                             " cords, " + sockets.Length + " sockets.", this);
+            if (logProgress) LogRoster();
+            else Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' started - " + freePlugs.Length +
+                                  " cords to run into group '" + targetGroupId + "'.", this);
             return true;
+        }
+
+        /// <summary>
+        /// Unplugs a cord and moves it somewhere that reads as unplugged.
+        ///
+        /// Unplug() on its own only clears the connection - the plug stays sitting exactly where it
+        /// was, which on screen is still inside the jack. Home Anchor wins if the cord has one;
+        /// otherwise the plug is drawn back along its own axis, which is the direction it would come
+        /// out of a real jack.
+        /// </summary>
+        void PullOut(PatchCord plug)
+        {
+            // Whether it was actually IN anything decides what happens next, so it has to be read
+            // before Unplug() clears it.
+            bool wasPlugged = plug.IsPlugged;
+
+            suppressCallback = true;
+            plug.Unplug();
+            suppressCallback = false;
+
+            if (plug.homeAnchor != null)
+            {
+                // Home wins in every case. A cord that starts loose has its resting pose here, and
+                // a retry should put it back there rather than wherever the last drag ended.
+                plug.transform.SetPositionAndRotation(plug.homeAnchor.position, plug.homeAnchor.rotation);
+            }
+            else if (wasPlugged && unplugOffset > 0f)
+            {
+                // The offset only makes sense as "back it out of the jack it was in".
+                //
+                // Applying it unconditionally was a bug: this runs from ResetStage() on every entry
+                // to the station and from Retry() after every failure, so a cord that was ALREADY
+                // unplugged would creep backwards by Unplug Offset each time - five centimetres per
+                // visit, drifting further from the panel the more the player retried.
+                plug.transform.position -= plug.transform.forward * unplugOffset;
+            }
+
+            plug.RebuildRope();
+        }
+
+        /// <summary>
+        /// Takes the objects in Hide While Running out of shot, and puts them back exactly as they
+        /// were.
+        ///
+        /// The restore records what it found rather than switching everything on. A cable rig has
+        /// renderers that are deliberately off - PunchStageConductorRig hides each source mesh once
+        /// it has built the rope that replaces it - and blanket-enabling them on the way out would
+        /// bring back eight straight cylinders sitting inside eight simulated wires.
+        /// </summary>
+        void SetBlockersHidden(bool hidden)
+        {
+            if (hideWhileRunning == null || hideWhileRunning.Length == 0) return;
+
+            if (hidden)
+            {
+                if (blockersHidden) return;
+                blockersHidden = true;
+
+                if (blockers == null)
+                {
+                    var list = new System.Collections.Generic.List<Renderer>();
+                    foreach (var t in hideWhileRunning)
+                    {
+                        if (t == null) continue;
+                        foreach (var r in t.GetComponentsInChildren<Renderer>(true))
+                        {
+                            if (r != null && !list.Contains(r)) list.Add(r);
+                        }
+                    }
+                    blockers = list.ToArray();
+                    blockerWasEnabled = new bool[blockers.Length];
+                }
+
+                for (int i = 0; i < blockers.Length; i++)
+                {
+                    if (blockers[i] == null) continue;
+                    blockerWasEnabled[i] = blockers[i].enabled;
+                    blockers[i].enabled = false;
+                }
+                return;
+            }
+
+            // Nothing was hidden, so there is nothing to restore. Without this guard a restore that
+            // runs before any hide - ResetStage() on the station's first entry - would apply an
+            // all-false record and switch the objects off instead of on.
+            if (!blockersHidden) return;
+            blockersHidden = false;
+
+            if (blockers == null) return;
+            for (int i = 0; i < blockers.Length; i++)
+            {
+                if (blockers[i] == null) continue;
+                blockers[i].enabled = blockerWasEnabled[i];
+            }
+        }
+
+        /// <summary>
+        /// Prints exactly which plugs this phase is supervising and what each one needs.
+        ///
+        /// This is the line that answers "why did it never say complete". The phase finishes when
+        /// the number of cords sitting in the target group reaches the number of plugs it collected,
+        /// so if it collected sixteen plugs for eight cords - which is what happens when Free Plug
+        /// Name Contains is empty and BOTH ends of every cord are picked up - that count can never
+        /// be reached and nothing looks wrong anywhere else.
+        /// </summary>
+        [ContextMenu("Report cord state")]
+        public void LogRoster()
+        {
+            var sb = new StringBuilder();
+            sb.Append("[PatchCordBoard] '").Append(phaseName).Append("' supervising ")
+              .Append(freePlugs == null ? 0 : freePlugs.Length)
+              .Append(" plug(s), all of which must reach group '").Append(targetGroupId)
+              .Append("' for the phase to complete:\n");
+
+            if (freePlugs != null)
+            {
+                foreach (var p in freePlugs)
+                {
+                    if (p == null) { sb.AppendLine("    (empty slot)"); continue; }
+
+                    int want = RequiredPort(p);
+                    sb.Append("    ").Append(p.transform.parent != null ? p.transform.parent.name + "/" : "")
+                      .Append(p.name)
+                      .Append("   needs: ").Append(want > 0 ? socketNoun + " " + want : "any " + socketNoun)
+                      .Append("   now: ");
+
+                    if (!p.IsPlugged || p.PluggedSocket == null) sb.Append("unplugged");
+                    else sb.Append(p.PluggedSocket.groupId).Append(" ").Append(p.PluggedSocket.portNumber)
+                           .Append(IsCorrectlyPlugged(p) ? "  OK" : "  WRONG");
+                    sb.Append('\n');
+                }
+            }
+
+            int inGroup = 0;
+            foreach (var sock in RJ45Socket.All)
+            {
+                if (sock != null && sock.groupId == targetGroupId) inGroup++;
+            }
+            sb.Append("    ---- ").Append(PatchedCount()).Append(" of ")
+              .Append(freePlugs == null ? 0 : freePlugs.Length)
+              .Append(" run. ").Append(inGroup).Append(" socket(s) exist in group '")
+              .Append(targetGroupId).Append("'.");
+
+            Debug.LogWarning(sb.ToString(), this);
+        }
+
+        /// <summary>
+        /// Prints every RJ45Socket in the scene, grouped, with its port number - and flags any group
+        /// where two sockets claim the same number.
+        ///
+        /// Port Number is the one field that CANNOT be multi-edited, so it is the one most often
+        /// left at its default across a whole row. Eight sockets all reading 4 look completely
+        /// normal in the Scene view and produce exactly this: a cord dropped into the jack you can
+        /// see is the right one is reported as port 4, and refused.
+        /// </summary>
+        [ContextMenu("Report sockets")]
+        public void LogSockets()
+        {
+            var groups = new System.Collections.Generic.Dictionary<string,
+                             System.Collections.Generic.List<RJ45Socket>>();
+
+            foreach (var s in RJ45Socket.All)
+            {
+                if (s == null) continue;
+                string key = s.groupId ?? "";
+                if (!groups.ContainsKey(key))
+                    groups[key] = new System.Collections.Generic.List<RJ45Socket>();
+                groups[key].Add(s);
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("[PatchCordBoard] Sockets in the scene, by group:\n");
+
+            foreach (var pair in groups)
+            {
+                sb.Append("  group '").Append(pair.Key).Append("'  (")
+                  .Append(pair.Value.Count).Append(" sockets)\n");
+
+                var seen = new System.Collections.Generic.Dictionary<int, string>();
+                foreach (var s in pair.Value)
+                {
+                    Vector3 wp = s.Snap.position;
+                    sb.Append("      port ").Append(s.portNumber).Append("   ").Append(s.name)
+                      .Append("   at ").Append(wp.x.ToString("F3")).Append(", ")
+                      .Append(wp.y.ToString("F3")).Append(", ").Append(wp.z.ToString("F3"));
+                    if (seen.ContainsKey(s.portNumber))
+                        sb.Append("   <-- DUPLICATE, '").Append(seen[s.portNumber]).Append("' already claims it");
+                    else
+                        seen[s.portNumber] = s.name;
+                    sb.Append('\n');
+                }
+            }
+
+            sb.Append("  Remember: Port Number cannot be multi-edited. Set each one individually.");
+            Debug.LogWarning(sb.ToString(), this);
+        }
+
+        /// <summary>Duplicate port numbers inside one group, which make a socket unreachable and a
+        /// cord refusable no matter where the player puts it.</summary>
+        void CheckSocketNumbering(StringBuilder sb)
+        {
+            var seen = new System.Collections.Generic.Dictionary<int, string>();
+            int inGroup = 0;
+
+            foreach (var s in RJ45Socket.All)
+            {
+                if (s == null || s.groupId != targetGroupId) continue;
+                inGroup++;
+
+                if (seen.ContainsKey(s.portNumber))
+                    sb.AppendLine("  - '" + s.name + "' and '" + seen[s.portNumber] + "' both claim " +
+                                  targetGroupId + " port " + s.portNumber + ". Port Number cannot be " +
+                                  "multi-edited - set each socket's individually. Right-click this " +
+                                  "component > Report sockets for the full list.");
+                else
+                    seen[s.portNumber] = s.name;
+            }
+
+            if (inGroup > 0 && seen.Count < inGroup)
+                sb.AppendLine("  - Group '" + targetGroupId + "' has " + inGroup + " sockets but only " +
+                              seen.Count + " distinct port numbers between them, so some cords can " +
+                              "never be placed correctly.");
+        }
+
+        /// <summary>
+        /// Are the sockets in the target group actually in different PLACES?
+        ///
+        /// PatchCord picks its target with RJ45Socket.NearestFree, so two anchors sitting on top of
+        /// each other are indistinguishable to it: every drop resolves to whichever one comes first
+        /// in the list, and the player is told they aimed at a port they never went near. Duplicating
+        /// an anchor and forgetting to offset it produces exactly that.
+        /// </summary>
+        void CheckSocketSpacing(StringBuilder sb)
+        {
+            var live = new System.Collections.Generic.List<RJ45Socket>();
+            foreach (var s in RJ45Socket.All)
+            {
+                if (s != null && s.groupId == targetGroupId) live.Add(s);
+            }
+            if (live.Count < 2) return;
+
+            float minGap = float.MaxValue;
+            RJ45Socket a = null, b = null;
+
+            for (int i = 0; i < live.Count; i++)
+            {
+                for (int j = i + 1; j < live.Count; j++)
+                {
+                    float d = Vector3.Distance(live[i].Snap.position, live[j].Snap.position);
+                    if (d < minGap) { minGap = d; a = live[i]; b = live[j]; }
+                }
+            }
+
+            if (minGap < 0.001f)
+                sb.AppendLine("  - '" + a.name + "' and '" + b.name + "' are in the SAME PLACE (" +
+                              minGap.ToString("F4") + " apart). A dropped cord cannot tell them " +
+                              "apart - it always resolves to whichever comes first - so it will " +
+                              "report the same port however carefully the player aims. Move the " +
+                              "anchors onto their own jacks.");
+            else if (minGap < 0.005f)
+                sb.AppendLine("  - '" + a.name + "' and '" + b.name + "' are only " +
+                              minGap.ToString("F4") + " apart, which is far tighter than " +
+                              "PatchCord's Snap Distance. Cords will land in the wrong one.");
         }
 
         void MoveCameraToPose()
@@ -306,7 +763,7 @@ namespace CSSSimulation.Networking
 
         System.Collections.IEnumerator FlyCamera(Vector3 toPos, Quaternion toRot)
         {
-            InputSuspended = true;
+            SetCordsLocked(true);
 
             Transform cam = stageCamera.transform;
             Vector3 fromPos = cam.position;
@@ -326,259 +783,111 @@ namespace CSSSimulation.Networking
             }
             cam.SetPositionAndRotation(toPos, toRot);
 
-            InputSuspended = false;
+            if (IsRunning) SetCordsLocked(false);
             cameraRoutine = null;
         }
 
+        /// <summary>Locked cords ignore all input. Used to hold them still while the camera flies -
+        /// a drag started mid-flight is computed from a camera that is still moving, so the plug
+        /// slides across the screen on its own.</summary>
+        void SetCordsLocked(bool locked)
+        {
+            if (freePlugs == null) return;
+            foreach (var p in freePlugs) { if (p != null) p.isLocked = locked; }
+        }
+
         // ------------------------------------------------------------------
-        // One drag at a time
+        // Watching the cords
         // ------------------------------------------------------------------
+
+        void HandleConnectionChanged(RJ45Socket socket, bool connected)
+        {
+            if (suppressCallback || !IsRunning || HasFinished) return;
+            if (!connected) { RefreshUI(); return; }
+
+            PatchCord plug = socket != null ? socket.Current : null;
+            if (plug == null) { RefreshUI(); return; }
+
+            if (socket.groupId != targetGroupId)
+            {
+                Reject(plug, "That is not a " + socketNoun + ".");
+                return;
+            }
+
+            if (requireCorrectPort && !IsCorrectlyPlugged(plug))
+            {
+                int want = RequiredPort(plug);
+                Reject(plug, want > 0
+                    ? "This cord goes to " + socketNoun + " " + want + ", not " + socket.portNumber + "."
+                    : "That is the wrong " + socketNoun + " for this cord.");
+                return;
+            }
+
+            OnCordPatched?.Invoke();
+
+            int done = PatchedCount();
+            if (logProgress)
+                Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' - " + plug.name + " into " +
+                                 socketNoun + " " + socket.portNumber + ". " + done + " of " +
+                                 freePlugs.Length + " run.", this);
+
+            if (done >= freePlugs.Length) { Finish(); return; }
+
+            SetHint(PatchedCount() + " of " + freePlugs.Length + " run.");
+            RefreshUI();
+        }
 
         /// <summary>
-        /// Which plug a press at this screen point should pick up - the nearest one on screen, not
-        /// whichever component Unity happened to update first.
+        /// Pops a wrongly-placed cord straight back out.
         ///
-        /// Same reasoning as PunchStageBoard.ConductorForPress: renderer bounds are axis-aligned
-        /// boxes, eight cords hanging together overlap, and letting each plug claim for itself makes
-        /// the winner depend on component order. Cached per frame so eight plugs asking in the same
-        /// frame costs one pass, not eight.
+        /// Deferred by a frame on purpose. This is called from inside PatchCord's own connection
+        /// event, and unplugging there would re-enter the same event while the first one is still
+        /// unwinding - the classic way a listener list gets modified mid-iteration.
         /// </summary>
-        public PatchCordPlug PlugForPress(Vector2 screenPoint)
+        void Reject(PatchCord plug, string why)
         {
-            if (pressFrame == Time.frameCount) return pressWinner;
-            pressFrame = Time.frameCount;
-            pressWinner = null;
+            wrongAttempts++;
+            SetHint(why);
 
-            if (plugs == null || stageCamera == null) return null;
-
-            // Once per press, not once per plug. Touch needs the active finger's id - the
-            // parameterless call only ever checks the mouse.
-            if (EventSystem.current != null)
+            // To the Console as well as the hint, because Hint Text is optional and most of the
+            // time it is not assigned - which makes a refusal completely silent. The cord goes in,
+            // pops back out a frame later, and it reads as "plugging it in does nothing" rather
+            // than "that was the wrong port".
+            if (logProgress)
             {
-                bool overUI = Input.touchCount > 0
-                    ? EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)
-                    : EventSystem.current.IsPointerOverGameObject();
-                if (overUI) return null;
+                int want = RequiredPort(plug);
+                string got = plug.PluggedSocket != null
+                    ? "group '" + plug.PluggedSocket.groupId + "' port " + plug.PluggedSocket.portNumber
+                    : "nothing";
+
+                Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' REFUSED " + plug.name +
+                                 " - it went into " + got + ", but this phase wants group '" +
+                                 targetGroupId + "'" + (want > 0 ? " port " + want : " (any port)") +
+                                 ".\n    " + why, this);
             }
 
-            float best = float.MaxValue;
-            foreach (var p in plugs)
-            {
-                if (p == null || p.IsLocked || p.IsSeated || !p.isActiveAndEnabled) continue;
-                if (!p.IsPointerOverBounds(screenPoint)) continue;
-
-                float score = p.GrabScore(screenPoint);
-                if (score < best) { best = score; pressWinner = p; }
-            }
-            return pressWinner;
+            StartCoroutine(RejectNextFrame(plug));
         }
 
-        public bool TryClaimDrag(PatchCordPlug who)
+        System.Collections.IEnumerator RejectNextFrame(PatchCord plug)
         {
-            if (claimedBy != null && claimedBy != who) return false;
-            claimedBy = who;
-            return true;
-        }
-
-        public void ReleaseDrag(PatchCordPlug who)
-        {
-            if (claimedBy == who) claimedBy = null;
-        }
-
-        // ------------------------------------------------------------------
-        // Where things stand
-        // ------------------------------------------------------------------
-
-        public PatchCordSocket Socket(int portNumber)
-        {
-            if (sockets == null) return null;
-            foreach (var s in sockets)
-            {
-                if (s != null && s.portNumber == portNumber) return s;
-            }
-            return null;
+            yield return null;
+            if (plug != null) PullOut(plug);
+            RefreshUI();
         }
 
         public int PatchedCount()
         {
             int n = 0;
-            if (plugs != null)
+            if (freePlugs != null)
             {
-                foreach (var p in plugs) { if (p != null && p.IsSeated) n++; }
+                foreach (var p in freePlugs)
+                {
+                    if (p != null && p.IsPlugged && p.PluggedSocket != null &&
+                        p.PluggedSocket.groupId == targetGroupId) n++;
+                }
             }
             return n;
-        }
-
-        /// <summary>The lowest cord not yet run. Only meaningful when Require In Order is on.</summary>
-        public int NextExpectedPort()
-        {
-            for (int n = 1; n <= cordCount; n++)
-            {
-                PatchCordSocket s = Socket(n);
-                if (s == null || !s.IsOccupied) return n;
-            }
-            return -1;
-        }
-
-        // ------------------------------------------------------------------
-        // Hit testing - the same three tests, cheapest and strictest first
-        // ------------------------------------------------------------------
-
-        public PatchCordSocket SocketNearest(Vector3 worldPosition)
-        {
-            if (sockets == null) return null;
-            PatchCordSocket best = null;
-            float bestDist = snapDistance;
-
-            foreach (var s in sockets)
-            {
-                if (s == null) continue;
-                float d = s.DistanceTo(worldPosition);
-                if (d <= bestDist) { bestDist = d; best = s; }
-            }
-            return best;
-        }
-
-        public PatchCordSocket SocketNearestOnScreen(Vector3 worldPosition, out float pixels)
-        {
-            pixels = float.MaxValue;
-            if (sockets == null || stageCamera == null) return null;
-
-            Vector3 from = stageCamera.WorldToScreenPoint(worldPosition);
-            PatchCordSocket best = null;
-
-            foreach (var s in sockets)
-            {
-                if (s == null) continue;
-                Vector3 to = stageCamera.WorldToScreenPoint(s.Seat.position);
-                if (to.z <= 0f) continue;          // behind the camera - not on screen at all
-                float d = Vector2.Distance(new Vector2(from.x, from.y), new Vector2(to.x, to.y));
-                if (d < pixels) { pixels = d; best = s; }
-            }
-            return best;
-        }
-
-        public PatchCordSocket SocketUnderScreenPoint(Vector2 screenPoint)
-        {
-            if (sockets == null || stageCamera == null) return null;
-
-            Ray ray = stageCamera.ScreenPointToRay(screenPoint);
-            PatchCordSocket best = null;
-            float bestDist = float.MaxValue;
-
-            foreach (var s in sockets)
-            {
-                if (s == null) continue;
-                if (s.IsUnderRay(ray, out float d) && d < bestDist) { bestDist = d; best = s; }
-            }
-            return best;
-        }
-
-        // ------------------------------------------------------------------
-        // Drops
-        // ------------------------------------------------------------------
-
-        /// <summary>Called by a plug when the player lets go. True if it went in - the plug sends
-        /// itself home when this is false.</summary>
-        public bool HandlePlugDropped(PatchCordPlug plug, Vector2 screenPoint)
-        {
-            ClearAllHighlights();
-            if (!AcceptsInput || plug == null) { RefreshUI(); return false; }
-
-            PatchCordSocket target = SocketNearest(plug.transform.position);
-
-            float px;
-            PatchCordSocket onScreen = SocketNearestOnScreen(plug.transform.position, out px);
-            float snapPx = EffectiveScreenSnap;
-            if (target == null && snapPx > 0f && onScreen != null && px <= snapPx)
-                target = onScreen;
-
-            if (target == null && alsoAcceptRayHit) target = SocketUnderScreenPoint(screenPoint);
-
-            if (target == null)
-            {
-                if (logRefusedDrops) LogRefusal(plug, onScreen, px);
-                SetHint("Bring the plug down onto a switch port.");
-                RefreshUI();
-                return false;
-            }
-
-            if (target.IsOccupied)
-            {
-                SetHint("Switch port " + target.portNumber + " already has a cord in it.");
-                RefreshUI();
-                return false;
-            }
-
-            if (requireInOrder)
-            {
-                int expected = NextExpectedPort();
-                if (expected > 0 && plug.portNumber != expected)
-                {
-                    SetHint("Work the panel in order - port " + expected + " is next.");
-                    RefreshUI();
-                    return false;
-                }
-            }
-
-            if (requireCorrectPort && target.portNumber != plug.portNumber)
-            {
-                wrongAttempts++;
-                SetHint("Panel port " + plug.portNumber + " goes to switch port " + plug.portNumber +
-                        ", not " + target.portNumber + ".");
-                RefreshUI();
-                return false;
-            }
-
-            target.Seat_(plug);
-            plug.SeatInto(target);
-            plug.Lock();                 // a patched cord stays put, the same finality as a punch
-
-            OnCordPatched?.Invoke();
-
-            if (PatchedCount() >= cordCount) { Finish(); return true; }
-
-            SetHint(requireInOrder
-                ? "Port " + NextExpectedPort() + " next."
-                : PatchedCount() + " of " + cordCount + " patched.");
-            RefreshUI();
-            return true;
-        }
-
-        /// <summary>
-        /// Says exactly how close the drop got, both ways, so one Console line separates the two
-        /// possible faults instead of leaving you to guess.
-        ///
-        ///   world small, screen small  -> raise Snap Distance a little
-        ///   world LARGE, screen small  -> the cords hang at a different depth from the switch ports;
-        ///                                 that is what Screen Snap Pixels exists for
-        ///   both large                 -> the drop really was nowhere near
-        /// </summary>
-        void LogRefusal(PatchCordPlug plug, PatchCordSocket nearestOnScreen, float pixels)
-        {
-            PatchCordSocket nearest = null;
-            float world = float.MaxValue;
-            if (sockets != null)
-            {
-                foreach (var s in sockets)
-                {
-                    if (s == null) continue;
-                    float d = s.DistanceTo(plug.transform.position);
-                    if (d < world) { world = d; nearest = s; }
-                }
-            }
-
-            Debug.LogWarning(string.Format(
-                "[PatchCordBoard] Drop refused - no switch port found.\n" +
-                "    nearest by WORLD distance : {0}   {1:F4} world units   (Snap Distance is {2})\n" +
-                "    nearest ON SCREEN         : {3}   {4:F0} pixels        (Screen Snap Pixels is {5})\n" +
-                "    If the world number is large but the pixel number is small, the cords hang at a " +
-                "different depth from the switch ports - raise Screen Snap Pixels, not Snap Distance.",
-                nearest == null ? "none" : "port " + nearest.portNumber, world, snapDistance,
-                nearestOnScreen == null ? "none" : "port " + nearestOnScreen.portNumber, pixels,
-                EffectiveScreenSnap.ToString("F0") + (scaleSnapToScreen
-                    ? " - " + screenSnapPixels + " scaled for a " + Screen.height + "px screen"
-                    : "")), this);
         }
 
         // ------------------------------------------------------------------
@@ -593,11 +902,20 @@ namespace CSSSimulation.Networking
             HasFinished = true;
             IsRunning = false;
             LastResultPassed = passed;
-            ClearAllHighlights();
+
+            if (lockWhenIdle) SetCordsLocked(true);
+
+            // Hand the sockets back to everyone else. Leaving the filter set would make every other
+            // group in the scene unsnappable for the rest of the session.
+            RJ45Socket.OnlyGroup = null;
+
+            // Back in shot the moment the phase is over - a failure keeps them hidden, because
+            // Retry() re-hides them and the player is still working in this same framing.
+            SetBlockersHidden(false);
 
             if (progressText != null)
             {
-                progressText.text = passed ? "PASS - cross-connect complete." : "FAIL";
+                progressText.text = passed ? "PASS - " + phaseName + " complete." : "FAIL";
                 progressText.color = passed ? passColor : failColor;
             }
             if (hintText != null)
@@ -617,8 +935,8 @@ namespace CSSSimulation.Networking
                 OnPhaseFailed?.Invoke();
             }
 
-            Debug.LogWarning("[PatchCordBoard] Patching " + (passed ? "PASSED" : "FAILED") + ". " +
-                             reason, this);
+            Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' " + (passed ? "PASSED" : "FAILED") +
+                             ". " + reason, this);
 
             OnFinished?.Invoke(passed, reason);
         }
@@ -628,39 +946,31 @@ namespace CSSSimulation.Networking
             var wrong = new StringBuilder();
             int bad = 0;
 
-            if (plugs != null)
+            if (freePlugs != null)
             {
-                foreach (var p in plugs)
+                foreach (var p in freePlugs)
                 {
-                    if (p == null) continue;
-                    if (p.SeatedIn == null)
-                    {
-                        bad++;
-                        if (bad <= 4)
-                        {
-                            if (wrong.Length > 0) wrong.Append(" ");
-                            wrong.Append("Panel port " + p.portNumber + " was never patched.");
-                        }
-                        continue;
-                    }
-                    if (p.SeatedIn.portNumber != p.portNumber)
-                    {
-                        bad++;
-                        if (bad <= 4)
-                        {
-                            if (wrong.Length > 0) wrong.Append(" ");
-                            wrong.Append("Panel port " + p.portNumber + " is in switch port " +
-                                         p.SeatedIn.portNumber + ".");
-                        }
-                    }
+                    if (p == null || IsCorrectlyPlugged(p)) continue;
+
+                    bad++;
+                    if (bad > 4) continue;
+                    if (wrong.Length > 0) wrong.Append(" ");
+
+                    int want = RequiredPort(p);
+                    if (!p.IsPlugged)
+                        wrong.Append("Cord " + (want > 0 ? want.ToString() : p.name) +
+                                     " was never plugged in.");
+                    else
+                        wrong.Append("Cord " + (want > 0 ? want.ToString() : p.name) + " is in " +
+                                     socketNoun + " " + p.PluggedSocket.portNumber + ".");
                 }
             }
 
             if (bad == 0)
             {
                 reason = wrongAttempts == 0
-                    ? "Every panel port is cross-connected to its matching switch port."
-                    : "Every panel port is cross-connected correctly, after " + wrongAttempts +
+                    ? "Every cord is in its matching " + socketNoun + "."
+                    : "Every cord is in its matching " + socketNoun + ", after " + wrongAttempts +
                       " wrong attempt(s).";
                 return true;
             }
@@ -674,21 +984,6 @@ namespace CSSSimulation.Networking
         // Presentation
         // ------------------------------------------------------------------
 
-        /// <summary>Called every frame a cord is being dragged - shows where it belongs.</summary>
-        public void HighlightForPlug(PatchCordPlug plug)
-        {
-            if (!showTargetHighlight || plug == null) { ClearAllHighlights(); return; }
-            SetOnlyHighlight(Socket(plug.portNumber));
-        }
-
-        void SetOnlyHighlight(PatchCordSocket only)
-        {
-            if (sockets == null) return;
-            foreach (var s in sockets) { if (s != null) s.SetHighlighted(s == only && !s.IsOccupied); }
-        }
-
-        void ClearAllHighlights() { SetOnlyHighlight(null); }
-
         public void SetHint(string message)
         {
             if (hintText == null) return;
@@ -700,11 +995,16 @@ namespace CSSSimulation.Networking
 
         void RefreshUI()
         {
-            if (!HasFinished && progressText != null)
-            {
-                progressText.text = PatchedCount() + " of " + cordCount + " patched";
-                progressText.color = progressColor;
-            }
+            // An idle phase must not touch the readout. It is normal to point every board on the
+            // station at ONE progress line and ONE hint line, and without this guard a phase that is
+            // merely being reset - which happens to every phase on entry - would overwrite whatever
+            // the live one had written. Two phases and a punch board sharing a label means the last
+            // one to run ResetStage wins, which is nothing to do with what the player is doing.
+            if (!IsRunning) return;
+
+            if (HasFinished || progressText == null || freePlugs == null) return;
+            progressText.text = PatchedCount() + " of " + freePlugs.Length + " run";
+            progressText.color = progressColor;
         }
 
         // ------------------------------------------------------------------
@@ -713,118 +1013,69 @@ namespace CSSSimulation.Networking
         /// Pulls every cord back out for another go, WITHOUT leaving the phase.
         ///
         /// Distinct from ResetStage() on purpose. ResetStage undoes Begin() entirely - it puts the
-        /// punch tool back on screen, re-enables the punch camera, and would make the next Begin()
-        /// fly the camera to a pose it is already sitting at. That is right for a fresh visit to the
-        /// station and wrong for a retry, where the player should simply find the cords back at the
-        /// panel and the shot unchanged.
+        /// punch tool back on screen and re-enables the punch camera, which is right for a fresh
+        /// visit to the station and wrong for a retry, where the player should simply find the cords
+        /// back where they started and the shot unchanged.
         /// </summary>
         public void Retry()
         {
             HasFinished = false;
             LastResultPassed = false;
             IsRunning = true;
-            claimedBy = null;
             wrongAttempts = 0;
 
-            if (sockets != null)
+            if (freePlugs != null)
             {
-                foreach (var s in sockets) { if (s != null) s.ResetSocket(); }
-            }
-            if (plugs != null)
-            {
-                foreach (var p in plugs) { if (p != null) { p.ResetPlug(); p.Bind(this); } }
+                foreach (var p in freePlugs)
+                {
+                    if (p == null) continue;
+                    PullOut(p);
+                    p.isLocked = false;
+                }
             }
 
-            SetHint("Try again - each cord goes to the switch port with its own number.");
+            SetBlockersHidden(true);
+
+            SetHint("Try again - each cord goes to the " + socketNoun + " with its own number.");
             RefreshUI();
         }
 
         /// <summary>
-        /// Pulls every cord back out, puts them where they started, and undoes everything Begin()
-        /// switched.
+        /// Pulls every cord back out and undoes everything Begin() switched.
         ///
         /// That last part matters more than it looks. Begin() DISABLES the components in Disable On
         /// Begin - PunchStageCamera among them - and a disabled component never runs OnEnable again.
         /// Without putting them back, the second visit to the station would open with a camera script
-        /// that never re-arms, and the punch phase would play from wherever the last shot left off.
+        /// that never re-arms.
         /// </summary>
-        [ContextMenu("Reset patch-cord phase")]
+        [ContextMenu("Reset this phase")]
         public void ResetStage()
         {
             IsRunning = false;
             HasFinished = false;
             LastResultPassed = false;
-            claimedBy = null;
             wrongAttempts = 0;
 
             if (cameraRoutine != null) { StopCoroutine(cameraRoutine); cameraRoutine = null; }
-            InputSuspended = false;
 
             foreach (var go in hideOnBegin) { if (go != null) go.SetActive(true); }
             foreach (var go in showOnBegin) { if (go != null) go.SetActive(false); }
             foreach (var mb in disableOnBegin) { if (mb != null) mb.enabled = true; }
+            SetBlockersHidden(false);
+            RJ45Socket.OnlyGroup = null;
 
-            if (sockets != null)
+            if (freePlugs != null)
             {
-                foreach (var s in sockets) { if (s != null) s.ResetSocket(); }
-            }
-            if (plugs != null)
-            {
-                foreach (var p in plugs) { if (p != null) p.ResetPlug(); }
+                foreach (var p in freePlugs)
+                {
+                    if (p == null) continue;
+                    PullOut(p);
+                    if (lockWhenIdle) p.isLocked = true;
+                }
             }
 
             SetHint(null);
             RefreshUI();
-        }
-
-        /// <summary>
-        /// Measures the real gap between neighbouring switch ports and checks the snap settings
-        /// against it.
-        ///
-        /// Worth having twice over here: switch ports sit far closer together than IDC positions do,
-        /// so settings carried over from the punch board will happily drop every cord into the port
-        /// next door - which produces no error at all and looks exactly like broken code.
-        /// </summary>
-        void CheckScale(StringBuilder sb)
-        {
-            if (sockets == null || sockets.Length < 2) return;
-
-            float minGap = float.MaxValue;
-            for (int a = 0; a < sockets.Length; a++)
-            {
-                if (sockets[a] == null) continue;
-                for (int b = a + 1; b < sockets.Length; b++)
-                {
-                    if (sockets[b] == null) continue;
-                    float d = Vector3.Distance(sockets[a].Seat.position, sockets[b].Seat.position);
-                    if (d > 0.00001f && d < minGap) minGap = d;
-                }
-            }
-            if (minGap == float.MaxValue) return;
-
-            string gap = minGap.ToString("F4");
-
-            if (snapDistance >= minGap)
-                sb.AppendLine("  - Snap Distance (" + snapDistance + ") is at least as big as the gap " +
-                              "between neighbouring switch ports (" + gap + "). A cord will land in " +
-                              "the wrong port. Try " + (minGap * 0.6f).ToString("F4") + ".");
-            else if (snapDistance < minGap * 0.15f)
-                sb.AppendLine("  - Snap Distance (" + snapDistance + ") is tiny next to the gap " +
-                              "between ports (" + gap + "), so almost every drop will be refused. " +
-                              "About " + (minGap * 0.6f).ToString("F4") + " would suit this switch.");
-
-            foreach (var s in sockets)
-            {
-                if (s == null || !s.UsesRadius) continue;
-                if (s.pickRadius >= minGap * 0.5f)
-                {
-                    sb.AppendLine("  - Socket " + s.portNumber + " has no renderer and its Pick Radius (" +
-                                  s.pickRadius + ") reaches past halfway to the next port (" + gap +
-                                  " apart), so a cord will go into whichever it hits first. Try " +
-                                  (minGap * 0.35f).ToString("F4") + ".");
-                    break;   // one is enough; they are almost always all set the same
-                }
-            }
         }
 
         /// <summary>Says out loud what is missing, rather than the phase quietly doing nothing.</summary>
@@ -833,58 +1084,97 @@ namespace CSSSimulation.Networking
         {
             var sb = new StringBuilder();
 
-            int socketCount = sockets == null ? 0 : sockets.Length;
-            if (socketCount < cordCount)
-                sb.AppendLine("  - Found " + socketCount + " PatchCordSocket components under the " +
-                              "search root(s); Cord Count is " + cordCount + ". If the sockets live " +
-                              "on the switch model, add it to Search Roots.");
+            // An empty filter is the trap. CollectFreePlugs skips the name test entirely when this
+            // is blank, so BOTH ends of every cord are picked up - sixteen plugs for eight cords.
+            // The fixed ends sit in 'panel' and never count toward the target group, so the phase
+            // can never reach its own total and simply never completes.
+            if (string.IsNullOrEmpty(freePlugNameContains))
+                sb.AppendLine("  - Free Plug Name Contains is EMPTY, so every PatchCord under the " +
+                              "search root(s) was collected - both ends of every cord. This phase " +
+                              "can never complete, because it waits for all of them to reach group '" +
+                              targetGroupId + "' and the fixed ends never will. Set it to 'Plug_B'.");
 
-            int plugCount = plugs == null ? 0 : plugs.Length;
-            if (plugCount != cordCount)
-                sb.AppendLine("  - Found " + plugCount + " PatchCordPlug components under the search " +
-                              "root(s); Cord Count is " + cordCount + ". If the cords live under " +
-                              "PatchCords, add that to Search Roots.");
+            int n = freePlugs == null ? 0 : freePlugs.Length;
+            if (n == 0)
+                sb.AppendLine("  - No cords found. This looks for PatchCord components under the " +
+                              "search root(s) whose name contains '" + freePlugNameContains + "'. " +
+                              "Check Search Roots, and check your plugs are named to match.");
 
-            var seenSocket = new System.Collections.Generic.HashSet<int>();
-            if (sockets != null)
+            int inGroup = 0;
+            foreach (var s in RJ45Socket.All)
             {
-                foreach (var s in sockets)
-                {
-                    if (s == null) continue;
-                    if (!seenSocket.Add(s.portNumber))
-                        sb.AppendLine("  - Two sockets both claim switch port " + s.portNumber +
-                                      ". One of them can never be reached.");
-                }
+                if (s != null && s.groupId == targetGroupId) inGroup++;
             }
+            if (inGroup == 0)
+                sb.AppendLine("  - No RJ45Socket in the scene has Group Id '" + targetGroupId +
+                              "', so these cords have nowhere to go. Check the spelling - it is " +
+                              "case-sensitive.");
+            else if (inGroup < n)
+                sb.AppendLine("  - " + n + " cords but only " + inGroup + " sockets with Group Id '" +
+                              targetGroupId + "'. At least one cord can never be plugged in.");
 
-            var seenPlug = new System.Collections.Generic.HashSet<int>();
-            if (plugs != null)
+            if (freePlugs != null)
             {
-                foreach (var p in plugs)
+                foreach (var p in freePlugs)
                 {
                     if (p == null) continue;
-                    if (!seenPlug.Add(p.portNumber))
-                        sb.AppendLine("  - Two cords are both set to panel port " + p.portNumber +
-                                      ", so one port has no cord and another has two.");
-                    if (Socket(p.portNumber) == null)
-                        sb.AppendLine("  - Cord " + p.portNumber + " has no socket with a matching " +
-                                      "Port Number, so it can never be plugged in anywhere.");
+
+                    if (Partner(p) == null)
+                        sb.AppendLine("  - '" + p.name + "' has no second PatchCord under its parent, " +
+                                      "so its fixed end cannot be found and there is no port number " +
+                                      "to match against.");
+                    else if (matchPartnerPortNumber && !Partner(p).startPlugged &&
+                             RequiredPort(p) < 0)
+                        sb.AppendLine("  - '" + p.name + "' has nothing to match a port against: its " +
+                                      "fixed end is not plugged at start, and its cord '" +
+                                      (p.transform.parent != null ? p.transform.parent.name : "?") +
+                                      "' does not end in a number either. ANY port in group '" +
+                                      targetGroupId + "' will be accepted. Either tick Start Plugged " +
+                                      "on the fixed end, or rename the cord to end in its port " +
+                                      "number (PatchCord_03), or untick Match Partner Port Number " +
+                                      "if the numbering genuinely does not matter here.");
+
+                    if (p.rope == null)
+                        sb.AppendLine("  - '" + p.name + "' has no Rope assigned, so nothing will " +
+                                      "be drawn between the plugs.");
                 }
             }
 
-            if (cameraPose == null)
-                sb.AppendLine("  - Camera Pose is empty, so the camera will stay closed in on the " +
-                              "last punched port. The player will not be able to see the switch.");
+            // Two plugs pointed at one socket. Plug() returns early when a socket is already
+            // occupied, so the second cord simply never seats - silently, with no error, and the
+            // cord just sits wherever the editor left it.
+            if (watched != null)
+            {
+                var claimed = new System.Collections.Generic.Dictionary<RJ45Socket, PatchCord>();
+                foreach (var p in watched)
+                {
+                    if (p == null || !p.startPlugged || p.startSocket == null) continue;
+                    if (claimed.TryGetValue(p.startSocket, out PatchCord first))
+                        sb.AppendLine("  - '" + p.name + "' and '" + first.name + "' both have Start " +
+                                      "Socket set to '" + p.startSocket.name + "'. Only the first " +
+                                      "one seats - the second is refused because the socket is " +
+                                      "already occupied, and stays wherever the editor left it.");
+                    else
+                        claimed[p.startSocket] = p;
+                }
+            }
 
-            CheckScale(sb);
+            CheckSocketNumbering(sb);
+            CheckSocketSpacing(sb);
+            ReportStartJumps(sb);
+
+            if (cameraPose == null)
+                sb.AppendLine("  - Camera Pose is empty, so the camera stays wherever the previous " +
+                              "phase left it and what the player has to reach may be off screen.");
 
             if (sb.Length == 0)
             {
-                Debug.LogWarning("[PatchCordBoard] Setup looks complete - " + plugCount + " cords, " +
-                                 socketCount + " sockets, camera pose set.", this);
+                Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' looks complete - " + n +
+                                 " cords, " + inGroup + " sockets in group '" + targetGroupId +
+                                 "', camera pose set.", this);
                 return;
             }
-            Debug.LogWarning("[PatchCordBoard] Setup is incomplete:\n" + sb, this);
+            Debug.LogWarning("[PatchCordBoard] '" + phaseName + "' setup is incomplete:\n" + sb, this);
         }
     }
 }

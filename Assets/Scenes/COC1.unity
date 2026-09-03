@@ -1049,6 +1049,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3152662953470705769, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 402
+      objectReference: {fileID: 0}
     - target: {fileID: 4423089854975749111, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9250,6 +9254,103 @@ Transform:
   - {fileID: 3254066432770378}
   m_Father: {fileID: 77548436728581405}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &338977367
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_Name
+      value: AssessmentManagers
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1041.7579
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1263.6028
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888431713633680202, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 338977370}
+    - targetCorrespondingSourceObject: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 338977369}
+  m_SourcePrefab: {fileID: 100100000, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+--- !u!1 &338977368 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+  m_PrefabInstance: {fileID: 338977367}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &338977369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 338977368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa5b376b7924d524296064c8943a4f3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.LegacyAssessmentBridge
+  coc1Manager: {fileID: 0}
+  coc2Manager: {fileID: 0}
+  recordGuidedRuns: 1
+  contributeToGlobalScore: 0
+--- !u!114 &338977370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 338977368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3680c9a61f6b94db84db755993d75e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.OSInstallTaskBridge
+  taskId: install_os
 --- !u!1 &339189637
 GameObject:
   m_ObjectHideFlags: 0
@@ -62523,6 +62624,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AssessmentHUD
       objectReference: {fileID: 0}
+    - target: {fileID: 4799959268290318259, guid: 1c00130dbddff144094df5210a4868e4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7293209202882476185, guid: 1c00130dbddff144094df5210a4868e4, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -66569,7 +66674,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2525780263036310275, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 218
+      value: 147
       objectReference: {fileID: 0}
     - target: {fileID: 2525780263036310275, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -66663,6 +66768,7 @@ SceneRoots:
   - {fileID: 2005901987}
   - {fileID: 77548436728581405}
   - {fileID: 194942172}
+  - {fileID: 338977367}
   - {fileID: 1048210362}
   - {fileID: 1435840665}
   - {fileID: 780991139}

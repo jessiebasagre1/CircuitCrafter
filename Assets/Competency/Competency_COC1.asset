@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab975d03e41288b4b9cc6c3ab66dd52c, type: 3}
+  m_Name: Competency_COC1
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.CompetencyDefinition
+  moduleId: COC1
+  unitCode: 
+  unitTitle: Install and configure computer systems
+  outcomes:
+  - code: LO1
+    title: Assemble and disassemble computer hardware
+    criteria: Dismantles and reassembles the system unit following the correct sequence,
+      observing correct handling of components.
+    evidenceTaskIds:
+    - disassemble_pc
+    - assemble_pc
+    requiredEvidenceCount: 0
+  - code: LO2
+    title: Prepare installation media
+    criteria: Obtains the imaging tool and writes a bootable installer to removable
+      media.
+    evidenceTaskIds:
+    - install_rufus
+    - create_bootable_usb
+    requiredEvidenceCount: 0
+  - code: LO3
+    title: Install operating system and drivers
+    criteria: Installs the operating system and all required device drivers.
+    evidenceTaskIds:
+    - install_os
+    - install_drivers
+    requiredEvidenceCount: 0
+  - code: LO4
+    title: Install application software
+    criteria: Installs the required application software on the configured system.
+    evidenceTaskIds:
+    - install_app_software
+    requiredEvidenceCount: 0
+  - code: LO5
+    title: Test the system and document the work
+    criteria: Applies updates and patches, runs diagnostic tests, and completes the
+      service report.
+    evidenceTaskIds:
+    - install_updates
+    - test_computer
+    - document_work
+    requiredEvidenceCount: 0

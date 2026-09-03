@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc3_Wrong_Gateway
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc3_wrong_gateway
+  targetModule: 2
+  sceneName: COC3-Copy
+  title: Can print, but cannot reach the internet
+  description: This machine can still open the shared drive and print, but nothing
+    outside the office works.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc3_wrong_gateway
+  requiresDiagnosis: 1
+  symptomText: 'Pings to other machines on the same network succeed. Pings to anything
+    on another network return: Destination host unreachable.'
+  diagnosisOptions:
+  - label: Default gateway is wrong or not on this subnet
+    isCorrect: 1
+    feedback: Correct. Local traffic never needs the gateway, which is why the shared
+      drive still works - the split between what works and what does not is the clue.
+  - label: Network cable is faulty
+    isCorrect: 0
+    feedback: Local traffic is working, so the cable and the link are fine.
+  - label: Wrong IP address on this machine
+    isCorrect: 0
+    feedback: A wrong address would break local traffic too. Printing and the shared
+      drive both work.
+  - label: The server is down
+    isCorrect: 0
+    feedback: The server is answering - the shared drive and printer are on it.

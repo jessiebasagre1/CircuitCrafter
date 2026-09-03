@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc1_Ssd_Missing
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc1_ssd_missing
+  targetModule: 0
+  sceneName: COC1-Copy
+  title: '"No boot device found"'
+  description: The machine starts up but shows an error about no operating system.
+    The customer says nothing was changed.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc1_ssd_missing
+  requiresDiagnosis: 1
+  symptomText: 'System powers on and completes POST normally. On screen: "No boot
+    device found. Press any key to reboot."'
+  diagnosisOptions:
+  - label: Storage drive not detected or not seated
+    isCorrect: 1
+    feedback: Correct. POST completed, so the board and memory are fine - the machine
+      simply cannot find a drive to boot from.
+  - label: Memory failure
+    isCorrect: 0
+    feedback: POST completed and the message displayed, so memory is working. A RAM
+      fault stops the machine before this point.
+  - label: Monitor fault
+    isCorrect: 0
+    feedback: The error message is visible on that monitor, so the display is fine.
+  - label: Operating system needs reinstalling
+    isCorrect: 0
+    feedback: Possible eventually - but check the drive is present and connected
+      before erasing anything. Reinstalling onto a drive the machine cannot see will
+      not work.

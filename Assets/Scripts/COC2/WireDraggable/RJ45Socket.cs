@@ -80,6 +80,19 @@ namespace CSSSimulation.Networking
                 highlightVisual.SetActive(on);
         }
 
+        /// <summary>
+        /// When set, NearestFree ignores every socket outside this group.
+        ///
+        /// A stage that is asking for one piece of equipment sets this while it runs. Without it a
+        /// cord being run to the switch will happily snap into a router jack a couple of centimetres
+        /// away - the drop is then refused by the rules, which is correct but reads as the cord
+        /// refusing to go where the player clearly put it. Filtering here means the wrong jack is
+        /// never a candidate in the first place, so the highlight never offers it either.
+        ///
+        /// Null or empty = no filter, which is the normal state outside a stage.
+        /// </summary>
+        public static string OnlyGroup;
+
         /// <summary>Nearest free socket to a world point, or null. Pure maths - no physics query,
         /// so it cannot be defeated by a stale collider pose or a wrong layer mask.</summary>
         public static RJ45Socket NearestFree(Vector3 position, float maxDistance, RJ45Socket ignore = null)
@@ -91,6 +104,7 @@ namespace CSSSimulation.Networking
                 RJ45Socket s = All[i];
                 if (s == null || s == ignore) continue;
                 if (s.IsOccupied) continue;
+                if (!string.IsNullOrEmpty(OnlyGroup) && s.groupId != OnlyGroup) continue;
                 float d = Vector3.Distance(position, s.Snap.position);
                 if (d <= bestDist) { bestDist = d; best = s; }
             }

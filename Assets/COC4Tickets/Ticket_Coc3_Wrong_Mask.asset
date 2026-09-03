@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc3_Wrong_Mask
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc3_wrong_mask
+  targetModule: 2
+  sceneName: COC3-Copy
+  title: Workstation cannot reach the server
+  description: This workstation cannot open the shared folder any more. It worked
+    yesterday. Another technician was "tidying up the network settings" that afternoon.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc3_wrong_mask
+  requiresDiagnosis: 1
+  symptomText: 'The workstation has an IP address and the cable is connected. Pinging
+    the server returns: Reply from 192.168.1.20: Destination host unreachable.'
+  diagnosisOptions:
+  - label: Incorrect subnet mask
+    isCorrect: 1
+    feedback: Correct. With the wrong mask the machine believes the server is on
+      a different network, so it tries to route to a gateway instead of speaking
+      to it directly - and reports the destination as unreachable.
+  - label: Network cable unplugged
+    isCorrect: 0
+    feedback: ipconfig would report "Media disconnected" and there would be no address
+      at all. The ping also failed at this machine rather than timing out, but it
+      did leave the adapter.
+  - label: Server is switched off
+    isCorrect: 0
+    feedback: A server that is off gives "Request timed out" - the packet leaves
+      and nothing answers. "Destination host unreachable" means this machine could
+      not even work out where to send it.
+  - label: Duplicate IP address
+    isCorrect: 0
+    feedback: An address conflict disables the interface completely, so you would
+      see a transmit failure rather than this message.

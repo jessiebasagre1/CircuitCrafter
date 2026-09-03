@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ffa952c0679944092eb9effd5dba6a, type: 3}
+  m_Name: Ticket_Coc3_Duplicate_Ip_Observations
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Repair.TicketObservationSet
+  ticketId: ticket_coc3_duplicate_ip
+  observations:
+  - observationId: check_link
+    action: Check the network cable and link light
+    result: Cable seated, link light on and flickering.
+    timeCostSeconds: 10
+  - observationId: run_ipconfig
+    action: Run ipconfig on the workstation
+    result: IPv4 Address 192.168.1.10, Subnet Mask 255.255.255.0, Default Gateway
+      192.168.1.1 - which matches the documentation exactly.
+    timeCostSeconds: 15
+  - observationId: check_notifications
+    action: Check Windows notifications
+    result: '"Windows has detected an IP address conflict. Another computer on this
+      network has the same IP address as this computer."'
+    timeCostSeconds: 15
+  - observationId: ping_server
+    action: Ping the server
+    result: 'PING: transmit failed. General failure.'
+    timeCostSeconds: 15

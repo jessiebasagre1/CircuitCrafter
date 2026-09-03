@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc3_No_Dhcp
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc3_no_dhcp
+  targetModule: 2
+  sceneName: COC3-Copy
+  title: Machine gave itself a strange address
+  description: A workstation that normally picks up its settings automatically has
+    no network this morning. Nothing else in the room is affected.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc3_no_dhcp
+  requiresDiagnosis: 1
+  symptomText: ipconfig shows IPv4 Address 169.254.14.62 with subnet mask 255.255.0.0
+    and no default gateway. The cable is connected and the link light is on.
+  diagnosisOptions:
+  - label: No DHCP server responded, so Windows self-assigned an address
+    isCorrect: 1
+    feedback: Correct. 169.254.x.x is the automatic private range Windows falls back
+      to when nobody answers its request. Either fix the DHCP service or set a static
+      address that fits the network.
+  - label: Someone typed the wrong IP address in by hand
+    isCorrect: 0
+    feedback: A person would be unlikely to invent a 169.254 address - that range
+      is Windows telling you it gave up waiting. Check whether the adapter is set
+      to obtain an address automatically.
+  - label: Network cable unplugged
+    isCorrect: 0
+    feedback: The link light is on and ipconfig shows an address rather than "Media
+      disconnected".
+  - label: Faulty network card
+    isCorrect: 0
+    feedback: The card is working well enough to request an address and self-assign
+      one when nothing replied.

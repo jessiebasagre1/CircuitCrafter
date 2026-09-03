@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ffa952c0679944092eb9effd5dba6a, type: 3}
+  m_Name: Ticket_Coc1_Gpu_Missing_Observations
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Repair.TicketObservationSet
+  ticketId: ticket_coc1_gpu_missing
+  observations:
+  - observationId: power_on
+    action: Press the power button and listen
+    result: Fans spin up straight away and the drive light flickers. No beep of any
+      kind.
+    timeCostSeconds: 10
+  - observationId: check_screen
+    action: Look at the monitor
+    result: Completely black. No manufacturer logo, no error text. The monitor's
+      own light is on and it reports "No signal".
+    timeCostSeconds: 10
+  - observationId: check_cable
+    action: Check the video cable
+    result: Firmly connected at both ends, into the port on the expansion card rather
+      than the motherboard.
+    timeCostSeconds: 15
+  - observationId: open_case
+    action: Open the case and inspect
+    result: No burning smell and nothing obviously disconnected. The graphics card
+      is sitting slightly proud of its slot, and the retention clip at the end of
+      the slot is open.
+    timeCostSeconds: 30

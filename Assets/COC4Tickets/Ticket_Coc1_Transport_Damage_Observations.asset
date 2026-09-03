@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ffa952c0679944092eb9effd5dba6a, type: 3}
+  m_Name: Ticket_Coc1_Transport_Damage_Observations
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Repair.TicketObservationSet
+  ticketId: ticket_coc1_transport_damage
+  observations:
+  - observationId: power_on
+    action: Press the power button and listen
+    result: 'Fans spin normally. Beep code: one long, three short, repeating.'
+    timeCostSeconds: 10
+  - observationId: check_screen
+    action: Look at the monitor
+    result: Black. No logo, no error message.
+    timeCostSeconds: 10
+  - observationId: check_packaging
+    action: Look over the case and the packaging
+    result: Two case screws are loose in the bottom of the box. The side panel was
+      not fully secured.
+    timeCostSeconds: 15
+  - observationId: open_case
+    action: Open the case and inspect
+    result: One memory module is raised at one end with its clip open. The graphics
+      card is also not fully home in its slot.
+    timeCostSeconds: 30

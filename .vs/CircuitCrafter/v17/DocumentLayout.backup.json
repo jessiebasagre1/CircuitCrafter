@@ -3,28 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc1\\manager\\introdialogtrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\introdialogtrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc1\\hotbar\\hotbartutorialtrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\hotbar\\hotbartutorialtrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\coc1assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc1assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\ticketdiagnosticpanelview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\ticketdiagnosticpanelview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\repairticketmode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\repairticketmode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\ticketdetailpanelview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\ticketdetailpanelview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc4\\observation\\servicecallstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\observation\\servicecallstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -39,77 +19,15 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "IntroDialogTrigger.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\IntroDialogTrigger.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\IntroDialogTrigger.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\IntroDialogTrigger.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\IntroDialogTrigger.cs",
-              "ViewState": "AgIAACUAAAAAAAAAAAAAADEAAAAJAAAAAAAAAA==",
+              "Title": "ServiceCallState.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\Observation\\ServiceCallState.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\Observation\\ServiceCallState.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\Observation\\ServiceCallState.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC4\\Observation\\ServiceCallState.cs",
+              "ViewState": "AgIAAHUAAAAAAAAAAAAUwIIAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-31T06:44:43.375Z",
+              "WhenOpened": "2026-09-01T10:19:07.91Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "HotbarTutorialTrigger.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Hotbar\\HotbarTutorialTrigger.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Hotbar\\HotbarTutorialTrigger.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Hotbar\\HotbarTutorialTrigger.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Hotbar\\HotbarTutorialTrigger.cs",
-              "ViewState": "AgIAAHwAAAAAAAAAAAAAAIYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-31T06:34:51.971Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "COC1AssessmentManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "ViewState": "AgIAAF8BAAAAAAAAAAASwGgBAABEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-31T04:11:06.998Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "TicketDetailPanelView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\TicketDetailPanelView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\TicketDetailPanelView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\TicketDetailPanelView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC4\\TicketDetailPanelView.cs",
-              "ViewState": "AgIAAGYAAAAAAAAAAAAAAHkAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-30T08:58:24.692Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "RepairTicketMode.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\RepairTicketMode.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\RepairTicketMode.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\RepairTicketMode.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC4\\RepairTicketMode.cs",
-              "ViewState": "AgIAAFgAAAAAAAAAAAAAAGsAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-30T08:57:58.149Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "TicketDiagnosticPanelView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\TicketDiagnosticPanelView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\TicketDiagnosticPanelView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\TicketDiagnosticPanelView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC4\\TicketDiagnosticPanelView.cs",
-              "ViewState": "AgIAAMcAAAAAAAAAAAAAAM8AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-08-30T08:57:26.777Z"
             }
           ]
         }

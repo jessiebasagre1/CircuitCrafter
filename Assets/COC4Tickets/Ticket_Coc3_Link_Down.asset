@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146b4dedcb9af3b4ab5fe5794271c3d8, type: 3}
+  m_Name: Ticket_Coc3_Link_Down
+  m_EditorClassIdentifier: Assembly-CSharp::TicketData
+  ticketId: ticket_coc3_link_down
+  targetModule: 2
+  sceneName: COC3-Copy
+  title: No network on one workstation
+  description: One machine in the lab has no network. The user says a cleaner was
+    working around the desks yesterday evening.
+  icon: {fileID: 0}
+  briefingDialog: {fileID: 0}
+  requiredTaskId: ticket_coc3_link_down
+  requiresDiagnosis: 1
+  symptomText: 'ipconfig reports: Media State . . . : Media disconnected. No IPv4
+    address is listed. The link light on the network port is off.'
+  diagnosisOptions:
+  - label: Network cable disconnected or faulty
+    isCorrect: 1
+    feedback: Correct. "Media disconnected" means the adapter cannot see a link at
+      all - that is a physical problem, and no amount of changing IP settings will
+      fix it. Check the cable at both ends first.
+  - label: Incorrect IP configuration
+    isCorrect: 0
+    feedback: There is no address to be wrong. The adapter reports no link, which
+      happens before addressing is even considered.
+  - label: DHCP server not responding
+    isCorrect: 0
+    feedback: That gives a 169.254 self-assigned address, not "Media disconnected".
+      The machine has no link to ask over.
+  - label: Firewall blocking traffic
+    isCorrect: 0
+    feedback: A firewall filters traffic on a working connection. This adapter has
+      no connection to filter.

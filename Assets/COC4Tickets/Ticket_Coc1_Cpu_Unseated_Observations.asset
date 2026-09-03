@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ffa952c0679944092eb9effd5dba6a, type: 3}
+  m_Name: Ticket_Coc1_Cpu_Unseated_Observations
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Repair.TicketObservationSet
+  ticketId: ticket_coc1_cpu_unseated
+  observations:
+  - observationId: power_on
+    action: Press the power button and listen
+    result: Fans move for about a second, then settle to a slow spin. No beep at
+      all - not even an error one.
+    timeCostSeconds: 10
+  - observationId: check_screen
+    action: Look at the monitor
+    result: Nothing. The monitor never comes out of standby.
+    timeCostSeconds: 10
+  - observationId: check_psu
+    action: Check the power supply and its connectors
+    result: The PSU fan runs and the board's standby light is lit. Both power connectors
+      are firmly seated.
+    timeCostSeconds: 20
+  - observationId: open_case
+    action: Open the case and inspect
+    result: The cooler has been taken off and set aside from the cleaning. The processor
+      socket is empty and its retention lever is standing up.
+    timeCostSeconds: 30

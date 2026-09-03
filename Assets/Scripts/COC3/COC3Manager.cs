@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using TMPro;
+using CircuitCrafter.Assessment;
 
 /// <summary>
 /// THE CENTRAL BRAIN of the simulation.
@@ -107,6 +108,13 @@ public class COC3Manager : MonoBehaviour
 
     private void HandleStepResult(ScreenshotStep step, bool success, string message)
     {
+        // Records the try before anything branches on it. The FIRST call for a
+        // step is what sets its first-attempt flag.
+        AssessmentRecorder.Attempt(step.stepData.stepId, success);
+
+        if (!success)
+            AssessmentRecorder.Mistake("configuration", message);
+
         // Remember whether the config step passed, so a later PingTest step can react to it.
         if (step.stepData.stepType == StepType.NetworkConfigInput)
             lastNetworkConfigCorrect = success;
