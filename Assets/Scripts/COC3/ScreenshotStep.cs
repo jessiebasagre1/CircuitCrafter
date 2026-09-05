@@ -100,6 +100,11 @@ public class ScreenshotStep : MonoBehaviour
 
         if (instructionLabel != null) instructionLabel.text = stepData.instructionText;
 
+        PrepareField(ipInputField);
+        PrepareField(subnetInputField);
+        PrepareField(gatewayInputField);
+        PrepareField(textInputField);
+
         if (ipInputField != null) ipInputField.text = string.Empty;
         if (subnetInputField != null) subnetInputField.text = string.Empty;
         if (gatewayInputField != null) gatewayInputField.text = string.Empty;
@@ -114,6 +119,33 @@ public class ScreenshotStep : MonoBehaviour
             if (textInputField.placeholder is TMP_Text placeholderLabel)
                 placeholderLabel.text = stepData.textFieldLabel;
         }
+    }
+
+    /// <summary>
+    /// Stops TextMeshPro eating a backslash as you type.
+    ///
+    /// TMP_Text processes escape sequences in the text it is given - "\\" becomes one backslash,
+    /// the same as in C# source. Harmless in a label. In an INPUT FIELD it means pressing the
+    /// backslash key twice leaves one character behind, and a UNC path like
+    ///
+    ///     \\SERVER01\SharedDocs
+    ///
+    /// simply cannot be typed. Steps 19 and 25 were unpassable because of it.
+    ///
+    /// It is NOT the Rich Text setting - that governs &lt;b&gt; markup and switching it off changes
+    /// nothing here. The one that matters is Parse Escape Characters, under Extra Settings on the
+    /// text component, serialized as m_parseCtrlCharacters. Setting it in code as well as in the
+    /// Inspector means a rebuilt or duplicated panel cannot quietly reintroduce the bug.
+    ///
+    /// IF THIS LINE WILL NOT COMPILE in your TextMeshPro version, delete this whole method and
+    /// its four calls, then untick Parse Escape Characters by hand on each input field's
+    /// Text (TMP) child. The effect is identical - this only makes it automatic.
+    /// </summary>
+    private static void PrepareField(TMP_InputField field)
+    {
+        if (field == null || field.textComponent == null) return;
+
+        field.textComponent.parseCtrlCharacters = false;
     }
 
     /// <summary>Makes this step panel visible and interactable.</summary>
@@ -193,12 +225,65 @@ public class ScreenshotStep : MonoBehaviour
     /// </summary>
     private bool ValidateTextInput(string typed, string expected, bool caseSensitive)
     {
-        typed = (typed ?? string.Empty).Trim();
-        expected = (expected ?? string.Empty).Trim();
+        typed = Normalize(typed);
+        expected = Normalize(expected);
 
         return caseSensitive
             ? typed == expected
             : string.Equals(typed, expected, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Trims, and collapses any run of consecutive backslashes down to one.
+    ///
+    /// WHY A UNC PATH CANNOT OTHERWISE BE ANSWERED
+    /// TextMeshPro treats "\\" as an escape sequence for a single backslash, and does so inside
+    /// TMP_InputField as well as in a label. Press the backslash key twice and only one character
+    /// reaches the field - it is not a display quirk, the second keystroke never lands in .text.
+    /// Turning off Rich Text on the field does not stop it.
+    ///
+    /// That makes steps 19 and 25 impossible to complete, because both answers begin with the
+    /// "\\" of a UNC path. No amount of correct typing can produce the stored expected value.
+    ///
+    /// Collapsing runs on BOTH sides makes the two agree however many backslashes survived:
+    ///
+    ///     expected  \\SERVER01\SharedDocs  ->  \SERVER01\SharedDocs
+    ///     typed      \SERVER01\SharedDocs  ->  \SERVER01\SharedDocs      match
+    ///
+    /// The trade is honest and worth naming: a single leading backslash is not a valid UNC path,
+    /// and this now accepts one. The alternative is a step nobody can pass. The instruction and
+    /// the hint still teach the correct "\\" form, so what the learner is TOLD stays right - only
+    /// the grading tolerates what the engine will physically let them type.
+    ///
+    /// Nothing else in COC 3 changes: steps 12 and 23 use paths like C:\ServerData\Users, which
+    /// contain no consecutive backslashes and so pass through untouched.
+    /// </summary>
+    private static string Normalize(string value)
+    {
+        value = (value ?? string.Empty).Trim();
+        if (value.IndexOf('\\') < 0) return value;
+
+        var sb = new System.Text.StringBuilder(value.Length);
+        bool previousWasBackslash = false;
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+
+            if (c == '\\')
+            {
+                if (previousWasBackslash) continue;   // swallow the repeat
+                previousWasBackslash = true;
+            }
+            else
+            {
+                previousWasBackslash = false;
+            }
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
     }
 
     private string BuildErrorMessage(bool ipOk, bool maskOk, bool gwOk)

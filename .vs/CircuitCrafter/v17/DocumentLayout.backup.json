@@ -3,6 +3,22 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\windows10theme\\coc3winwidgets.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\new\\repairworkgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\new\\repairworkgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -15,7 +31,7 @@
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\new\\repairstation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc4\\new\\cleaningtool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\new\\cleaningtool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\new\\cleaningtool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -38,11 +54,62 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "COC3WinWidgets.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\Windows10Theme\\COC3WinWidgets.cs",
+              "ViewState": "AgIAALgCAAAAAAAAAAAIwMQCAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-05T10:25:58.721Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ScreenshotStep.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
+              "ViewState": "AgIAABYBAAAAAAAAAAAIwCgBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-05T10:18:16.193Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "COC3Manager.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Manager.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Manager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-05T09:24:42.987Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "COC3Tutorial.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "ViewState": "AgIAAMsBAAAAAAAAAAAAANwBAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-05T08:53:52.497Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "CleaningTool.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\New\\CleaningTool.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\New\\CleaningTool.cs",
@@ -50,12 +117,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC4\\New\\CleaningTool.cs",
               "ViewState": "AgIAACoAAAAAAAAAAAAAAD0AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-05T02:56:07.031Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-05T02:56:07.031Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 8,
               "Title": "PartType.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Sockets\\PartType.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Sockets\\PartType.cs",
@@ -67,7 +133,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 4,
               "Title": "RepairWorkGate.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\New\\RepairWorkGate.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\New\\RepairWorkGate.cs",
@@ -75,12 +141,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC4\\New\\RepairWorkGate.cs",
               "ViewState": "AgIAAO8AAAAAAAAAAAAAAPgAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-05T00:21:43.13Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-05T00:21:43.13Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 5,
               "Title": "TicketDiagnosisPanel.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
@@ -88,12 +153,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
               "ViewState": "AgIAAC0BAAAAAAAAAAAAAEABAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-04T23:55:30.306Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-04T23:55:30.306Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 9,
               "Title": "DragController.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\DragController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Interaction\\DragController.cs",
@@ -105,7 +169,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 6,
               "Title": "RepairStation.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\New\\RepairStation.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\New\\RepairStation.cs",
@@ -113,12 +177,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC4\\New\\RepairStation.cs",
               "ViewState": "AgIAAH0CAAAAAAAAAAAAAJACAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-04T23:55:25.183Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-04T23:55:25.183Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 10,
               "Title": "CableConnector.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\PSU\\CableConnector.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\PSU\\CableConnector.cs",

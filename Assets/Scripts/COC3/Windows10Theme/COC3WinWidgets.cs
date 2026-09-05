@@ -173,6 +173,14 @@ public static class COC3WinWidgets
                         string.Empty, TextAlignmentOptions.Left, false,
                         readOnly ? t.disabledText : t.text);
 
+        // TMP processes escape sequences in whatever text it renders, so "\\" arrives as one
+        // backslash. Invisible in a label; in an INPUT FIELD it means the second backslash key
+        // press is swallowed and a UNC path like \\SERVER01\SharedDocs cannot be typed at all.
+        // This is the "Parse Escape Characters" tickbox under Extra Settings - NOT Rich Text,
+        // which governs <b> markup and makes no difference here.
+        txt.parseCtrlCharacters = false;
+        ph.parseCtrlCharacters = false;
+
         field.textViewport = area;
         field.textComponent = txt;
         field.placeholder = ph;

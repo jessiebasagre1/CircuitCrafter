@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -34,15 +34,15 @@ public class COC3Tutorial : MonoBehaviour
     public COC3Manager manager;
 
     // ------------------------------------------------------------------
-    [Header("INTRO DIALOGS — uses your existing DialogManager")]
-    [Tooltip("Index-matched to COC3Manager.steps. Played through DialogManager when the step opens. Leave an entry EMPTY for steps that need no popup — nothing is auto-generated here, because the instruction text is already on the panel.")]
+    [Header("INTRO DIALOGS ï¿½ uses your existing DialogManager")]
+    [Tooltip("Index-matched to COC3Manager.steps. Played through DialogManager when the step opens. Leave an entry EMPTY for steps that need no popup ï¿½ nothing is auto-generated here, because the instruction text is already on the panel.")]
     public DialogSequence[] stepIntroDialogs;
 
     [Tooltip("Untick to keep hints but stop the per-step popups.")]
     public bool playIntroDialogs = true;
 
     // ------------------------------------------------------------------
-    [Header("HINT PANEL — your own panel, not the dialog box")]
+    [Header("HINT PANEL ï¿½ your own panel, not the dialog box")]
     [Tooltip("The hint panel GameObject. Must start INACTIVE.")]
     public GameObject hintPanel;
 
@@ -52,7 +52,7 @@ public class COC3Tutorial : MonoBehaviour
     [Tooltip("Optional heading inside the hint panel, e.g. 'Hint' or the step name.")]
     public TMP_Text hintTitleText;
 
-    [Tooltip("The Close (X) button ON the hint panel. Wired automatically at runtime — you do not need to set its OnClick.")]
+    [Tooltip("The Close (X) button ON the hint panel. Wired automatically at runtime ï¿½ you do not need to set its OnClick.")]
     public Button hintCloseButton;
 
     [Tooltip("The Hint button in your HUD that OPENS the panel. Also wired automatically.")]
@@ -63,7 +63,7 @@ public class COC3Tutorial : MonoBehaviour
 
     // ------------------------------------------------------------------
     [Header("Hint Behaviour")]
-    [Tooltip("Master switch. Untick for a graded assessment run — no dialogs, no hints, no highlights.")]
+    [Tooltip("Master switch. Untick for a graded assessment run ï¿½ no dialogs, no hints, no highlights.")]
     public bool tutorialMode = true;
 
     [Tooltip("Open the hint automatically after this many seconds stuck on one step. 0 = only when the button is pressed.")]
@@ -75,7 +75,7 @@ public class COC3Tutorial : MonoBehaviour
     [Tooltip("Space or Escape also closes the hint panel, as well as the Close button.")]
     public bool closeHintOnSpace = true;
 
-    [Tooltip("Move the hint panel to the front each time it opens, so it can never be painted over by a step panel. Only works if the hint panel is a SIBLING of the step panels — normally a direct child of the Canvas.")]
+    [Tooltip("Move the hint panel to the front each time it opens, so it can never be painted over by a step panel. Only works if the hint panel is a SIBLING of the step panels ï¿½ normally a direct child of the Canvas.")]
     public bool bringHintToFront = true;
 
     [Tooltip("Heading shown above generated hints.")]
@@ -275,8 +275,17 @@ public class COC3Tutorial : MonoBehaviour
 
         var authored = Get(stepHintDialogs, activeIndex);
 
+        // The AUTHORED branch goes through ForDisplay; the generated one does NOT, because
+        // BuildGeneratedHint has already escaped the expected value itself. Escaping twice would
+        // double the backslashes again and show four where two belong.
+        //
+        // The authored branch was missing this entirely, so a hand-written hint containing a UNC
+        // path lost a backslash on the way to the screen and told the learner to type an answer
+        // the validator then rejected. Only two steps in COC 3 carry backslashes - 19
+        // (the SharedDocs path) and 25 (the Redirected path) - which is why it read as a
+        // one-step content error rather than a rendering bug.
         hintText.text = authored != null
-            ? Flatten(authored)
+            ? ForDisplay(Flatten(authored))
             : BuildGeneratedHint(activeStep.stepData);
 
         if (hintTitleText != null)
