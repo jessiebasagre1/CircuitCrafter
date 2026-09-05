@@ -123,12 +123,24 @@ namespace CircuitCrafter.Repair
 
         private bool running;
         private bool resolved;
+        private bool openRequested;
         private DialogSequence generatedFailDialog;
 
         /// <summary>True once the machine has started normally at least once this
-        /// visit. Read it from a Return To Hub button if you would rather gate on a
-        /// property than wire the UnityEvent.</summary>
+        /// visit. This is about the HARDWARE only.</summary>
         public bool HasPassedBootTest { get; private set; }
+
+        /// <summary>True when the ticket can actually be closed: the machine passes
+        /// AND the cause has been recorded.
+        ///
+        /// The two are genuinely different states and conflating them is what makes
+        /// a learner walk back to the hub with a working machine and a ticket still
+        /// marked In Progress. A repair made before the diagnosis is deliberately
+        /// not credited by TicketFaultCoordinator - it stands, and it counts the
+        /// moment the diagnosis is submitted - so a machine can be fully working
+        /// while the job is unfinished. This is the property to gate the Return To
+        /// Hub button on.</summary>
+        public bool CanCloseTicket => HasPassedBootTest && RepairTicketMode.IsDiagnosed;
 
         /// <summary>True while the boot sequence is playing out.</summary>
         public bool IsBooting => running;
@@ -152,7 +164,13 @@ namespace CircuitCrafter.Repair
             // runs and the panel is left half-initialised with no error to show for
             // it. SiteObservationPanel has the full account of that trap; this is
             // the same trap.
-            if (panelRoot != null) panelRoot.SetActive(false);
+            // Guarded by openRequested. If this panel's object starts INACTIVE in
+            // the scene, Unity never runs Start - but a UnityEvent still reaches
+            // Open(), which activates the object, which makes Unity run Start in
+            // that same frame, which would hide the panel again. The learner sees
+            // nothing and has to trigger it a second time. The flag stops Start
+            // closing something that has just been asked to open.
+            if (!openRequested && panelRoot != null) panelRoot.SetActive(false);
         }
 
         /// <summary>Late binding, called from Start AND from Open, so the panel
@@ -176,6 +194,7 @@ namespace CircuitCrafter.Repair
         /// station is what brings the screen up.</summary>
         public void Open()
         {
+            openRequested = true;
             Resolve();
 
             if (!RepairTicketMode.IsActive)
@@ -331,7 +350,27 @@ namespace CircuitCrafter.Repair
                 yield return Wait();
                 yield return Wait();
 
-                if (allClear)
+                if (allClear && !RepairTicketMode.IsDiagnosed)
+                {
+                    // The machine works and the ticket still cannot be closed,
+                    // because nobody ever recorded what was wrong with it. Saying
+                    // "the ticket can be closed" here would be a straight lie - the
+                    // learner would walk back to the hub, find it still open, and
+                    // have nothing on screen to explain why.
+                    sb.AppendLine();
+                    sb.AppendLine("The computer starts normally and passes");
+                    sb.AppendLine("every check.");
+                    sb.AppendLine();
+                    sb.AppendLine("-----------------------------------------");
+                    sb.AppendLine("The job is NOT finished. You have not");
+                    sb.AppendLine("recorded what was wrong with it.");
+                    sb.AppendLine();
+                    sb.AppendLine("  Open Diagnose and name the cause. The");
+                    sb.AppendLine("  repair you have already made will count");
+                    sb.AppendLine("  the moment you do.");
+                    sb.AppendLine("-----------------------------------------");
+                }
+                else if (allClear)
                 {
                     sb.AppendLine();
                     sb.AppendLine("The computer starts normally and passes");
@@ -397,12 +436,22 @@ namespace CircuitCrafter.Repair
             Debug.Log($"[PCPowerStation] Boot {(allClear ? "PASSED" : "FAILED")} " +
                       $"({(countsAsTest ? "counted as a test" : "counted as an observation")}). {ServiceCallState.Summary()}", this);
 
+            if (allClear && !RepairTicketMode.IsDiagnosed)
+            {
+                Debug.Log("[PCPowerStation] The machine works, but no diagnosis has been submitted - the ticket cannot be closed yet. " +
+                          "Open the Diagnose panel; the repair already made will be credited the moment the cause is named.", this);
+            }
+
             running = false;
             if (powerButton != null) powerButton.interactable = true;
 
             ShowDialogFor(allClear);
 
-            if (allClear) onBootSucceeded?.Invoke();
+            // Gated on CanCloseTicket, not on allClear. A working machine with no
+            // recorded cause is not a finished job, and unlocking Return To Hub for
+            // it sends the learner back to a ticket that is still In Progress with
+            // nothing to explain why.
+            if (CanCloseTicket) onBootSucceeded?.Invoke();
             else onBootFailed?.Invoke();
         }
 
@@ -410,9 +459,32 @@ namespace CircuitCrafter.Repair
         {
             if (DialogManager.Instance == null) return;
 
-            if (allClear)
+            if (CanCloseTicket)
             {
                 if (successDialog != null) DialogManager.Instance.ShowDialog(successDialog);
+                return;
+            }
+
+            // Nothing authored, so one is written to match what is already on
+            // screen. Built once and reused: a DialogSequence created per press
+            // would leak a ScriptableObject on every power-on.
+            if (generatedFailDialog == null)
+                generatedFailDialog = ScriptableObject.CreateInstance<DialogSequence>();
+
+            if (allClear)
+            {
+                // Working machine, unfinished job. Never the authored fail dialog -
+                // that one talks about a machine that will not start, which would
+                // contradict the screen the learner is looking at.
+                generatedFailDialog.lines.Clear();
+                generatedFailDialog.lines.Add(new DialogLine
+                {
+                    speakerName = "You",
+                    text = "It runs perfectly now. But I have not written down what was actually wrong with it - " +
+                           "I cannot close the job on a machine I never diagnosed."
+                });
+
+                DialogManager.Instance.ShowDialog(generatedFailDialog);
                 return;
             }
 
@@ -421,12 +493,6 @@ namespace CircuitCrafter.Repair
                 DialogManager.Instance.ShowDialog(failDialog);
                 return;
             }
-
-            // Nothing authored, so one is written from the symptom that is already
-            // on screen. Built once and reused: a DialogSequence created per press
-            // would leak a ScriptableObject on every power-on.
-            if (generatedFailDialog == null)
-                generatedFailDialog = ScriptableObject.CreateInstance<DialogSequence>();
 
             generatedFailDialog.lines.Clear();
             generatedFailDialog.lines.Add(new DialogLine

@@ -4,6 +4,10 @@ public class MouseLook : MonoBehaviour
 {
 
     public float mouseSensitivity = 100f;
+
+    [Tooltip("Pushing the mouse or finger forward looks DOWN instead of up. Driven by the Settings panel; the value here is only the starting point.")]
+    public bool invertLookY = false;
+
     public Transform playerBody;
     float xRotation = 0f;
 
@@ -63,6 +67,12 @@ public class MouseLook : MonoBehaviour
             mouseX += touchDelta.x;
             mouseY += touchDelta.y;
         }
+
+        // Applied here rather than by negating the sensitivity, so that inverting
+        // affects the vertical axis ONLY. A negative sensitivity would flip the
+        // horizontal too, which nobody has ever wanted and which would also make
+        // the settings slider read back wrong.
+        if (invertLookY) mouseY = -mouseY;
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);

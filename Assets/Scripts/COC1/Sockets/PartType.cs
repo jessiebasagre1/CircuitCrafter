@@ -14,4 +14,5 @@ public enum PartType
     Motherboard,
     SSD,
     DataCable,
+    Tool,
 }

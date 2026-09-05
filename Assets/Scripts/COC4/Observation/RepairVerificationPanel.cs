@@ -71,6 +71,8 @@ namespace CircuitCrafter.Repair
 
         // ==================================================================
 
+        private bool openRequested;
+
         private void Awake()
         {
             if (runButton != null) runButton.onClick.AddListener(Run);
@@ -85,11 +87,18 @@ namespace CircuitCrafter.Repair
             // Awake stops Unity ever calling this Start, and Panel Root is
             // normally this same object. See SiteObservationPanel for the full
             // account of that trap.
-            if (panelRoot != null) panelRoot.SetActive(false);
+            // Guarded by openRequested. If this panel's object starts INACTIVE in
+            // the scene, Unity never runs Start - but a UnityEvent still reaches
+            // Open(), which activates the object, which makes Unity run Start in
+            // that same frame, which would hide the panel again. The learner sees
+            // nothing and has to trigger it a second time. The flag stops Start
+            // closing something that has just been asked to open.
+            if (!openRequested && panelRoot != null) panelRoot.SetActive(false);
         }
 
         public void Open()
         {
+            openRequested = true;
             if (!RepairTicketMode.IsActive)
             {
                 Debug.LogWarning("[RepairVerificationPanel] No active ticket - nothing to test.", this);

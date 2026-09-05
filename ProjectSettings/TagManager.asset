@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Pickup
+  - Wireslot
   layers:
   - Default
   - TransparentFX
@@ -29,7 +30,7 @@ TagManager:
   - Shelf
   - Workspace
   - Power On
-  - 
+  - Dust
   - 
   - 
   - 

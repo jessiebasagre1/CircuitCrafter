@@ -63,12 +63,17 @@ namespace CircuitCrafter.Repair
         private string lockedMessage =
             "You haven't examined the machine yet. Check it over first - a cause you can't point to evidence for is a guess.";
 
+        [Tooltip("Leave on. When this panel is opened away from a station - mid-walk, anywhere on the site - it frees the mouse and freezes the player, then puts both back on close.\n\nWITHOUT IT THE PANEL IS UNUSABLE AWAY FROM A STATION. While walking, MouseLook holds the cursor locked and hidden, so the options would be visible and unclickable. At a station the cursor is already free and the player already frozen, so this does nothing there and correctly leaves the station's own state alone.")]
+        [SerializeField] private bool freeCursorWhenAwayFromStation = true;
+
         [Header("Assessment (optional)")]
         [SerializeField] private string stageId = "";
 
         private TicketData ticket;
 
         // ==================================================================
+
+        private bool openRequested;
 
         private void Awake()
         {
@@ -83,11 +88,64 @@ namespace CircuitCrafter.Repair
             // for the full version of this trap. Nothing here depends on Start
             // today, but the two panels should fail the same way, not
             // differently.
-            if (panelRoot != null) panelRoot.SetActive(false);
+            // Guarded by openRequested. If this panel's object starts INACTIVE in
+            // the scene, Unity never runs Start - but a UnityEvent still reaches
+            // Open(), which activates the object, which makes Unity run Start in
+            // that same frame, which would hide the panel again. The learner sees
+            // nothing and has to trigger it a second time. The flag stops Start
+            // closing something that has just been asked to open.
+            if (!openRequested && panelRoot != null) panelRoot.SetActive(false);
         }
 
         private void OnEnable() => SiteObservationPanel.OnObservationMade += HandleObservationMade;
-        private void OnDisable() => SiteObservationPanel.OnObservationMade -= HandleObservationMade;
+
+        private void OnDisable()
+        {
+            SiteObservationPanel.OnObservationMade -= HandleObservationMade;
+            if (owningInput == this) owningInput = null;
+
+            // Belt and braces. Close() releases first and so never reaches this,
+            // but anything else that switches the panel off - a scene teardown, a
+            // UnityEvent wired straight to SetActive(false) - would otherwise leave
+            // the input lock held by a component that no longer exists.
+            ReleaseControl();
+        }
+
+        /// <summary>
+        /// The panel currently holding the shared key, or null.
+        ///
+        /// WHY A STATIC RATHER THAN THE TWO COMPONENTS KNOWING ABOUT EACH OTHER
+        /// RepairStation and this panel can both be bound to E, and one press
+        /// would otherwise open the diagnosis AND walk the learner out of the
+        /// station in the same frame. RepairStation checks this before reading its
+        /// own key, so whichever one is genuinely in play gets the press. It is the
+        /// same trick DialogManager uses with openedFrame, generalised to two
+        /// components instead of one.
+        /// </summary>
+        private static TicketDiagnosisPanel owningInput;
+
+        private static int consumedFrame = -1;
+
+        /// <summary>True while the panel is showing.</summary>
+        public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
+
+        /// <summary>Called by whoever polls the shortcut key, on the frame it was
+        /// pressed, so RepairStation does not act on the same press.
+        ///
+        /// The polling deliberately does NOT happen in this component. Open() hides
+        /// this panel's own GameObject, and Unity does not run Update on a component
+        /// whose object is switched off - so a key read from here would work exactly
+        /// once, while the panel was open, and never open it. RepairWorkGate lives
+        /// on Managers, which is never deactivated, so it does the reading.</summary>
+        public static void NoteKeyConsumed()
+        {
+            consumedFrame = Time.frameCount;
+        }
+
+        /// <summary>True while this panel owns the shared key - read by
+        /// RepairStation so a single press does not do two things.</summary>
+        public static bool BlocksStationInput =>
+            owningInput != null || Time.frameCount == consumedFrame;
 
         private void HandleObservationMade(int count)
         {
@@ -101,6 +159,7 @@ namespace CircuitCrafter.Repair
         /// <summary>Wire to the diagnostic tool's interaction or a button.</summary>
         public void Open()
         {
+            openRequested = true;
             if (!RepairTicketMode.IsActive || RepairTicketMode.ActiveTicket == null)
             {
                 Debug.LogWarning("[TicketDiagnosisPanel] No active ticket to diagnose.", this);
@@ -111,7 +170,10 @@ namespace CircuitCrafter.Repair
             ServiceCallState.EnsureTicket(ticket.ticketId);
 
             if (panelRoot != null) panelRoot.SetActive(true);
+            owningInput = this;
             if (feedbackText != null) feedbackText.text = "";
+
+            TakeControl();
 
             RefreshOptions();
             RefreshBanner();
@@ -119,7 +181,63 @@ namespace CircuitCrafter.Repair
 
         public void Close()
         {
+            if (owningInput == this) owningInput = null;
+
+            // Released BEFORE the object is switched off. Close() usually
+            // deactivates this component's own GameObject, and anything left until
+            // after that runs in OnDisable or not at all - which is how a learner
+            // ends up frozen in place with no panel on screen and nothing in the
+            // Console to say why.
+            ReleaseControl();
+
             if (panelRoot != null) panelRoot.SetActive(false);
+        }
+
+        // ==================================================================
+        // Mouse and movement, when opened away from a station
+        // ==================================================================
+
+        private bool tookControl;
+
+        /// <summary>
+        /// Frees the mouse and freezes the player - but only when this panel was
+        /// opened somewhere the station system is not already doing both.
+        ///
+        /// The station case is deliberately left alone. RepairStation owns the
+        /// cursor and the input lock while the learner is inside one, and a second
+        /// component setting the same two things would fight it on the way out: the
+        /// panel would hand the cursor back to a locked state while the learner was
+        /// still standing at an open case, and the case would become unusable.
+        /// </summary>
+        private void TakeControl()
+        {
+            if (!freeCursorWhenAwayFromStation) return;
+            if (tookControl) return;
+            if (RepairStation.Current != null) return;
+
+            tookControl = true;
+            PlayerInputLock.Acquire();
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        private void ReleaseControl()
+        {
+            if (!tookControl) return;
+            tookControl = false;
+
+            PlayerInputLock.Release();
+
+            // Re-checked rather than assumed. A learner can open this in the open,
+            // walk nowhere, and close it - but they can also have entered a station
+            // by some other route in between, and re-locking the cursor there would
+            // leave them unable to click anything at the station.
+            if (RepairStation.Current == null)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
 
         private bool HasEnoughEvidence => ServiceCallState.ObservationCount >= minimumObservations;

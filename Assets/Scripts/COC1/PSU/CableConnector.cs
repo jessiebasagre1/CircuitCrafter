@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using CircuitCrafter.Repair;
 
 /// <summary>
 /// The draggable plug end of a cable. Pick it up with the mouse, drag it near a compatible
@@ -88,6 +89,10 @@ public class CableConnector : MonoBehaviour
     public void BeginDrag()
     {
         if (isLocked) return;
+
+        // COC4: a cable is hardware too. Same rule as parts - see
+        // DragController.BeginDragFromWorld. Inert outside RepairTicketMode.
+        if (RepairWorkGate.Refuse("the cable")) return;
         if (isDragging) return;
 
         if (isPlugged)

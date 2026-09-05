@@ -54,6 +54,7 @@ namespace CircuitCrafter.Repair
 
         private TicketObservationSet activeSet;
         private bool resolved;
+        private bool openRequested;
         private readonly List<string> findings = new List<string>();
 
         // ==================================================================
@@ -82,7 +83,13 @@ namespace CircuitCrafter.Repair
             Resolve();
 
             // Now it is safe to hide - Start has run, so nothing is waiting on it.
-            if (panelRoot != null) panelRoot.SetActive(false);
+            // Guarded by openRequested. If this panel's object starts INACTIVE in
+            // the scene, Unity never runs Start - but a UnityEvent still reaches
+            // Open(), which activates the object, which makes Unity run Start in
+            // that same frame, which would hide the panel again. The learner sees
+            // nothing and has to trigger it a second time. The flag stops Start
+            // closing something that has just been asked to open.
+            if (!openRequested && panelRoot != null) panelRoot.SetActive(false);
         }
 
         /// <summary>
@@ -127,6 +134,7 @@ namespace CircuitCrafter.Repair
         /// button. Public so an InteractableObject can call it.</summary>
         public void Open()
         {
+            openRequested = true;
             if (!RepairTicketMode.IsActive)
             {
                 Debug.LogWarning("[SiteObservationPanel] No active ticket - nothing to examine.", this);

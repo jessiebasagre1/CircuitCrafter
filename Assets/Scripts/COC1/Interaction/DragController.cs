@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using CircuitCrafter.Repair;
 using UnityEngine.UI;
 
 /// <summary>
@@ -28,6 +29,10 @@ public class DragController : MonoBehaviour
     /// <summary>True while a part is currently being dragged (world or hotbar), false otherwise.</summary>
     public bool IsDragging => draggedItem != null;
 
+    /// <summary>What is currently being dragged, or null. Read by DustScrubber
+    /// to tell a cleaning tool from a computer part mid-drag.</summary>
+    public PCPartItem DraggedItem => draggedItem;
+
     [Header("Refs")]
     public Camera worldCamera;
     [Tooltip("UI Image used as the floating drag cursor. Keep Raycast Target OFF.")]
@@ -49,6 +54,13 @@ public class DragController : MonoBehaviour
 
     public void BeginDragFromWorld(PCPartItem item)
     {
+        // COC4: during a repair ticket nothing may be moved until the fault has
+        // been diagnosed. Checked HERE rather than in PCPartItem.TryBeginDrag
+        // because this is the one door every part drag comes through - world
+        // clicks and hotbar drags both - so one guard covers both and cannot be
+        // forgotten on a part added later. Inert outside RepairTicketMode.
+        if (RepairWorkGate.Refuse(item)) return;
+
         draggedItem = item;
         sourceSlot = null;
         StartDragVisual(item.icon);
@@ -57,6 +69,10 @@ public class DragController : MonoBehaviour
 
     public void BeginDragFromHotbar(HotbarSlot slot)
     {
+        // The item, not a string: a cleaning tool must be draggable out of the
+        // hotbar before diagnosis, because picking one up is not a repair.
+        if (RepairWorkGate.Refuse(slot != null ? slot.StoredItem : null)) return;
+
         draggedItem = slot.StoredItem;
         sourceSlot = slot;
         StartDragVisual(draggedItem.icon);

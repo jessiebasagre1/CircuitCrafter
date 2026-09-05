@@ -86,6 +86,11 @@ namespace CircuitCrafter.Repair.EditorTools
             public string id, title, description, symptom, scene;
             public TicketTargetModule module;
             public string faultNote;                       // printed as a reminder
+
+            /// <summary>True for a ticket that already exists as a hand-made asset.
+            /// Only its observations are generated - the ticket itself is never
+            /// created or touched, so its wording stays yours.</summary>
+            public bool observationsOnly;
             public readonly List<Option> options = new List<Option>();
             public readonly List<Ob> obs = new List<Ob>();
         }
@@ -323,6 +328,42 @@ namespace CircuitCrafter.Repair.EditorTools
             Obs(apipa, "ping_server", "Ping the server",
                 "PING: transmit failed. General failure.", 15);
 
+            // ---------- observations for the two hand-made tickets ----------
+            //
+            // These two already exist as assets Harold wrote. Only their
+            // observations are generated - observationsOnly stops the ticket
+            // itself being created or altered, so the customer report, symptom and
+            // diagnosis options stay exactly as authored.
+            //
+            // CHECK THE WORDING against those two assets. These findings were
+            // written without sight of their symptomText, so they may describe
+            // the fault slightly differently from the diagnosis options they sit
+            // beside.
+
+            var ram = New(list, "ticket_coc1_ram_missing", TicketTargetModule.COC1, HardwareScene,
+                "", "", "", "PartRemovedFault - remove the RAM sticks, watch the RAM sockets.");
+            ram.observationsOnly = true;
+            Obs(ram, "power_on", "Press the power button and listen",
+                "Fans spin up and keep running. Beep code: one long, three short, repeating.", 10);
+            Obs(ram, "check_screen", "Look at the monitor",
+                "Black. The monitor never comes out of standby - no logo and no error text.", 10);
+            Obs(ram, "check_cable", "Check the video cable",
+                "Firmly connected at both ends. The monitor works on another machine.", 15);
+            Obs(ram, "open_case", "Open the case and inspect",
+                "The inside has been disturbed recently - clean patches in the dust. Every memory slot is empty.", 30);
+
+            var psu = New(list, "ticket_coc1_psu_cable_fix", TicketTargetModule.COC1, HardwareScene,
+                "", "", "", "CableUnplugFault - unplug the PSU cable, assign a rest point.");
+            psu.observationsOnly = true;
+            Obs(psu, "power_on", "Press the power button and listen",
+                "Nothing at all. No fans, no lights, no sound. The machine does not react to the button.", 10);
+            Obs(psu, "check_mains", "Check the mains supply",
+                "The wall socket is live. The kettle lead is firmly in the back of the unit and the PSU switch is set to on.", 15);
+            Obs(psu, "check_front_panel", "Watch the case lights as you press the button",
+                "The power LED on the front does not light, not even for an instant.", 10);
+            Obs(psu, "open_case", "Open the case and inspect",
+                "No burning smell and no damage. A power connector from the supply is hanging loose beside the board instead of being plugged into it.", 30);
+
             return list;
         }
 
@@ -361,6 +402,8 @@ namespace CircuitCrafter.Repair.EditorTools
 
         private static bool Create(Spec spec)
         {
+            if (spec.observationsOnly) return false;
+
             string existing = FindExisting(spec.id);
             if (existing != null)
             {
