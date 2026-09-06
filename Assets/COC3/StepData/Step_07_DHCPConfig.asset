@@ -24,7 +24,7 @@ MonoBehaviour:
     Note the pool starts
     well clear of 192.168.10.10 - a scope must never overlap a static address.'
   screenshotImage: {fileID: 0}
-  stepType: 1
+  stepType: 3
   expectedIP: 192.168.10.100
   expectedSubnetMask: 255.255.255.0
   expectedGateway: 192.168.10.1

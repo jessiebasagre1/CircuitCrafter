@@ -20,7 +20,7 @@ MonoBehaviour:
     Active Directory Users and Computers > Users > New > User, type the User logon
     name.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

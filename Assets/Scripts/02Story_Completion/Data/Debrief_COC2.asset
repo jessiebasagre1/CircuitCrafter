@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2f9ec81392f3254b96fef70765aaae9, type: 3}
+  m_Name: Debrief_COC2
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.ModuleDebriefData
+  moduleId: COC2
+  headline: Cable made, addresses set, and the two machines can see each other. What
+    counts now is whether you could do it again on someone else's network.
+  practiceNotice: 
+  assessorNotes:
+  - outcomeCode: "LO1 \xB7 Install network cables"
+    assessorLooksFor: "An assessor checks your pinout against the standard you named
+      \u2014 T568A or T568B, the same at both ends unless you meant a crossover \u2014
+      and looks for the jacket seated inside the connector, not just for the click."
+  - outcomeCode: "LO2 \xB7 Set network configuration"
+    assessorLooksFor: You are judged on whether the address is consistent with the
+      mask and gateway you were given, and on whether you can say why an address
+      is usable rather than reciting one from a worksheet.
+  - outcomeCode: "LO3 \xB7 Set router/Wi-Fi/wireless access point/repeater configuration"
+    assessorLooksFor: The assessor looks for default credentials changed, an SSID
+      and security mode chosen deliberately, and settings you can explain. A working
+      link on an open network is not a pass.
+  - outcomeCode: "LO4 \xB7 Inspect and test the configured computer networks"
+    assessorLooksFor: Testing means proving it in both directions and reading the
+      actual output. "Request timed out" with a reason you can name beats a ping
+      you ran and did not look at.
+  nextButtonLabel: Take the assessment
+  nextSceneName: 
+  nextButtonLabelAfterAssessment: 
+  nextSceneNameAfterAssessment: 
+  replayButtonLabel: Run it again

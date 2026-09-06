@@ -13,18 +13,19 @@ MonoBehaviour:
   m_Name: Step_04_DNSConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_04_DNSConfig
-  instructionText: 'This server will host the DNS role itself, so it must resolve
-    names through its own loopback address.
-
-
-    Enter the Preferred DNS server.'
+  instructionText: "The Preferred DNS server points at 127.0.0.1 \u2014 the server's
+    own loopback.\n\nThat looks circular and isn't. This machine is about to become
+    the DNS server for the whole domain, so the name it needs to resolve first is
+    its own. Point it at a router or a public resolver instead and domain join will
+    fail on the client with an error that names neither DNS nor the cause.\n\nTap
+    NEXT to continue."
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 0
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 
   textFieldLabel: Preferred DNS Server
   textFieldExpectedValue: 127.0.0.1
   textFieldCaseSensitive: 0
-  pointsForCorrect: 15
+  pointsForCorrect: 5
   pointsPenaltyForMistake: 3

@@ -25,7 +25,7 @@ MonoBehaviour:
     The server restarts afterwards and you sign back
     in as a domain administrator.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

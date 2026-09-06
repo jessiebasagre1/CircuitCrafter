@@ -21,7 +21,7 @@ MonoBehaviour:
     In DNS Manager > Reverse Lookup Zones > New
     Zone > IPv4, type the Network ID.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

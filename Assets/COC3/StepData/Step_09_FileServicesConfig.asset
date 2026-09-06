@@ -13,18 +13,16 @@ MonoBehaviour:
   m_Name: Step_09_FileServicesConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_09_FileServicesConfig
-  instructionText: 'Enable the role that lets this server host shared folders.
-
-
-    In
-    the Server Roles list, tick ''File and Storage Services'' > ''File Server''.'
+  instructionText: "File and Storage Services \u25B8 File Server is what lets this
+    machine host a shared folder over SMB. Without it, the share you create later
+    would exist on disk and be unreachable from the client."
   screenshotImage: {fileID: 0}
-  stepType: 3
+  stepType: 0
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 
   textFieldLabel: Value
   textFieldExpectedValue: 
   textFieldCaseSensitive: 0
-  pointsForCorrect: 10
+  pointsForCorrect: 3
   pointsPenaltyForMistake: 2

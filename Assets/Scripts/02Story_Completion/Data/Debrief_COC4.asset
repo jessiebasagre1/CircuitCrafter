@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2f9ec81392f3254b96fef70765aaae9, type: 3}
+  m_Name: Debrief_COC4
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.ModuleDebriefData
+  moduleId: COC4
+  headline: That machine is back with its owner and the ticket is closed. What the
+    client never sees is the part I'm looking at now.
+  practiceNotice: 
+  assessorNotes:
+  - outcomeCode: "LO1 \xB7 Plan and prepare for maintenance and repair"
+    assessorLooksFor: "An assessor looks for the job understood before the toolkit
+      is opened \u2014 the reported fault read, tools and materials gathered, workspace
+      and PPE sorted before anything is touched."
+  - outcomeCode: "LO2 \xB7 Maintain computer systems and networks"
+    assessorLooksFor: 'Preventive work is judged as work: the correct tool for the
+      surface, the machine safely isolated, and the cleaning actually finished rather
+      than the visible face wiped.'
+  - outcomeCode: "LO3 \xB7 Diagnose faults of computer systems and networks"
+    assessorLooksFor: The outcome this module is built around. An assessor wants
+      a cause you can point to evidence for. Naming a fault having looked at nothing
+      is a guess, and it is marked as one even when the guess turns out right.
+  - outcomeCode: "LO4 \xB7 Rectify/correct defects in computer systems and networks"
+    assessorLooksFor: The check is that you fixed the cause you diagnosed, one change
+      at a time. Swapping parts until it works is not repair, and an assessor can
+      tell the difference.
+  - outcomeCode: "LO5 \xB7 Inspect and test the computer systems and networks"
+    assessorLooksFor: "Closing a job untested is the callback the industry actually
+      measures. You are judged on testing after the repair \u2014 and on reopening
+      the job when the test fails."
+  nextButtonLabel: Take the assessment
+  nextSceneName: 
+  nextButtonLabelAfterAssessment: 
+  nextSceneNameAfterAssessment: 
+  replayButtonLabel: Run it again

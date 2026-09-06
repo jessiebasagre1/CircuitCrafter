@@ -13,18 +13,16 @@ MonoBehaviour:
   m_Name: Step_10_OtherServices
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_10_OtherServices
-  instructionText: 'LO2.4 - Add the remaining service the job order calls for.
-
-
-    Tick
-    ''Print and Document Services'' so the server can host the shared printer later.'
+  instructionText: Print and Document Services does the same job for printers. It
+    is what allows a printer attached to this server to be published to the domain,
+    so a client can install it by name rather than by driver.
   screenshotImage: {fileID: 0}
-  stepType: 3
+  stepType: 0
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 
   textFieldLabel: Value
   textFieldExpectedValue: 
   textFieldCaseSensitive: 0
-  pointsForCorrect: 10
+  pointsForCorrect: 3
   pointsPenaltyForMistake: 2

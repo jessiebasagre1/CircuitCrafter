@@ -20,7 +20,7 @@ MonoBehaviour:
     Open System Properties > Computer Name > Change, and type the host
     name given in the job order.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

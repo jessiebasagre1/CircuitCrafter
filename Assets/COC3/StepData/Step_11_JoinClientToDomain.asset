@@ -25,7 +25,7 @@ MonoBehaviour:
     Properties > Change > select ''Domain'', and type the domain name. Authenticate
     as the domain administrator, then restart.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2f9ec81392f3254b96fef70765aaae9, type: 3}
+  m_Name: Debrief_COC3
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.ModuleDebriefData
+  moduleId: COC3
+  headline: "The server is up and the clients can reach it. Getting it running is
+    the easy half \u2014 here's where you stand on the rest."
+  practiceNotice: 
+  assessorNotes:
+  - outcomeCode: "LO1 \xB7 Set-up user access"
+    assessorLooksFor: "An assessor watches whether accounts and groups follow least
+      privilege \u2014 rights granted to groups rather than to people one at a time,
+      and no account left with more than its role needs."
+  - outcomeCode: "LO2 \xB7 Configure network services"
+    assessorLooksFor: "The check is that the service is configured for the brief
+      and reachable from a client \u2014 not that the role installed without an error."
+  - outcomeCode: "LO3 \xB7 Perform testing, documentation and pre-deployment procedures"
+    assessorLooksFor: 'Prove the server does what was specified, and leave a record
+      another technician could pick up: what is configured, what is not, and what
+      is still outstanding.'
+  nextButtonLabel: Take the assessment
+  nextSceneName: 
+  nextButtonLabelAfterAssessment: 
+  nextSceneNameAfterAssessment: 
+  replayButtonLabel: Run it again

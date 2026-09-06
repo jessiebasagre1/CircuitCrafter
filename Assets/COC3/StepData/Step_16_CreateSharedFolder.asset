@@ -20,7 +20,7 @@ MonoBehaviour:
     the folder > Properties > Sharing > Advanced Sharing, tick ''Share this folder'',
     and type the share name.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

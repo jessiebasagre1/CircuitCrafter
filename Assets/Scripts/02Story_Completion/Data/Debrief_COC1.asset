@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2f9ec81392f3254b96fef70765aaae9, type: 3}
+  m_Name: Debrief_COC1
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.ModuleDebriefData
+  moduleId: COC1
+  headline: "It came in as a box of parts and it's going out as a working machine
+    \u2014 that's the whole job in one sentence. Here's what the run showed about
+    how you work."
+  practiceNotice: 
+  assessorNotes:
+  - outcomeCode: "LO1 \xB7 Assemble computer hardware"
+    assessorLooksFor: "An assessor watches the order you work in and how you handle
+      the boards \u2014 strap on before the case is open, CPU seated and its retention
+      arm fully down before the cooler goes on, RAM clipped at both ends. That the
+      machine starts afterwards is not the evidence; how you got there is."
+  - outcomeCode: "LO2 \xB7 Prepare installer"
+    assessorLooksFor: 'You are watched for whether you verify the installer before
+      you trust it: the right image for the architecture, a drive you have confirmed
+      is bootable, and no assumption that last term''s USB is still good.'
+  - outcomeCode: "LO3 \xB7 Install operating system and drivers for peripherals/devices"
+    assessorLooksFor: "An assessor looks for drivers from a known source in a sensible
+      order, and for you checking Device Manager for anything left unrecognised \u2014
+      rather than declaring it done when the desktop appears."
+  - outcomeCode: "LO4 \xB7 Install application software"
+    assessorLooksFor: The check is licensing and fitness for purpose, not speed.
+      Install what the job sheet asks for, from media you can account for, and confirm
+      each one actually launches.
+  - outcomeCode: "LO5 \xB7 Conduct testing and documentation"
+    assessorLooksFor: "This is the outcome most learners lose. Test against the specification
+      and write down what you did \u2014 serials, what was installed, what you replaced.
+      Work with no record is work nobody can verify."
+  nextButtonLabel: Take the assessment
+  nextSceneName: 
+  nextButtonLabelAfterAssessment: 
+  nextSceneNameAfterAssessment: 
+  replayButtonLabel: Run it again

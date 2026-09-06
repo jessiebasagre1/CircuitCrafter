@@ -28,5 +28,5 @@ MonoBehaviour:
   textFieldLabel: Value
   textFieldExpectedValue: 
   textFieldCaseSensitive: 0
-  pointsForCorrect: 10
-  pointsPenaltyForMistake: 2
+  pointsForCorrect: 24
+  pointsPenaltyForMistake: 4
