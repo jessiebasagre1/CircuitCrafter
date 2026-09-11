@@ -190,6 +190,16 @@ namespace CircuitCrafter.Settings
         /// bigger menu text would resize a computer monitor in the world. World
         /// Space canvases are therefore skipped automatically, and Excluded
         /// Canvases is there for anything else you want left alone.
+        ///
+        /// EXCLUDED CANVASES ONLY REACHES THIS SCENE
+        /// That list holds object references, and Unity cannot hold a reference
+        /// from one scene into another. This applier lives in the Main Menu, so
+        /// the list can name menu canvases and nothing else - a canvas in COC2
+        /// or COC3 cannot be dragged into it, and the field just refuses the
+        /// drop with no explanation.
+        ///
+        /// An IgnoreInterfaceScale component on the canvas itself covers that
+        /// case: it travels with the canvas into whatever scene it lives in.
         /// </summary>
         private bool IsExcluded(CanvasScaler scaler)
         {
@@ -197,6 +207,17 @@ namespace CircuitCrafter.Settings
 
             // A canvas standing in the 3D world is scenery, not interface.
             if (canvas != null && canvas.renderMode == RenderMode.WorldSpace) return true;
+
+            // The cross-scene opt-out. Checked before the list because it is the
+            // one that works from any scene.
+            var marker = scaler.GetComponent<IgnoreInterfaceScale>();
+            if (marker != null)
+            {
+                if (verbose)
+                    Debug.Log($"[SettingsApplier] Leaving '{scaler.name}' at its authored size - " +
+                              $"IgnoreInterfaceScale: {marker.Reason}", scaler);
+                return true;
+            }
 
             if (excludedCanvases == null) return false;
 

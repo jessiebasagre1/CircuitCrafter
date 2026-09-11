@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q3_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: How far back may the pairs be untwisted at the plug in a Cat5e termination?
+  choices:
+  - No limit, as long as the colours are in order
+  - "No more than 13 mm (\xBD inch)"
+  - At least 50 mm, to make the plug easier to load
+  - Exactly 25 mm on every conductor
+  correctChoiceIndex: 1
+  points: 10
+  explanation: The twist is what cancels crosstalk. Untwisting more than about 13
+    mm lets pairs interfere with each other, and the cable can fail certification
+    even though a continuity tester shows all eight pins good.

@@ -69,7 +69,29 @@ namespace CSSSimulation.Networking
             PlayerArrived,
             /// <summary>Nothing detects this - you call CompleteStep from a UnityEvent. The escape
             /// hatch for anything the others cannot see.</summary>
-            Manual
+            Manual,
+
+            // ---- ADDED LATER - AND THEREFORE ADDED AT THE END --------------
+            //
+            // Unity serialises an enum by its NUMBER, not its name. Slotting a new value into the
+            // middle of this list renumbers every value below it, and every Step already saved in
+            // every scene silently changes meaning - a step set to Object Active would reopen as
+            // something else entirely, with nothing to show it had moved.
+            //
+            // New conditions go here, at the bottom, however out of place they read.
+
+            /// <summary>The player has TAKEN a CableCarrier off the bench. Use it for the
+            /// "go and pick up the cable" step: the moment it is in hand the arrow moves on to
+            /// where the first end goes.
+            ///
+            /// It stays true for the rest of the run, so it needs no latch - unlike IsHeld, which
+            /// blinks off every time an end seats.</summary>
+            CablePickedUp,
+
+            /// <summary>A CableCarrier has its FIRST end plugged in, whichever socket that was.
+            /// Use it for the "plug it into the patch panel" step, so the arrow then sends the
+            /// player on to the far end of the run.</summary>
+            CableFirstEndIn
         }
 
         [System.Serializable]
@@ -91,7 +113,12 @@ namespace CSSSimulation.Networking
             public string taskId = "";
             [Tooltip("Done When = Phase Passed.")]
             public PatchCordBoard phase;
-            [Tooltip("Done When = Cable Run or Cable Available.")]
+            [Tooltip("Done When = Cable Run, Cable Available, Cable Picked Up or Cable First End In.\n\n" +
+                     "One cable usually wants THREE steps in a row, all pointing at the same " +
+                     "CableCarrier but at different places:\n" +
+                     "  1. Cable Picked Up   -> the spawn point\n" +
+                     "  2. Cable First End In -> the patch panel\n" +
+                     "  3. Cable Run          -> the server (or client)")]
             public CableCarrier cable;
             [Tooltip("Done When = Object Active or Object Inactive.")]
             public GameObject witness;
@@ -195,6 +222,7 @@ namespace CSSSimulation.Networking
         Camera cam;
         int activeIndex = -1;
         bool suppressed;
+        bool lockedOffForAssessment;
         bool allDoneFired;
         float bobPhase;
         float spinAngle;
@@ -227,6 +255,17 @@ namespace CSSSimulation.Networking
                 GameObject tagged = GameObject.FindGameObjectWithTag("Player");
                 if (tagged != null) player = tagged.transform;
             }
+
+            // No guidance during a graded run. Done before ValidateSetup so an assessment does not
+            // also print a page of setup warnings about steps nobody is going to see.
+            if (AssessmentMode.IsActive)
+            {
+                LockOffForAssessment();
+                Debug.Log("[TaskWaypointArrow] Assessment mode - the arrow and its label stay off " +
+                          "for this run.", this);
+                return;
+            }
+
             ValidateSetup();
         }
 
@@ -334,6 +373,12 @@ namespace CSSSimulation.Networking
 
                 case DoneWhen.CableAvailable:
                     return s.cable != null && s.cable.IsAvailable;
+
+                case DoneWhen.CablePickedUp:
+                    return s.cable != null && s.cable.HasBeenPickedUp;
+
+                case DoneWhen.CableFirstEndIn:
+                    return s.cable != null && s.cable.FirstEndPlugged;
 
                 case DoneWhen.ObjectActive:
                     return s.witness != null && s.witness.activeInHierarchy;
@@ -521,9 +566,43 @@ namespace CSSSimulation.Networking
 
         public void SetSuppressed(bool on)
         {
+            // An assessment run has the arrow off for the whole run, and nothing gets to turn it
+            // back on. Stations call Resume() when their close-up closes - PunchDownStation's On
+            // Stage Closed is wired to it - so without this latch the arrow would reappear the
+            // moment the learner stepped out of the first station, which is precisely the guidance
+            // an assessment is supposed to withhold.
+            if (lockedOffForAssessment && !on) return;
+
             if (suppressed == on) return;
             suppressed = on;
             if (on) { ShowWorldArrow(false); ShowScreenArrow(false); }
+        }
+
+        /// <summary>
+        /// Switches the arrow off for a graded run and keeps it off.
+        ///
+        /// WHY THE ARROW MUST GO
+        /// The waypoint is teaching scaffolding: it tells the learner where the next step happens.
+        /// Under assessment the whole point is to find out whether they know where to go, so an
+        /// arrow pointing at the patch panel hands them the answer to the question being asked.
+        /// TESDA competency evidence gathered with the arrow up is not evidence of competence.
+        ///
+        /// Called from Start when AssessmentMode is active. Also public so an assessment manager
+        /// can call it directly.
+        /// </summary>
+        public void LockOffForAssessment()
+        {
+            lockedOffForAssessment = false;   // let the SetSuppressed call through
+            SetSuppressed(true);
+            lockedOffForAssessment = true;
+
+            // labelText and distanceText are allowed to be the SAME object - that is how you get
+            // one line with the distance appended - so the second call would be switching off
+            // something already off. Harmless, but the null checks are what matter: both are
+            // optional fields and a scene may have neither.
+            if (labelText != null) labelText.gameObject.SetActive(false);
+            if (distanceText != null && distanceText != labelText)
+                distanceText.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -590,6 +669,8 @@ namespace CSSSimulation.Networking
                         break;
                     case DoneWhen.CableRun:
                     case DoneWhen.CableAvailable:
+                    case DoneWhen.CablePickedUp:
+                    case DoneWhen.CableFirstEndIn:
                         if (s.cable == null) problems.Add(where + " is judged by a cable but Cable is empty.");
                         break;
                     case DoneWhen.ObjectActive:
@@ -682,7 +763,9 @@ namespace CSSSimulation.Networking
                 case DoneWhen.TaskComplete: return "'" + s.taskId + "'";
                 case DoneWhen.PhasePassed: return s.phase != null ? "'" + s.phase.phaseName + "'" : "(none)";
                 case DoneWhen.CableRun:
-                case DoneWhen.CableAvailable: return s.cable != null ? "'" + s.cable.cableName + "'" : "(none)";
+                case DoneWhen.CableAvailable:
+                case DoneWhen.CablePickedUp:
+                case DoneWhen.CableFirstEndIn: return s.cable != null ? "'" + s.cable.cableName + "'" : "(none)";
                 case DoneWhen.ObjectActive:
                 case DoneWhen.ObjectInactive: return s.witness != null ? "'" + s.witness.name + "'" : "(none)";
                 case DoneWhen.CableOnTable: return s.pickup != null ? "'" + s.pickup.name + "'" : "(none)";

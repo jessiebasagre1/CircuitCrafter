@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q4_Connectivity
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: A machine set to obtain an address automatically ends up with 169.254.14.7.
+    What happened?
+  choices:
+  - It was assigned a public address
+  - No DHCP server answered, so it gave itself an APIPA address
+  - The subnet mask is wrong
+  - It is connected to the internet through a router
+  correctChoiceIndex: 1
+  points: 10
+  explanation: "169.254.x.x is what Windows assigns itself when DHCP fails. Seeing
+    it points at the link or the DHCP server, not at the machine's own settings \u2014
+    and it will not reach a 192.168.1.x host."

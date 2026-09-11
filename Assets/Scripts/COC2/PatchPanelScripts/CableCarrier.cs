@@ -200,6 +200,32 @@ namespace CSSSimulation.Networking
         /// <summary>True once the player has made this cable and it is lying by the tester.</summary>
         public bool IsAvailable { get { return appeared; } }
 
+        /// <summary>How many of this cable's two ends are plugged in - 0, 1 or 2.</summary>
+        public int EndsPlugged
+        {
+            get
+            {
+                int n = 0;
+                if (firstEnd != null && firstEnd.IsPlugged) n++;
+                if (secondEnd != null && secondEnd.IsPlugged) n++;
+                return n;
+            }
+        }
+
+        /// <summary>
+        /// True once the player has taken this cable off the bench - and it STAYS true for the rest
+        /// of the run.
+        ///
+        /// IsHeld alone is not enough for anything that has to remember: it drops to false for a
+        /// moment each time an end seats, and again for good once the cable is finished. Anything
+        /// asking "has the pick-up step been done" wants this, which only ever goes one way.
+        /// </summary>
+        public bool HasBeenPickedUp { get { return IsHeld || IsComplete || EndsPlugged > 0; } }
+
+        /// <summary>True once the FIRST end is in, whichever socket that was. The point at which
+        /// the player should be heading for the far end of the run.</summary>
+        public bool FirstEndPlugged { get { return EndsPlugged >= 1; } }
+
         void Awake()
         {
             cableRoot = transform;
@@ -266,6 +292,44 @@ namespace CSSSimulation.Networking
             Debug.LogWarning("[CableCarrier] '" + cableName + "' is now available" +
                              (spawnPoint != null ? " at " + spawnPoint.name : "") +
                              ". The player can pick it up.", this);
+
+            WarnIfAnotherCarrierCoversThisSpot();
+        }
+
+        /// <summary>
+        /// Says so if another cable's pick-up trigger reaches over this one's spawn point.
+        ///
+        /// Two overlapping triggers is a scene problem, not a code one: the player presses the
+        /// interact key, PlayerInteractor picks whichever it found, and the wrong cable answers.
+        /// Nothing about that looks like a bug from the Console - it looks like the key not working.
+        /// RefreshPickupCollider removes the common case (a FINISHED cable shadowing the next one),
+        /// but two cables that are both still to be run would still collide, so this names it.
+        /// </summary>
+        void WarnIfAnotherCarrierCoversThisSpot()
+        {
+            if (pickupCollider == null || !pickupCollider.enabled) return;
+
+            Vector3 here = cableRoot.position;
+
+            CableCarrier[] all = FindObjectsByType<CableCarrier>(FindObjectsInactive.Include,
+                                                                 FindObjectsSortMode.None);
+            foreach (CableCarrier other in all)
+            {
+                if (other == null || other == this) continue;
+
+                Collider oc = other.pickupCollider != null
+                    ? other.pickupCollider
+                    : other.GetComponent<Collider>();
+
+                if (oc == null || !oc.enabled) continue;
+                if (!oc.bounds.Contains(here)) continue;
+
+                Debug.LogWarning("[CableCarrier] '" + cableName + "' has just appeared INSIDE the " +
+                                 "pick-up trigger of '" + other.cableName + "' (on '" + oc.name +
+                                 "'). Standing here, the player is in reach of both, and the interact " +
+                                 "key may well answer for the other one instead of this one.\n\n" +
+                                 "Move the two spawn points further apart, or shrink that trigger.", this);
+            }
         }
 
         /// <summary>
@@ -291,7 +355,34 @@ namespace CSSSimulation.Networking
             {
                 foreach (var r in cableRenderers) { if (r != null) r.enabled = on; }
             }
-            if (pickupCollider != null) pickupCollider.enabled = on;
+            RefreshPickupCollider();
+        }
+
+        /// <summary>
+        /// The pick-up trigger is on ONLY while this cable is something the player can actually pick
+        /// up: it has appeared, and it is not already run.
+        ///
+        /// THIS IS THE FIX FOR "I CAN'T PICK UP THE CLIENT CABLE".
+        ///
+        /// The trigger used to be tied to visibility alone, so a finished cable kept a live pick-up
+        /// trigger sitting on the bench for the rest of the module. The server cable finishes at the
+        /// exact moment the client cable appears, and the two spawn points are close enough together
+        /// that the player standing at Spawn_ClientCable is inside BOTH triggers. PlayerInteractor
+        /// picks one of them, the finished server cable can win, and pressing the interact key then
+        /// answers "Server cable is already run" - while the client cable, a few centimetres away,
+        /// is never asked.
+        ///
+        /// Interact() already refused a completed cable, which is exactly why this was so hard to
+        /// see: the refusal was correct, it was just answering for the wrong object. A cable that
+        /// can no longer be picked up should not be in the running to be chosen at all.
+        ///
+        /// Note this is about the PICK-UP trigger only. The cable's own geometry and its PatchCord
+        /// ends are untouched - a finished run stays visible and stays plugged in.
+        /// </summary>
+        void RefreshPickupCollider()
+        {
+            if (pickupCollider == null) return;
+            pickupCollider.enabled = appeared && !IsComplete;
         }
 
         /// <summary>
@@ -550,6 +641,11 @@ namespace CSSSimulation.Networking
             Carried = null;
             Highlight(null);
             SetEndsLocked(true);
+
+            // Stand down as an interactable. Done BEFORE OnComplete fires, because OnComplete is
+            // what makes the NEXT cable appear - and that cable spawns close enough to this one that
+            // a pick-up trigger left live here can shadow it. See RefreshPickupCollider.
+            RefreshPickupCollider();
 
             if (!string.IsNullOrEmpty(taskId) && TaskManager.Instance != null)
                 TaskManager.Instance.ReportProgress(taskId);

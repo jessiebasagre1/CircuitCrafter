@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q6_Connectivity
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: The link light on both ports is on, but the ping still fails. What
+    is the most likely cause to check first?
+  choices:
+  - The cable is not plugged in
+  - The two machines are configured on different subnets
+  - The switch needs replacing
+  - The cable is a cross-over rather than straight-through
+  correctChoiceIndex: 1
+  points: 10
+  explanation: "A link light means the physical layer is good \u2014 the cable and
+    ports are fine. When the wire is proved and traffic still will not pass, the
+    fault has moved up to the addressing: check both with ipconfig and compare the
+    network parts."

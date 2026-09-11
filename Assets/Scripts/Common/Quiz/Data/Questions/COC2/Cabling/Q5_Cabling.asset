@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q5_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: A cable tester lights pins 1 to 8 in order at the near end, but at
+    the far end the order shows 3, 6, 1, 4, 5, 2, 7, 8. What has happened?
+  choices:
+  - The cable is broken and must be discarded
+  - The two ends were crimped to different standards, making a cross-over
+  - The tester batteries are low
+  - The jacket was stripped too far back
+  correctChoiceIndex: 1
+  points: 10
+  explanation: "The orange and green pairs have swapped places and the blue and brown
+    pairs have not \u2014 the signature of T568A at one end and T568B at the other.
+    Correct for a cross-over, wrong for a patch cord."

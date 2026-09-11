@@ -14,26 +14,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Assessment.CompetencyDefinition
   moduleId: COC2
   unitCode: 
-  unitTitle: Set up computer networks
+  unitTitle: Set-up computer networks
   outcomes:
   - code: LO1
-    title: Prepare and terminate network cables
-    criteria: Strips, arranges and crimps UTP cable to the correct standard for both
-      straight-through and crossover.
+    title: Install network cables
+    criteria: Cables are crimped to T568A/B, tested for continuity and correct pinout,
+      and terminated to the patch panel and switch.
     evidenceTaskIds:
     - crimp_cable
+    - test_cable
+    - punch_patch_panel
+    - patch_to_switch
     requiredEvidenceCount: 0
   - code: LO2
-    title: Test cable terminations
-    criteria: Verifies continuity and pin order with a cable tester and interprets
-      the result.
+    title: Set network configuration
+    criteria: IP address, subnet mask and gateway are assigned to the server and
+      client per the job order.
     evidenceTaskIds:
-    - test_cable
+    - configure_network
     requiredEvidenceCount: 0
   - code: LO3
-    title: Terminate structured cabling
-    criteria: Punches down conductors to a patch panel in the correct order and verifies
-      the port.
+    title: Inspect and test the configured computer networks
+    criteria: Connectivity is verified in both directions by ping between the client
+      and the server.
     evidenceTaskIds:
-    - punch_patch_panel
+    - verify_connectivity
     requiredEvidenceCount: 0

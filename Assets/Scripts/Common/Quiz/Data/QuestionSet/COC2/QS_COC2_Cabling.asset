@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: QS_COC2_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: 
+  questionPool:
+  - {fileID: 11400000, guid: 8a96c4c75cc63ab4da10effce2489583, type: 2}
+  - {fileID: 11400000, guid: 31da679d44456824bbe3ffa7952c03bb, type: 2}
+  - {fileID: 11400000, guid: 6bed856164759384bae125858897ab7e, type: 2}
+  - {fileID: 11400000, guid: 1948c6bb8c17eac4d8819d0b53ae58d2, type: 2}
+  - {fileID: 11400000, guid: f9d136caf990f2341b9fdcde2a996c22, type: 2}
+  - {fileID: 11400000, guid: 380140632ae39f74d82fe93c67fccf5c, type: 2}
+  questionsToAsk: 3
+  randomizeSelection: 1

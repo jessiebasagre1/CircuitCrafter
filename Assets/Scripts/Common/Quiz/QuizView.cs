@@ -57,10 +57,19 @@ public class QuizView : MonoBehaviour
     private bool acceptingInput;
     private bool settingUpToggles;
 
+    /// <summary>True when BeginQuiz switched this object on, so CloseResults knows to switch it
+    /// back off. A canvas that was already active before the quiz is left exactly as it was.</summary>
+    private bool activatedSelf;
+
     private void Awake()
     {
         if (quizPanel != null) quizPanel.SetActive(false);
         if (resultsPanel != null) resultsPanel.SetActive(false);
+
+        // A group that will not switch off cannot be cleared between questions, and a stale
+        // "on" toggle is what stops a later answer registering. The player still cannot
+        // un-answer, because answering locks every toggle anyway.
+        if (choiceToggleGroup != null) choiceToggleGroup.allowSwitchOff = true;
 
         if (closeResultsButton != null)
             closeResultsButton.onClick.AddListener(CloseResults);
@@ -82,6 +91,21 @@ public class QuizView : MonoBehaviour
         currentIndex = 0;
         correctCount = 0;
         pointsEarned = 0;
+
+        // Switch ourselves on before anything else.
+        //
+        // A view asked to show a quiz has to be able to show it. In COC1 this object happened to
+        // be left active in the scene and only its child panels were toggled, so nothing here ever
+        // needed to think about it - but the moment the canvas starts out inactive (which is how
+        // most people would build it, and how the COC2 copy was set up), StartCoroutine below
+        // throws "Coroutine couldn't be started because the game object is inactive" and the quiz
+        // silently never appears. The camera has already switched by then, so the learner is left
+        // looking at an empty quiz background.
+        //
+        // Self-activating means the canvas can be left switched off in the editor, which is also
+        // the tidier way to author it.
+        activatedSelf = !gameObject.activeSelf;
+        if (activatedSelf) gameObject.SetActive(true);
 
         if (resultsPanel != null) resultsPanel.SetActive(false);
 
@@ -106,12 +130,15 @@ public class QuizView : MonoBehaviour
             {
                 float fade = Mathf.Clamp(introFadeDuration, 0f, introDuration / 2f);
                 yield return Fade(introCanvasGroup, 0f, 1f, fade);
-                yield return new WaitForSeconds(Mathf.Max(0f, introDuration - fade * 2f));
+                // Realtime, like the fades below. A dialog with Pause Game While Open ticked
+                // leaves Time.timeScale at 0, and a scaled wait would then never end - the intro
+                // would sit on screen forever with no question behind it.
+                yield return new WaitForSecondsRealtime(Mathf.Max(0f, introDuration - fade * 2f));
                 yield return Fade(introCanvasGroup, 1f, 0f, fade);
             }
             else
             {
-                yield return new WaitForSeconds(introDuration);
+                yield return new WaitForSecondsRealtime(introDuration);
             }
 
             introPanel.SetActive(false);
@@ -119,6 +146,66 @@ public class QuizView : MonoBehaviour
 
         if (quizPanel != null) quizPanel.SetActive(true);
         ShowQuestion();
+        Relayout(quizPanel);
+    }
+
+    /// <summary>
+    /// Forces the layout groups and content size fitters under a panel to recalculate NOW.
+    ///
+    /// THIS IS THE FIX FOR "THE QUIZ LAYOUT IS A MESS IN PLAY MODE".
+    ///
+    /// Unity does not run layout on an inactive GameObject. The quiz canvas spends the whole
+    /// module switched off, so the arrangement visible in the Scene view is whatever was last
+    /// computed - and the first time the quiz is shown, the panel is drawn from those stale sizes.
+    /// Nested fitters make it worse: each pass only resolves one level, so a fitter inside a layout
+    /// group inside another fitter needs several passes before it settles, and a single frame's
+    /// automatic pass does not give it them.
+    ///
+    /// TMP is the other half. A TMP_Text does not know its own preferred size until it has
+    /// generated its mesh, which happens at the end of the frame - so a question longer than the
+    /// last one reports the OLD width to the layout group that is trying to size around it. That is
+    /// why the mess changes shape depending on which question you are on.
+    ///
+    /// So: rebuild immediately for the common case, then once more next frame, by which time TMP
+    /// has measured its text properly. Two cheap passes, on a panel that appears a handful of times
+    /// per module - not something that needs to be clever.
+    /// </summary>
+    private void Relayout(GameObject panel)
+    {
+        if (panel == null || !panel.activeInHierarchy) return;
+
+        RebuildNow(panel);
+
+        // Only if we are actually running - a coroutine cannot start on an inactive object, and
+        // BeginQuiz may not have switched us on yet in some orders.
+        if (isActiveAndEnabled) StartCoroutine(RebuildNextFrame(panel));
+    }
+
+    private static void RebuildNow(GameObject panel)
+    {
+        if (panel == null || !panel.activeInHierarchy) return;
+
+        RectTransform root = panel.transform as RectTransform;
+        if (root == null) return;
+
+        // Flush any pending canvas work first, so the rebuild below sees current text.
+        Canvas.ForceUpdateCanvases();
+
+        // Deepest first. A parent sized by a fitter can only be right once its children are, and
+        // GetComponentsInChildren returns parents before children - hence the reverse walk.
+        RectTransform[] all = panel.GetComponentsInChildren<RectTransform>(false);
+        for (int i = all.Length - 1; i >= 0; i--)
+        {
+            if (all[i] != null) LayoutRebuilder.ForceRebuildLayoutImmediate(all[i]);
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+    }
+
+    private IEnumerator RebuildNextFrame(GameObject panel)
+    {
+        yield return null;                  // let TMP generate its mesh and report real sizes
+        RebuildNow(panel);
     }
 
     private IEnumerator Fade(CanvasGroup group, float from, float to, float duration)
@@ -134,7 +221,7 @@ public class QuizView : MonoBehaviour
         float t = 0f;
         while (t < duration)
         {
-            t += Time.deltaTime;
+            t += Time.unscaledDeltaTime;
             group.alpha = Mathf.Lerp(from, to, t / duration);
             yield return null;
         }
@@ -164,18 +251,64 @@ public class QuizView : MonoBehaviour
 
         settingUpToggles = true;
 
+        // ---- 1. SHOW THE RIGHT NUMBER OF CHOICES, AND LABEL THEM -------------------------
+        //
+        // This happens BEFORE the clearing step below, and the order is not cosmetic. A Toggle
+        // unregisters itself from its ToggleGroup while it is inactive and registers again when it
+        // is switched back on, so a group asked to clear itself only ever reaches the toggles that
+        // are active at that moment. Showing every choice this question needs first means the
+        // clear that follows reaches all of them.
         for (int i = 0; i < choiceToggles.Count; i++)
         {
+            if (choiceToggles[i] == null) continue;
+
             bool inUse = q.choices != null && i < q.choices.Length;
             choiceToggles[i].gameObject.SetActive(inUse);
             if (!inUse) continue;
 
             if (i < choiceLabels.Count && choiceLabels[i] != null)
                 choiceLabels[i].text = q.choices[i];
+        }
 
-            choiceToggles[i].SetIsOnWithoutNotify(false);
+        // ---- 2. CLEAR THE PREVIOUS ANSWER - THROUGH THE GROUP, NOT AROUND IT -------------
+        //
+        // The original bug: SetIsOnWithoutNotify(false) does exactly what it says - it changes the
+        // toggle and tells NOBODY, the ToggleGroup included. The group went on believing the
+        // toggle picked on the last question was still the one that was on. Click that same
+        // position on a later question and uGUI considers it already on, onValueChanged never
+        // fires, and the answer does nothing. That was question 3 refusing to accept a click.
+        //
+        // SetAllTogglesOff is the supported way to empty a group: it walks the group's own
+        // registered toggles, lifts its Allow Switch Off rule for the duration, and turns each one
+        // off properly, so the group's idea of the world matches the screen.
+        //
+        // NOTHING HERE TOUCHES Toggle.group. An earlier attempt detached and re-attached the
+        // toggles every question, and that stopped them responding at all: the group setter
+        // re-registers a toggle only while that toggle is active, so any toggle hidden by a
+        // shorter question - or reached before its parent had been switched on - silently dropped
+        // out of the group and never came back. The grouping is authored in the Inspector; it is
+        // left exactly as authored.
+        if (choiceToggleGroup != null)
+        {
+            choiceToggleGroup.SetAllTogglesOff();
+        }
+        else
+        {
+            foreach (var t in choiceToggles)
+                if (t != null) t.SetIsOnWithoutNotify(false);
+        }
+
+        // ---- 3. ARM THEM ----------------------------------------------------------------
+        for (int i = 0; i < choiceToggles.Count; i++)
+        {
+            if (choiceToggles[i] == null) continue;
+            if (!choiceToggles[i].gameObject.activeSelf) continue;
+
+            // Belt and braces. If anything did survive step 2 still ticked, it would look answered
+            // and refuse to be clicked.
+            if (choiceToggles[i].isOn) choiceToggles[i].SetIsOnWithoutNotify(false);
+
             choiceToggles[i].interactable = true;
-            choiceToggles[i].group = choiceToggleGroup;
 
             int choiceIndex = i;
             choiceToggles[i].onValueChanged.RemoveAllListeners();
@@ -188,6 +321,11 @@ public class QuizView : MonoBehaviour
 
         settingUpToggles = false;
         acceptingInput = true;
+
+        // The question text and the choice labels have just changed, and so has how many choices
+        // are showing. Every one of those drives the layout, so it has to be recalculated here and
+        // not only when the panel first opens.
+        Relayout(quizPanel);
     }
 
     private void HandleAnswerSelected(int choiceIndex)
@@ -248,6 +386,10 @@ public class QuizView : MonoBehaviour
         if (resultsSummaryText != null)
             resultsSummaryText.text = $"You got {pendingResult.correctAnswers}/{pendingResult.totalQuestions} correct!\n+{pendingResult.pointsEarned} points";
 
+        // The results panel has been switched off for the whole quiz, so its layout is as stale as
+        // the question panel's was.
+        Relayout(resultsPanel);
+
         // NOTE: onFinished is deliberately NOT invoked here. QuizManager uses
         // onFinished to score the result AND to tell QuizCameraController to
         // switch the camera back (station/player) via NotifyQuizFinished().
@@ -258,13 +400,41 @@ public class QuizView : MonoBehaviour
 
     private void CloseResults()
     {
+        // EVERYTHING this view turned on, it turns off again.
+        //
+        // Hiding only the results panel was enough in COC1, where the last question was cleared
+        // for a different reason: the quiz canvas sat in QuizCameraController's Enable On Quiz
+        // list, and NotifyQuizFinished put it back to the state it was snapshotted in. Anywhere
+        // that list does not name this canvas, the question panel simply stayed on screen after
+        // the score was dismissed - the quiz appeared not to close.
+        //
+        // Leaving the tidying to whoever wired the camera controller was the mistake. The view
+        // owns what it shows.
         if (resultsPanel != null) resultsPanel.SetActive(false);
+        if (quizPanel != null) quizPanel.SetActive(false);
+        if (introPanel != null) introPanel.SetActive(false);
 
-        // Now that the player has actually clicked Continue/Close, report
-        // the finished result -- this is what triggers QuizManager to score
-        // it and switch the camera back.
-        onFinished?.Invoke(pendingResult);
+        acceptingInput = false;
+        if (nextButton != null) nextButton.gameObject.SetActive(false);
+
+        // Only if BeginQuiz switched it on. A canvas that was already active - COC1's, which holds
+        // other things besides the quiz - is left exactly as it was found.
+        if (activatedSelf)
+        {
+            activatedSelf = false;
+            gameObject.SetActive(false);
+        }
+
+        // Reported last, and to a local copy: this object may now be inactive, and the callback
+        // runs off to QuizManager, which scores the result and switches the camera back. Doing it
+        // in this order means the quiz UI is already gone by the time the world comes back, rather
+        // than being drawn over it for a frame.
+        Action<QuizResult> callback = onFinished;
+        QuizResult result = pendingResult;
+
         onFinished = null;
-        pendingResult = default;
+        pendingResult = null;
+
+        callback?.Invoke(result);
     }
 }

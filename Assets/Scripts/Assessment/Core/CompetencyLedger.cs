@@ -183,21 +183,54 @@ namespace CircuitCrafter.Assessment
             // id or an AssessmentRecorder manual stage id in evidenceTaskIds,
             // and doesn't have to say which it is.
             Func<string, bool> isComplete = id =>
-                (TaskManager.Instance != null && TaskManager.Instance.IsTaskComplete(id))
+                (TaskManager.Instance != null && TaskManager.Instance.IsTaskComplete(
+                    string.IsNullOrWhiteSpace(id) ? id : id.Trim()))
                 || HasCompletedStage(result, id);
 
-            bool canAwardCompetent =
-                result.Mode == SessionMode.Assessment &&
-                result.completed &&
-                result.ScorePercent >= passThresholdPercent;
+            bool modeOk = result.Mode == SessionMode.Assessment;
+            bool completedOk = result.completed;
+            bool scoreOk = result.ScorePercent >= passThresholdPercent;
+
+            bool canAwardCompetent = modeOk && completedOk && scoreOk;
+
+            // SAY WHY, WHEN THE ANSWER IS NO.
+            //
+            // Three separate conditions stand between a finished run and a Competent judgement,
+            // and until now failing any of them looked identical from the outside: the run saves,
+            // the profile screen shows Practised, and nothing anywhere says which one it was. A
+            // trainer looking at a learner who plainly did the work has no way to tell whether the
+            // score fell a point under the threshold, a stage never closed, or the run was not
+            // recognised as an assessment at all.
+            if (!canAwardCompetent)
+            {
+                string why = null;
+                if (!modeOk)
+                    why = Add(why, $"the run was recorded as {result.Mode}, not Assessment - it was " +
+                                   "started from the campaign menu rather than the assessment menu");
+                if (!completedOk)
+                    why = Add(why, "not every stage was completed - an unfinished run can only ever " +
+                                   "be Practised, however well it scored");
+                if (!scoreOk)
+                    why = Add(why, $"the score was {result.ScorePercent}%, below the {passThresholdPercent}% " +
+                                   "pass threshold on this ledger");
+
+                Debug.LogWarning($"[CompetencyLedger] '{result.moduleId}' run recorded, but NOTHING can " +
+                                 $"be marked Competent from it: {why}.\n\n" +
+                                 "The outcomes below will be stored as Practised instead.");
+            }
 
             result.criteria.Clear();
+
+            var evidenceReport = new System.Text.StringBuilder();
 
             foreach (var outcome in definition.outcomes)
             {
                 if (outcome == null || string.IsNullOrEmpty(outcome.code)) continue;
 
                 bool satisfied = definition.Evaluate(outcome, isComplete, out int have, out int need);
+
+                evidenceReport.AppendLine($"  {outcome.code} '{outcome.title}': evidence {have}/{need}" +
+                                          (satisfied ? " - satisfied" : " - NOT satisfied"));
 
                 CompetencyStatus earned;
                 if (satisfied && canAwardCompetent) earned = CompetencyStatus.Competent;
@@ -216,8 +249,21 @@ namespace CircuitCrafter.Assessment
                 Apply(definition.moduleId, outcome, earned, result, have, need);
             }
 
+            // Printed whether or not anything was awarded. An outcome sitting at 2/3 names the one
+            // piece of evidence that never arrived, which is usually an evidenceTaskIds entry that
+            // does not match any task id the module actually reports.
+            Debug.Log($"[CompetencyLedger] '{result.moduleId}' outcomes judged " +
+                      $"(score {result.ScorePercent}%, threshold {passThresholdPercent}%, " +
+                      $"all stages complete: {result.completed}, mode {result.Mode}):\n" +
+                      evidenceReport);
+
             Save();
             OnLedgerChanged?.Invoke();
+        }
+
+        private static string Add(string all, string line)
+        {
+            return all == null ? line : all + "; and " + line;
         }
 
         /// <summary>True if this run closed a stage with the given id. Lets a
@@ -225,11 +271,19 @@ namespace CircuitCrafter.Assessment
         /// progress through TaskManager - see the comment in RecordResult.</summary>
         private static bool HasCompletedStage(AssessmentResult result, string stageId)
         {
-            if (result == null || string.IsNullOrEmpty(stageId)) return false;
+            if (result == null || string.IsNullOrWhiteSpace(stageId)) return false;
 
+            string wanted = stageId.Trim();
+
+            // Trimmed, for the same reason as GetDefinition: a stage id comes from an Inspector
+            // field and the evidence id it is being matched against comes from a different one.
             foreach (var stage in result.stages)
             {
-                if (stage != null && stage.completed && stage.stageId == stageId) return true;
+                if (stage == null || !stage.completed || string.IsNullOrWhiteSpace(stage.stageId))
+                    continue;
+
+                if (string.Equals(stage.stageId.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+                    return true;
             }
             return false;
         }
@@ -288,9 +342,21 @@ namespace CircuitCrafter.Assessment
 
         public CompetencyDefinition GetDefinition(string moduleId)
         {
+            if (string.IsNullOrWhiteSpace(moduleId)) return null;
+
+            string wanted = moduleId.Trim();
+
+            // Trimmed and case-insensitive. Both sides are hand-typed strings in two different
+            // Inspectors - the module id on the definition asset, and the one the assessment menu
+            // starts the run with - and an exact compare means 'coc2' or 'COC2 ' silently finds
+            // nothing. The run then saves with no outcomes judged at all.
             foreach (var definition in definitions)
             {
-                if (definition != null && definition.moduleId == moduleId) return definition;
+                if (definition == null || string.IsNullOrWhiteSpace(definition.moduleId)) continue;
+
+                if (string.Equals(definition.moduleId.Trim(), wanted,
+                                  StringComparison.OrdinalIgnoreCase))
+                    return definition;
             }
             return null;
         }

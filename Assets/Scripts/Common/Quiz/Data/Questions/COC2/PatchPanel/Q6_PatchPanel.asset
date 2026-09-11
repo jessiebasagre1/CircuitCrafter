@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q6_PatchPanel
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Why does the punch-down job work position 1 through 8 in order rather
+    than in whatever order is convenient?
+  choices:
+  - The tool only fits the block in that direction
+  - The panel records the order electronically
+  - The colour sequence is what the standard defines, and the link fails if it is
+    not followed
+  - It uses less cable
+  correctChoiceIndex: 2
+  points: 10
+  explanation: "Position on the block is position on the pin. Two conductors swapped
+    there are a split pair or a reversed pair on the finished link \u2014 faults
+    a basic continuity check can miss, but that a certifier and a real network will
+    not."

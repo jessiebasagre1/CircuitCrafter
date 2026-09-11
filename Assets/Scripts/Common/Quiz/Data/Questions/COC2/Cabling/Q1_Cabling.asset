@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q1_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: In the T568B wiring standard, which conductor goes into pin 1 of
+    the RJ45 plug?
+  choices:
+  - White-Orange
+  - White-Green
+  - Orange
+  - Blue
+  correctChoiceIndex: 0
+  points: 10
+  explanation: "T568B runs white-orange, orange, white-green, blue, white-blue, green,
+    white-brown, brown. T568A swaps the orange and green pairs \u2014 pin 1 there
+    is white-green."

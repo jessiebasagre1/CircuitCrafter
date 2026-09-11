@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: QS_COC2_Connectivity
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: 
+  questionPool:
+  - {fileID: 11400000, guid: 393ece2eceec7ca4b9835848cb6c7c7d, type: 2}
+  - {fileID: 11400000, guid: 855401357e91417459b1f5c7fc4e66ed, type: 2}
+  - {fileID: 11400000, guid: 08c7b280ef27d3641b3f1a1d1468ea21, type: 2}
+  - {fileID: 11400000, guid: 7bdcc55c4cd619940a739617ace37c6f, type: 2}
+  - {fileID: 11400000, guid: ce12c7aaba62f074c9e58ca2c2db942f, type: 2}
+  - {fileID: 11400000, guid: 641b52c6639c3f14abdef1ec76a58c69, type: 2}
+  questionsToAsk: 3
+  randomizeSelection: 1

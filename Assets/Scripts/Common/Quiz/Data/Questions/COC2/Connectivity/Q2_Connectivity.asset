@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q2_Connectivity
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: The server is 192.168.1.10 and the client is 192.168.1.20, both with
+    subnet mask 255.255.255.0. Are they on the same network?
+  choices:
+  - "Yes \u2014 the mask makes 192.168.1 the network part, and both share it"
+  - "No \u2014 the last octet differs, so they are different networks"
+  - Only if a default gateway is configured on both
+  - Only if they are plugged into the same switch port
+  correctChoiceIndex: 0
+  points: 10
+  explanation: 255.255.255.0 (a /24) means the first three octets identify the network
+    and the last identifies the host. .10 and .20 are two hosts on one network, so
+    they reach each other without a router.

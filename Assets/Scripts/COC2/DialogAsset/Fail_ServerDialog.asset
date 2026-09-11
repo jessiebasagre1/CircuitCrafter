@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
   - speakerName: Guide
-    text: Buli ni ina nya SALA!
+    text: "No reply. The console names the break \u2014 read it, fix that one thing,
+      and test again."

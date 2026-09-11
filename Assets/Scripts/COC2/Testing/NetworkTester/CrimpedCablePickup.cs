@@ -118,14 +118,36 @@ namespace CSSSimulation.Networking
 
         public override void Interact()
         {
-            if (!IsAvailable) return;
+            // EVERY refusal says why now.
+            //
+            // All three of these used to be a bare `return`, so pressing E on a
+            // cable that was plainly on the table did nothing at all - no log, no
+            // hint, no sound. The second cable is where it bites: the player is
+            // usually still carrying the first one, the pickup refuses, and the only
+            // possible reading is that the cable is broken or the collider is wrong.
+            // A refusal that explains itself turns a ten-minute hunt into a sentence.
+            if (!IsAvailable)
+            {
+                Debug.LogWarning("[CrimpedCablePickup] '" + name + "' is not available yet - " +
+                                 "crimping has not finished for this cable.", this);
+                return;
+            }
 
             if (CableInventory.Instance == null)
             {
                 Debug.LogWarning("[CrimpedCablePickup] No CableInventory found in the scene.", this);
                 return;
             }
-            if (CableInventory.Instance.HasCable) return;
+
+            if (CableInventory.Instance.HasCable)
+            {
+                // THE ONE THAT LOOKS LIKE A BROKEN COLLIDER. The inventory holds one
+                // cable at a time, so the second cable cannot be collected until the
+                // first has been dealt with - taken to the tester, or plugged in.
+                Debug.LogWarning("[CrimpedCablePickup] '" + name + "' refused: you are already carrying " +
+                                 "a cable. Take that one to the tester first - the pocket holds one.", this);
+                return;
+            }
 
             CableInventory.Instance.PickUp();
 

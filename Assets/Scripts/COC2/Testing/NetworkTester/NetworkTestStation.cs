@@ -63,6 +63,20 @@ namespace CSSSimulation.Networking
         [Tooltip("Seconds the pass/fail clip runs for, before the result text and events fire.")]
         public float resultLength = 2f;
 
+        [Header("Controls")]
+        [Tooltip("Key that leaves the tester close-up.\n\n" +
+                 "Defaulted to E - the same key that opened the station - because that is what a " +
+                 "player reaches for, and because this bench is entered from the walking view rather " +
+                 "than from a menu. Pressing it to get out cannot re-enter the station: entry is " +
+                 "ignored for a frame afterwards, so PlayerInteractor seeing the same keypress does " +
+                 "nothing.\n\n" +
+                 "Set to None to disable and rely on Escape or a Back button alone.")]
+        public KeyCode exitKey = KeyCode.E;
+
+        [Tooltip("Leave on. Escape also leaves the tester, which is what this station did before it " +
+                 "had an Exit Key at all - untick only if your pause menu should own Escape here.")]
+        public bool alsoExitOnEscape = true;
+
         [Header("Player control")]
         [Tooltip("Same array you filled in on your other view controllers.")]
         public MonoBehaviour[] playerControlScripts;
@@ -98,6 +112,11 @@ namespace CSSSimulation.Networking
 
         Renderer[] cableRenderers;
 
+        // The frame the close-up was left on. PlayerInteractor and this component both read the
+        // same keypress in the same frame, in an order Unity does not promise: without this, E to
+        // leave can be E to walk straight back in, and the station looks like it ignored the press.
+        int exitedOnFrame = -10;
+
         void Awake()
         {
             Instance = this;
@@ -128,6 +147,11 @@ namespace CSSSimulation.Networking
         {
             if (InTesterView) return;
 
+            // Just left with the exit key, and the interactor is reading that same press. Ignoring
+            // it here is what makes E work as "get me out" rather than as a toggle that lands on
+            // whichever component Unity happened to update second.
+            if (Time.frameCount - exitedOnFrame <= 1) return;
+
             if (CableInventory.Instance == null || !CableInventory.Instance.HasCable)
             {
                 if (noCableDialog != null && DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
@@ -140,22 +164,48 @@ namespace CSSSimulation.Networking
             SetTesterViewActive(true);
         }
 
-        /// <summary>Wire to a mobile Back button.</summary>
+        /// <summary>Wire to a mobile Back button. Also what the exit key calls, so the key and the
+        /// button can never drift apart.</summary>
         public void RequestExit()
         {
-            if (!InTesterView || IsTesting) return;
+            if (!InTesterView)
+            {
+                Debug.Log("[NetworkTestStation] Exit ignored - the tester close-up is not open.", this);
+                return;
+            }
+
+            // Said out loud rather than refused in silence. A test runs for plugInLength +
+            // resultLength seconds, and a player pressing E during it gets nothing back; without a
+            // line in the Console that reads as the key being broken rather than as the station
+            // being busy.
+            if (IsTesting)
+            {
+                Debug.Log("[NetworkTestStation] Exit ignored - the test is still running. It finishes in a moment.", this);
+                return;
+            }
+
+            exitedOnFrame = Time.frameCount;
             SetTesterViewActive(false);
+            Debug.Log("[NetworkTestStation] Left the tester.", this);
         }
 
         void Update()
         {
-            if (!InTesterView || IsTesting) return;
+            if (!InTesterView) return;
 
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // Read before the IsTesting guard, so a press during the test is answered with a
+            // reason instead of being swallowed by an early return.
+            bool wantsOut =
+                (exitKey != KeyCode.None && Input.GetKeyDown(exitKey)) ||
+                (alsoExitOnEscape && Input.GetKeyDown(KeyCode.Escape));
+
+            if (wantsOut)
             {
-                SetTesterViewActive(false);
+                RequestExit();
                 return;
             }
+
+            if (IsTesting) return;
 
             // The drag path drives itself - TesterCablePlug fires OnPlugged the moment it seats,
             // so there's nothing to poll here.

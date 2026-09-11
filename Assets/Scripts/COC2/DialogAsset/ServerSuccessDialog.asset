@@ -14,4 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
   - speakerName: Guide
-    text: YEHEYYY Naggana man giraray
+    text: "Server workstation configured. 192.168.1.10, mask 255.255.255.0, gateway
+      192.168.1.1 \u2014 that matches the job order."
+  - speakerName: Guide
+    text: 'That address is the server''s identity on this network. An address on
+      its own reaches nothing, though: both hosts need one before the link can be
+      tested.'

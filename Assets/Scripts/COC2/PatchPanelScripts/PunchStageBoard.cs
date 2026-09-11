@@ -53,6 +53,19 @@ namespace CSSSimulation.Networking
                  "them afterwards.")]
         public bool requirePunchBeforeNextWire = true;
 
+        [Tooltip("ON: a conductor that has been seated but NOT yet struck can be picked up again and " +
+                 "moved. Striking it is what makes it permanent.\n\n" +
+                 "This is how the real job works - a conductor laid into a channel is just resting " +
+                 "there until the punch-down tool seats and trims it, and a learner who realises " +
+                 "they have laid the wrong colour in should be able to lift it back out. Nothing is " +
+                 "judged until all eight are struck, so allowing this costs no rigour.\n\n" +
+                 "Lifting a conductor out and dropping it somewhere that is not a valid position " +
+                 "sends it back to the cable, which is the way to undo a placement. A press that " +
+                 "does not actually move it puts it straight back in its channel, so a stray click " +
+                 "cannot disturb work already done.\n\n" +
+                 "OFF: a seated conductor is fixed where it landed, struck or not.")]
+        public bool allowRepositioningBeforePunch = true;
+
         [Tooltip("How close (world units) a released conductor must be to a pin's seat anchor to " +
                  "land in it. Set this against the size you actually built the stage at - on a set " +
                  "where the pins are 50 mm apart, 0.04 is about right.")]
@@ -87,10 +100,33 @@ namespace CSSSimulation.Networking
                  "somewhere else.")]
         public float referenceScreenHeight = 1080f;
 
+        [Tooltip("How far the pointer must actually TRAVEL, in pixels, before a release counts as a " +
+                 "drag rather than a click.\n\n" +
+                 "A conductor that was picked up and let go without moving was never dragged " +
+                 "anywhere, so it must not be able to terminate itself - and it can, because a wire " +
+                 "resting in the tray may already be within Snap Distance of a pin. Below this, the " +
+                 "conductor simply goes home.\n\n" +
+                 "Scaled for the real screen alongside Screen Snap Pixels. 0 switches the check off.")]
+        public float minDragPixels = 14f;
+
         [Tooltip("When a drop finds no pin, log how close it actually got - in world units AND in " +
                  "pixels - so you can see instantly whether the numbers or the aim are at fault. " +
                  "Worth leaving on until the stage plays, then off.")]
         public bool logRefusedDrops = true;
+
+        [Tooltip("How close the dragged wire has to get, ON SCREEN, before its target pin lights up.\n\n" +
+                 "Leave at 0 to use Effective Screen Snap - the same forgiveness the drop itself uses - " +
+                 "so the highlight means \"let go now and it will seat\" rather than \"this is the pin " +
+                 "you want eventually\". Raise it above the snap if you want the pin to light just " +
+                 "BEFORE it will actually take the wire.")]
+        public float highlightPixels = 0f;
+
+        [Tooltip("Light the NEXT pin as soon as the stage is idle - on entry, and again after every " +
+                 "seat and every punch - instead of only while a wire is being dragged near it.\n\n" +
+                 "OFF is the default and is what makes the stage a test of aim. ON turns it into a " +
+                 "guided walkthrough: the answer is on screen before the learner has picked anything " +
+                 "up. Worth switching on for a first lesson and off for anything that counts.")]
+        public bool showNextPinWhenIdle = false;
 
         [Header("Retrying a failed port")]
         [Tooltip("ON: a failed termination clears itself. THIS PORT's eight conductors come back out " +
@@ -202,12 +238,53 @@ namespace CSSSimulation.Networking
             }
         }
 
+        /// <summary>Min Drag Pixels, corrected for the screen this is actually running on - the same
+        /// correction Screen Snap Pixels gets, for the same reason.</summary>
+        public float EffectiveMinDrag
+        {
+            get
+            {
+                if (!scaleSnapToScreen || referenceScreenHeight <= 0f) return minDragPixels;
+                return minDragPixels * (Screen.height / referenceScreenHeight);
+            }
+        }
+
         PunchStageConductor claimedBy;
         Canvas toolCanvas;
         float hintClearAt;
 
         int pressFrame = -1;
         PunchStageConductor pressWinner;
+
+        // False from the moment the stage opens until the pointer has been seen released at least
+        // once. See ConductorForPress for why.
+        bool pressArmed;
+
+        /// <summary>True while the board is deliberately deaf to a press that was already held down
+        /// when the stage opened.</summary>
+        public bool IgnoringHeldPress { get { return !pressArmed; } }
+
+        /// <summary>
+        /// Throw away whatever press is in progress: no conductor may be picked up until the pointer
+        /// has been released and pressed again.
+        ///
+        /// Called when the stage opens - by OnEnable, by ResetStage, and by PunchDownStation as it
+        /// hands over the camera. Three call sites rather than one because the board may or may not
+        /// live under the stage root, and only the station knows for certain when the player
+        /// arrived.
+        /// </summary>
+        public void IgnorePressUntilReleased()
+        {
+            pressArmed = false;
+            claimedBy = null;
+            pressFrame = -1;
+            pressWinner = null;
+        }
+
+        void OnEnable()
+        {
+            IgnorePressUntilReleased();
+        }
 
         /// <summary>Null for a Screen Space - Overlay canvas, the canvas camera otherwise. Used by
         /// the tool icon; getting it wrong is what makes a UI drag land in the wrong place.</summary>
@@ -311,6 +388,11 @@ namespace CSSSimulation.Networking
 
         void Update()
         {
+            // Arm on the first frame the pointer is NOT held. Entering with the keyboard arms the
+            // board immediately; entering with a click or a tap arms it the moment that click ends,
+            // so the press that opened the stage can never also grab a wire.
+            if (!pressArmed && !PointerInput.Held) pressArmed = true;
+
             if (hintSeconds > 0f && hintClearAt > 0f && Time.unscaledTime >= hintClearAt)
             {
                 hintClearAt = 0f;
@@ -343,6 +425,17 @@ namespace CSSSimulation.Networking
 
             if (conductors == null || stageCamera == null) return null;
 
+            // The press that OPENED the stage is not a press on a conductor.
+            //
+            // Entering is a click - the mobile Interact button, or a click on the bench. The stage
+            // root switches on during that same frame, and Unity gives no order between the
+            // station's Update and a conductor's, so a conductor can read PointerInput.Down from
+            // the very click that brought the player here. The player then releases, the drop
+            // lands wherever that wire was already sitting, and if the tray is within Snap
+            // Distance of the block it seats itself - a conductor terminated without anyone
+            // having dragged anything.
+            if (IgnoringHeldPress) return null;
+
             // Once per press, not once per conductor. A tap on the tool icon can also line up with a
             // conductor behind it, since none of this knows about uGUI; the parameterless call only
             // checks the mouse, so touch needs the active finger's id.
@@ -357,7 +450,13 @@ namespace CSSSimulation.Networking
             float best = float.MaxValue;
             foreach (var c in conductors)
             {
-                if (c == null || c.IsLocked || c.IsSeated || !c.isActiveAndEnabled) continue;
+                if (c == null || c.IsLocked || !c.isActiveAndEnabled) continue;
+
+                // A seated conductor is still loose in its channel until the tool goes through it,
+                // so it stays pickable - that is what Allow Repositioning Before Punch means. Once
+                // struck, IsLocked above has already ruled it out.
+                if (c.IsSeated && !allowRepositioningBeforePunch) continue;
+
                 if (!c.IsPointerOverBounds(screenPoint)) continue;
 
                 float score = c.GrabScore(screenPoint);
@@ -378,6 +477,46 @@ namespace CSSSimulation.Networking
         public void ReleaseDrag(PunchStageConductor who)
         {
             if (claimedBy == who) claimedBy = null;
+        }
+
+        /// <summary>
+        /// Lifts an unstruck conductor back out of its channel, so it is loose in the player's hand
+        /// again and the position it was in is free.
+        ///
+        /// Called by the conductor as a drag begins. Emptying the pin here rather than at the drop
+        /// is what lets the wire be put back into the SAME position: leave the pin occupied and
+        /// PinAcceptingWire would refuse it as "position 3 already has a conductor in it" - by its
+        /// own former occupant.
+        /// </summary>
+        public void ReleaseFromPin(PunchStageConductor conductor)
+        {
+            if (conductor == null) return;
+
+            PunchStagePin pin = conductor.SeatedIn;
+            if (pin != null) pin.ClearSeat();      // refuses by itself if the pin was struck
+
+            conductor.LeavePin();
+            SetHint(null);
+            RefreshUI();
+
+            if (pin != null)
+                Debug.Log("[PunchStageBoard] " + WireColorPalette.ToDisplayName(conductor.color) +
+                          " lifted back out of position " + pin.pinNumber +
+                          " - it had not been punched yet.", this);
+        }
+
+        /// <summary>
+        /// Puts a conductor back into the position it was just lifted from - the undo for a press
+        /// that turned out not to be a drag at all.
+        /// </summary>
+        public void ReturnToPin(PunchStageConductor conductor, PunchStagePin pin)
+        {
+            if (conductor == null || pin == null) return;
+            if (pin.IsPunched || pin.IsSeated) return;
+
+            pin.Seat_(conductor);
+            conductor.SeatInto(pin);
+            RefreshUI();
         }
 
         // ------------------------------------------------------------------
@@ -522,6 +661,40 @@ namespace CSSSimulation.Networking
         {
             ClearAllHighlights();
             if (!AcceptsInput || conductor == null) { RefreshUI(); return false; }
+
+            // A click is not a drag.
+            //
+            // This is the guard that actually stops a conductor terminating itself. Snap Distance
+            // is a world measurement, and on a stage where the tray sits close to the block a wire
+            // AT REST is already inside it - so a press and release that never moved would seat a
+            // conductor the player never carried anywhere. Requiring real travel means the only
+            // way into a pin is to have taken the wire there.
+            float minDrag = EffectiveMinDrag;
+            if (minDrag > 0f)
+            {
+                float travelled = Vector2.Distance(conductor.DragStartScreen, screenPoint);
+                if (travelled < minDrag)
+                {
+                    Debug.Log("[PunchStageBoard] Ignored a press on " +
+                              WireColorPalette.ToDisplayName(conductor.color) +
+                              " that never moved (" + travelled.ToString("F0") + " px, needs " +
+                              minDrag.ToString("F0") + "). Treated as a click, not a drag - the " +
+                              "conductor stays where it is.", this);
+
+                    // Straight back into the channel it was lifted from. Returning false here would
+                    // send it home to the cable instead, which would mean a single stray click on a
+                    // seated conductor silently undid a placement the player had already made.
+                    if (conductor.DragOriginPin != null)
+                    {
+                        ReturnToPin(conductor, conductor.DragOriginPin);
+                        return true;
+                    }
+
+                    SetHint(null);
+                    RefreshUI();
+                    return false;
+                }
+            }
 
             // Three tests, cheapest and strictest first.
             //   1. World distance  - exact, and right when the tray and the pins share a depth.
@@ -832,9 +1005,36 @@ namespace CSSSimulation.Networking
         // ------------------------------------------------------------------
 
         /// <summary>Called every frame a conductor is being dragged - shows where it belongs.</summary>
+        /// <summary>
+        /// Lights the pin this wire would seat into - but only once the wire is
+        /// actually near it.
+        ///
+        /// It used to light PinAcceptingWire() the instant a drag began, wherever
+        /// the wire happened to be, and hold it lit until the drop. That is a
+        /// different statement: "this is the pin you want eventually" rather than
+        /// "let go now and it will seat". The first hands the learner the answer
+        /// before they have aimed at anything, which is exactly the aiming this
+        /// stage exists to teach.
+        ///
+        /// Measured with PinNearestOnScreen against EffectiveScreenSnap - the same
+        /// test the DROP uses - so the highlight can never promise a seat that
+        /// releasing would then refuse, and it scales to the device the same way.
+        ///
+        /// nearest == target matters as much as the distance: hovering over the
+        /// WRONG pin should light nothing, not light the right pin somewhere else
+        /// on the board.
+        /// </summary>
         public void HighlightForConductor(PunchStageConductor conductor)
         {
-            SetOnlyHighlight(PinAcceptingWire());
+            PunchStagePin target = PinAcceptingWire();
+            if (conductor == null || target == null) { SetOnlyHighlight(null); return; }
+
+            float pixels;
+            PunchStagePin nearest = PinNearestOnScreen(conductor.transform.position, out pixels);
+
+            float range = highlightPixels > 0f ? highlightPixels : EffectiveScreenSnap;
+
+            SetOnlyHighlight(nearest == target && pixels <= range ? target : null);
         }
 
         /// <summary>Called every frame the tool is being dragged - shows what it would strike.</summary>
@@ -868,7 +1068,11 @@ namespace CSSSimulation.Networking
                 progressText.text = PunchedCount() + " of 8 terminated";
                 progressText.color = progressColor;
             }
-            SetOnlyHighlight(ActivePin());
+            // The idle highlight is a teaching aid, not part of the interaction, so
+            // it is off by default. It used to be unconditional - which is why the
+            // first pin lit up the moment the station opened, before the learner
+            // had touched a wire, and stayed lit through every drag.
+            SetOnlyHighlight(showNextPinWhenIdle ? ActivePin() : null);
         }
 
         // ------------------------------------------------------------------
@@ -882,6 +1086,10 @@ namespace CSSSimulation.Networking
             // entry, or by a Try Again button - would be cleared a second time a moment later, in
             // the middle of the player's next drag.
             if (autoResetRoutine != null) { StopCoroutine(autoResetRoutine); autoResetRoutine = null; }
+
+            // A reset is a fresh start, and the click on the Try Again button must not carry
+            // through into a grab on the conductor sitting behind it.
+            IgnorePressUntilReleased();
 
             HasFinished = false;
             LastResultPassed = false;
@@ -1011,6 +1219,7 @@ namespace CSSSimulation.Networking
                 sb.AppendLine("  - No Target Standard, so every termination will be judged a FAIL.");
 
             CheckScale(sb);
+            CheckConductorsAtRest(sb);
 
             if (sb.Length == 0)
             {
@@ -1019,6 +1228,49 @@ namespace CSSSimulation.Networking
                 return;
             }
             Debug.LogWarning("[PunchStageBoard] Setup is incomplete:\n" + sb, this);
+        }
+
+        /// <summary>
+        /// Names any conductor that is ALREADY within Snap Distance of a pin while sitting in the
+        /// tray, untouched.
+        ///
+        /// This is the scene fault behind "a wire was terminated and nobody dragged it". A drop is
+        /// judged on where the conductor ended up, so a wire whose resting place is already inside
+        /// a pin's catchment needs no drag at all - any press-and-release on it, including a stray
+        /// one, seats it. Min Drag Pixels now refuses that release, but the wire is still sitting
+        /// somewhere it visually reads as plugged in, and the honest fix is to move the tray or
+        /// lower Snap Distance.
+        ///
+        /// Reported per colour, because it is almost never all eight - it is the one or two wires
+        /// in the middle of the fan whose tips reach furthest towards the block.
+        /// </summary>
+        void CheckConductorsAtRest(StringBuilder sb)
+        {
+            if (conductors == null || pins == null) return;
+
+            foreach (var c in conductors)
+            {
+                if (c == null || c.IsSeated || c.IsLocked) continue;
+
+                PunchStagePin nearest = null;
+                float best = float.MaxValue;
+
+                foreach (var p in pins)
+                {
+                    if (p == null) continue;
+                    float d = p.DistanceTo(c.transform.position);
+                    if (d < best) { best = d; nearest = p; }
+                }
+
+                if (nearest == null || best > snapDistance) continue;
+
+                sb.AppendLine("  - " + WireColorPalette.ToDisplayName(c.color) + " is resting " +
+                              best.ToString("F4") + " from position " + nearest.pinNumber +
+                              ", which is inside Snap Distance (" + snapDistance + "). It looks " +
+                              "plugged in before anyone has touched it, and any press on it would " +
+                              "terminate it. Move that conductor's tray position further from the " +
+                              "block, or lower Snap Distance.");
+            }
         }
     }
 }

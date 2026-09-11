@@ -41,7 +41,7 @@ namespace CSSSimulation.Networking
     /// Everything else has a working default.
     /// </summary>
     [DefaultExecutionOrder(210)]
-    public class ConnectivityCheckStation : Interactable
+    public class ConnectivityCheckStation : Interactable, ISaveable
     {
         [Header("Identity")]
         [Tooltip("Shown in messages, e.g. 'Server'. Just a label.")]
@@ -83,7 +83,19 @@ namespace CSSSimulation.Networking
                  "obvious one, since an unterminated horizontal run carries nothing.")]
         public string[] requiredTaskIds = new string[0];
 
-        [Tooltip("Turn every check off and always pass. Testing only - the Console shouts about it.")]
+        [Tooltip("Round 1 before round 2.\n\n" +
+                 "The player is meant to address BOTH machines, then test both. With this on, a " +
+                 "ping attempted before either machine has an address prints a real timeout, says " +
+                 "which machine is missing one, and is not recorded as a failure - it is a " +
+                 "sequencing mistake, not a wiring one, and marking it as a failed test would teach " +
+                 "the wrong lesson. Needs Requires Config set on both stations.")]
+        public bool requireBothConfigured = true;
+
+        [Tooltip("Skip the cable, patch-phase and task checks and always report a link. Testing " +
+                 "only - the Console shouts about it.\n\n" +
+                 "It does NOT skip Require Both Configured: a machine with no IPv4 address still " +
+                 "cannot be pinged, because that is the thing this task is teaching rather than a " +
+                 "wiring detail to be bypassed.")]
         public bool alwaysPassForTesting = false;
 
         [Header("The test itself")]
@@ -109,6 +121,20 @@ namespace CSSSimulation.Networking
                  "the command and the address they are testing. A wrong verb and a wrong address " +
                  "get different, real errors back.")]
         public bool requireCorrectCommand = true;
+
+        [Header("Living inside a desktop shell")]
+        [Tooltip("Untick when the command prompt is a window on a WindowsShell desktop rather than " +
+                 "a station of its own.\n\n" +
+                 "With this off, the trigger collider is switched off at Start so this component " +
+                 "never competes to be the player's nearby interactable - the desktop's own station " +
+                 "owns the E press, and the Start menu opens this console.")]
+        public bool openOnInteract = true;
+
+        [Tooltip("Tick when a WindowsShell owns the player lock. This station then only shows and " +
+                 "hides its window, and leaves the cursor, the clock and the movement scripts alone.\n\n" +
+                 "Two components both writing Cursor.lockState is how you end up with a mouse that " +
+                 "never comes back.")]
+        public bool managedByShell = false;
 
         [Header("While the console is open")]
         [Tooltip("Free the mouse cursor so the player can click into the command box.")]
@@ -147,6 +173,15 @@ namespace CSSSimulation.Networking
         [Tooltip("Show the success dialog only the first time it passes.")]
         public bool successDialogOnlyOnce = true;
 
+        [Tooltip("Played ONCE, by whichever machine verifies LAST - the moment every station " +
+                 "sharing this Task Id has passed its ping.\n\n" +
+                 "Put the same DialogSequence on the server and the client; only the second one to " +
+                 "pass will play it. This is the beat that closes the whole networking job, and no " +
+                 "single station can deliver it, because neither one knows on its own whether the " +
+                 "other has been tested yet. A ping proves one direction; both directions answering " +
+                 "is what the assessment actually asks for.")]
+        public DialogSequence allMachinesDialog;
+
         [Header("Task")]
         [Tooltip("Reported to TaskManager when this machine passes. Register it in COC2TaskSetup, " +
                  "or tick Auto Register below. Leave blank to report nothing.")]
@@ -180,6 +215,8 @@ namespace CSSSimulation.Networking
         bool shownSuccess;
         bool shownBriefing;
         bool reported;
+        bool submittedThisVisit;
+        bool allDoneShown;
         float savedTimeScale = 1f;
         CursorLockMode savedLock;
         bool savedCursorVisible;
@@ -199,6 +236,30 @@ namespace CSSSimulation.Networking
             if (commandInput != null) commandInput.onSubmit.AddListener(OnInputSubmitted);
 
             if (consolePanel != null) consolePanel.SetActive(false);
+
+            // A component that is not meant to answer E must not register as the nearby interactable
+            // at all. PlayerInteractor keeps ONE reference, last writer wins, so simply ignoring the
+            // press here would make the desktop's own station unreachable half the time.
+            if (!openOnInteract)
+            {
+                // Only when the collider is OURS. Sharing a GameObject with another Interactable
+                // means sharing its trigger, and switching it off here would silently take the
+                // desktop's own station down with it - the exact failure this flag exists to avoid.
+                Interactable[] siblings = GetComponents<Interactable>();
+                if (siblings.Length > 1)
+                    Debug.LogWarning("[ConnectivityCheckStation] " + stationName + " has Open On " +
+                                     "Interact off, but it shares '" + gameObject.name + "' with " +
+                                     (siblings.Length - 1) + " other Interactable(s) and therefore " +
+                                     "shares their trigger. Move this component to its own child " +
+                                     "object with its own collider, or the two will keep fighting " +
+                                     "over the E press.", this);
+                else
+                {
+                    Collider trigger = GetComponent<Collider>();
+                    if (trigger != null) trigger.enabled = false;
+                }
+            }
+
             SetLight(false);
             ValidateSetup();
         }
@@ -206,6 +267,17 @@ namespace CSSSimulation.Networking
         void Update()
         {
             if (!IsOpen) return;
+
+            // Inside a shell the desktop owns both of these, and neither test is meaningful here.
+            //
+            // Escape belongs to the shell, which closes the top window first and only leaves the
+            // machine from the bare desktop - handling it here as well would fire both on one frame.
+            //
+            // And the range check is actively WRONG in shell mode: Open On Interact being off means
+            // this component's trigger is switched off at Start, so OnTriggerEnter never fires and
+            // IsPlayerInRange is permanently false. Applying the walk-away net would close the
+            // console on the frame after it opened - which reads as the window never appearing at all.
+            if (managedByShell) return;
 
             if (Input.GetKeyDown(closeKey)) { CloseConsole(); return; }
 
@@ -218,7 +290,7 @@ namespace CSSSimulation.Networking
 
         public override void Interact()
         {
-            if (IsOpen || IsChecking) return;
+            if (!openOnInteract || IsOpen || IsChecking) return;
 
             if (briefingDialog != null && !shownBriefing && DialogManager.Instance != null &&
                 !DialogManager.Instance.IsDialogOpen)
@@ -243,28 +315,48 @@ namespace CSSSimulation.Networking
         {
             if (IsOpen) return;
             IsOpen = true;
+            submittedThisVisit = false;
 
             if (consolePanel != null) consolePanel.SetActive(true);
-            foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(false);
-            foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = false;
 
-            if (releaseCursor)
+            // Inside a shell, the desktop's station already froze the player and freed the cursor.
+            // Doing it again here would mean two components racing to restore the same values.
+            if (!managedByShell)
             {
-                savedLock = Cursor.lockState;
-                savedCursorVisible = Cursor.visible;
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(false);
+                foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = false;
+
+                if (releaseCursor)
+                {
+                    savedLock = Cursor.lockState;
+                    savedCursorVisible = Cursor.visible;
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
+                if (freezeTime) { savedTimeScale = Time.timeScale; Time.timeScale = 0f; }
             }
-            if (freezeTime) { savedTimeScale = Time.timeScale; Time.timeScale = 0f; }
 
             if (commandInput == null) { StartCoroutine(RunCheck()); return; }
 
+            // The header carries this machine's OWN address, the way ipconfig would. Two identical
+            // command prompts on two desktops are otherwise indistinguishable on screen, and a
+            // trainee cannot check that they are at the right PC - nor can you, when a wiring
+            // mistake sends both windows to one station.
             lines.Clear();
             Write("Microsoft Windows [Version 10.0.19045.4046]");
             Write("(c) Microsoft Corporation. All rights reserved.");
             Write("");
+            Write("Ethernet adapter Ethernet:   [" + stationName + "]");
+            Write("   IPv4 Address. . . . . . . : " + ipAddress);
+            Write("");
             Write("Type  ping " + PingTarget() + "  and press Enter.");
             PushConsole();
+
+            Debug.Log("[ConnectivityCheckStation] " + stationName + ": console open. This machine " +
+                      ipAddress + ", target " + PingTarget() + " " +
+                      (peer != null && peer != this && !string.IsNullOrEmpty(peer.ipAddress)
+                           ? "(peer '" + peer.stationName + "')"
+                           : "(Target Address - no usable Peer is set)") + ".", this);
 
             commandInput.text = "";
             commandInput.interactable = true;
@@ -277,7 +369,20 @@ namespace CSSSimulation.Networking
             if (!IsOpen) return;
             IsOpen = false;
 
+            // "Nothing happened" is two very different faults - the player never sent a command, or
+            // they sent one and it was turned away on screen where the Unity log never sees it. Every
+            // other line in this file reports the second case; this one reports the first, so the two
+            // stop looking identical from the outside.
+            if (!submittedThisVisit)
+                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + ": console closed with " +
+                                 "NO command ever submitted. Neither Enter nor the Ping button reached " +
+                                 "this station. If the player did type and press Enter, this machine's " +
+                                 "Command Input or Ping Button is not the one in the window they were " +
+                                 "looking at - run 'Report link' and compare the paths.", this);
+
             if (consolePanel != null) consolePanel.SetActive(false);
+            if (managedByShell) return;
+
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(true);
             foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = true;
 
@@ -296,6 +401,7 @@ namespace CSSSimulation.Networking
         public void SubmitCommand()
         {
             if (IsChecking || !IsOpen) return;
+            submittedThisVisit = true;
 
             string typed = commandInput != null ? (commandInput.text ?? "").Trim() : "";
             string target = PingTarget();
@@ -317,6 +423,8 @@ namespace CSSSimulation.Networking
             // them - so the trainee learns which one they made.
             if (verb != "ping")
             {
+                Debug.Log("[ConnectivityCheckStation] " + stationName + ": rejected '" + typed +
+                          "' - the command is not 'ping'.", this);
                 Write("'" + (parts.Length > 0 ? parts[0] : typed) + "' is not recognized as an " +
                       "internal or external command, operable program or batch file.");
                 Write("");
@@ -328,6 +436,8 @@ namespace CSSSimulation.Networking
             string arg = parts.Length > 1 ? parts[1] : "";
             if (arg.Length == 0)
             {
+                Debug.Log("[ConnectivityCheckStation] " + stationName + ": rejected 'ping' with no " +
+                          "address after it.", this);
                 Write("Usage: ping [-t] [-a] [-n count] target_name");
                 Write("");
                 PushConsole();
@@ -337,6 +447,8 @@ namespace CSSSimulation.Networking
 
             if (!string.Equals(arg, target, System.StringComparison.OrdinalIgnoreCase))
             {
+                Debug.Log("[ConnectivityCheckStation] " + stationName + ": rejected 'ping " + arg +
+                          "' - this machine's target is " + target + ".", this);
                 Write("Ping request could not find host " + arg + ". Please check the name and " +
                       "try again.");
                 Write("");
@@ -345,6 +457,8 @@ namespace CSSSimulation.Networking
                 return;
             }
 
+            Debug.Log("[ConnectivityCheckStation] " + stationName + ": accepted 'ping " + target +
+                      "', running the check.", this);
             StartCoroutine(RunCheck());
         }
 
@@ -374,6 +488,34 @@ namespace CSSSimulation.Networking
             {
                 t += Time.unscaledDeltaTime;
                 yield return null;
+            }
+
+            // Round 1 before round 2. Testing a link before both machines have addresses is a
+            // sequencing mistake, not a wiring one, and the two deserve different answers: this
+            // branch prints a real timeout and stops WITHOUT calling Finish, so nothing is recorded
+            // against the trainee and the fail dialog stays shut. Marking someone down for reaching
+            // the right station in the wrong order teaches the wrong lesson.
+            string notReady = NotReadyYet();
+            if (notReady != null)
+            {
+                Write("Request timed out.");
+                Write("Request timed out.");
+                Write("");
+                Write("Ping statistics for " + target + ":");
+                Write("    Packets: Sent = 2, Received = 0, Lost = 2 (100% loss)");
+                Write("");
+                Write(notReady);
+                PushConsole();
+
+                IsChecking = false;
+                if (commandInput != null)
+                {
+                    commandInput.interactable = true;
+                    commandInput.ActivateInputField();
+                }
+                Debug.Log("[ConnectivityCheckStation] " + stationName + ": ping NOT RUN - " + notReady +
+                          " Nothing was recorded either way.", this);
+                yield break;
             }
 
             string failure = FindBreak();
@@ -435,14 +577,40 @@ namespace CSSSimulation.Networking
                 }
 
                 OnPassed?.Invoke();
-                Say(successDialog, successDialogOnlyOnce && shownSuccess);
+
+                // Two dialogs can land on this one ping - this machine's own result and the one that
+                // closes the job. They are chained rather than fired together, because DialogManager
+                // shows one at a time and would drop the second.
+                bool skipMine = successDialogOnlyOnce && shownSuccess;
+                bool jobJustClosed = EveryMachineVerified() && allMachinesDialog != null && !allDoneShown;
+
+                if (jobJustClosed && !skipMine && successDialog != null &&
+                    DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
+                {
+                    MarkJobClosed();
+                    Debug.Log("[ConnectivityCheckStation] " + stationName + ": showing '" +
+                              successDialog.name + "', then '" + allMachinesDialog.name + "'.", this);
+                    DialogSequence after = allMachinesDialog;
+                    DialogManager.Instance.ShowDialog(successDialog,
+                        () => { if (DialogManager.Instance != null) DialogManager.Instance.ShowDialog(after); });
+                }
+                else
+                {
+                    Say(successDialog, skipMine, "Success");
+                    if (jobJustClosed)
+                    {
+                        MarkJobClosed();
+                        Say(allMachinesDialog, false, "All Machines");
+                    }
+                }
+
                 shownSuccess = true;
             }
             else
             {
                 IsConnected = false;
                 OnFailed?.Invoke();
-                Say(failDialog, false);
+                Say(failDialog, false, "Fail");
             }
         }
 
@@ -489,6 +657,39 @@ namespace CSSSimulation.Networking
         /// machine in the message - "this machine" when we are reporting on ourselves, "the Client"
         /// when the server is reporting on us.
         /// </summary>
+        /// <summary>
+        /// Whether the procedure has reached the point where a ping means anything yet.
+        ///
+        /// A ping is a round trip, so BOTH machines need an address before either can be tested. The
+        /// player is meant to set the server, set the client, and only then come back to test - and
+        /// that ordering is worth teaching rather than assuming. Returning a message here keeps the
+        /// early attempt out of the results entirely: it reads as "not yet", the way an unconfigured
+        /// machine really behaves, instead of "you failed".
+        ///
+        /// Returns null once the procedure is ready, which is the normal case.
+        /// </summary>
+        public string NotReadyYet()
+        {
+            // Deliberately NOT skipped by Always Pass For Testing. That flag exists to let you walk
+            // the procedure without running cables first; it is about the wiring checks. Addressing
+            // both machines before testing them is the lesson this task teaches, not a wiring
+            // detail, so it stays enforced - and leaving it enforced means you can actually test the
+            // gate while Always Pass is on, instead of the gate quietly disappearing with it.
+            if (!requireBothConfigured) return null;
+
+            if (requiresConfig != null && !requiresConfig.IsConfigured)
+                return "This machine has no IPv4 address yet. Set the address, subnet mask and " +
+                       "gateway from the job order before testing the link.";
+
+            if (peer != null && peer != this && peer.requiresConfig != null &&
+                !peer.requiresConfig.IsConfigured)
+                return "The " + peer.stationName.ToLower() + " has no IPv4 address yet. A ping is a " +
+                       "round trip, so both machines must be configured before either one can be " +
+                       "tested. Set up the " + peer.stationName.ToLower() + ", then come back.";
+
+            return null;
+        }
+
         public string FindLocalBreak(string who)
         {
             string Who = Cap(who);
@@ -589,14 +790,82 @@ namespace CSSSimulation.Networking
                 linkLightOff.SetActive(!connected);
         }
 
-        void Say(DialogSequence sequence, bool alreadyShown)
+        /// <summary>
+        /// Shows a dialog, and says WHY when it cannot.
+        ///
+        /// This used to fail three different ways in silence - no asset assigned, no DialogManager in
+        /// the scene, another dialog already open - and all three look identical from the player's
+        /// chair: the check passes and nothing happens. Naming the reason turns "the dialog will not
+        /// show" from a guessing game into one line of Console.
+        ///
+        /// The success case logs too, deliberately. If this says it showed the dialog and you still
+        /// see nothing, the dialog is rendering BEHIND something - which is a canvas sorting problem,
+        /// somewhere else entirely, and worth knowing immediately rather than after an hour here.
+        /// </summary>
+        void Say(DialogSequence sequence, bool alreadyShown, string which)
         {
-            if (sequence == null || alreadyShown) return;
-            if (DialogManager.Instance == null || DialogManager.Instance.IsDialogOpen) return;
+            if (alreadyShown) return;
+
+            if (sequence == null)
+            {
+                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + " passed, but its " +
+                                 which + " Dialog field is empty, so the player was told nothing. " +
+                                 "Assign a DialogSequence to it.", this);
+                return;
+            }
+            if (DialogManager.Instance == null)
+            {
+                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + ": there is no " +
+                                 "DialogManager in the scene, so '" + sequence.name + "' cannot be " +
+                                 "shown.", this);
+                return;
+            }
+            if (DialogManager.Instance.IsDialogOpen)
+            {
+                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + ": another dialog was " +
+                                 "already open, so '" + sequence.name + "' was dropped. Dismiss the " +
+                                 "previous one before triggering this.", this);
+                return;
+            }
+
+            Debug.Log("[ConnectivityCheckStation] " + stationName + ": showing '" + sequence.name +
+                      "'. If nothing appears on screen, the dialog canvas is sorting BELOW the " +
+                      "desktop - give it Override Sorting and a higher Sort Order.", this);
             DialogManager.Instance.ShowDialog(sequence);
         }
 
         // ---------------------------------------------------------------- public API
+
+        /// <summary>
+        /// True when every station sharing this Task Id has passed its ping.
+        ///
+        /// Task Id is the grouping rather than the hierarchy, so the server and client both reporting
+        /// to 'verify_connectivity' are one job. Add a third machine later with the same id and the
+        /// closing dialog simply waits for it.
+        /// </summary>
+        bool EveryMachineVerified()
+        {
+            ConnectivityCheckStation[] all =
+                Object.FindObjectsByType<ConnectivityCheckStation>(FindObjectsInactive.Include,
+                                                                   FindObjectsSortMode.None);
+            foreach (ConnectivityCheckStation other in all)
+            {
+                if (other == null || other == this) continue;
+                if (other.taskId != taskId) continue;
+                if (!other.IsConnected) return false;
+            }
+            return true;
+        }
+
+        /// <summary>Flags the whole group, so a second ping at either machine cannot replay the beat.</summary>
+        void MarkJobClosed()
+        {
+            ConnectivityCheckStation[] all =
+                Object.FindObjectsByType<ConnectivityCheckStation>(FindObjectsInactive.Include,
+                                                                   FindObjectsSortMode.None);
+            foreach (ConnectivityCheckStation other in all)
+                if (other != null && other.taskId == taskId) other.allDoneShown = true;
+        }
 
         /// <summary>Runs the check from a UnityEvent or a UI button, without walking up and pressing E.</summary>
         public void RunCheckNow()
@@ -611,9 +880,79 @@ namespace CSSSimulation.Networking
             reported = false;
             shownSuccess = false;
             shownBriefing = false;
+            allDoneShown = false;
             lines.Clear();
             PushConsole();
             SetLight(false);
+        }
+
+        // ---------------------------------------------------------------- saving
+
+        /// <summary>
+        /// Unique per station, because two of these share a scene - the server and
+        /// the client. SaveManager keys its ISaveables by this string and DROPS
+        /// duplicates silently, so a fixed key would mean one machine's state
+        /// quietly overwriting the other's.
+        ///
+        /// The object's name is the key, so RENAMING THIS GAMEOBJECT INVALIDATES
+        /// ITS SAVED STATE - the entry stays in the file, nothing claims it, and the
+        /// station comes back unverified. That is the right failure; a silent wrong
+        /// restore would be worse.
+        /// </summary>
+        public string SaveKey { get { return "ConnectivityCheckStation:" + gameObject.name; } }
+
+        [System.Serializable]
+        class SaveState
+        {
+            public bool connected;
+            public bool reported;
+            public bool shownSuccess;
+            public bool shownBriefing;
+            public bool allDoneShown;
+        }
+
+        public string CaptureState()
+        {
+            return JsonUtility.ToJson(new SaveState
+            {
+                connected = IsConnected,
+                reported = reported,
+                shownSuccess = shownSuccess,
+                shownBriefing = shownBriefing,
+                allDoneShown = allDoneShown,
+            });
+        }
+
+        /// <summary>
+        /// WHY reported IS SAVED TOO, and not just IsConnected.
+        ///
+        /// TaskManager restores its own completed tasks, so on a resumed save the
+        /// task is already done. If this station came back with reported = false it
+        /// would report progress again on the next successful ping, pushing a
+        /// two-step task past its finish line from one machine alone. Saving the
+        /// flag keeps the two records agreeing.
+        ///
+        /// IsChecking is deliberately NOT saved: a ping that was mid-flight when the
+        /// game closed did not happen, and restoring it would leave the station
+        /// permanently believing a coroutine is still running.
+        /// </summary>
+        public void RestoreState(string data)
+        {
+            if (string.IsNullOrEmpty(data)) return;
+
+            SaveState state = JsonUtility.FromJson<SaveState>(data);
+            if (state == null) return;
+
+            IsConnected = state.connected;
+            reported = state.reported;
+            shownSuccess = state.shownSuccess;
+            shownBriefing = state.shownBriefing;
+            allDoneShown = state.allDoneShown;
+
+            // The link light is the only thing on the set that shows this state, so
+            // it has to follow. Without it a restored save shows a verified station
+            // with a dead light.
+            SetLight(IsConnected);
         }
 
         // ---------------------------------------------------------------- self-reporting
@@ -623,8 +962,12 @@ namespace CSSSimulation.Networking
             List<string> problems = new List<string>();
 
             if (alwaysPassForTesting)
-                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + " ALWAYS PASSES. " +
-                                 "Untick 'Always Pass For Testing' before a graded build.", this);
+                Debug.LogWarning("[ConnectivityCheckStation] " + stationName + " ALWAYS PASSES the " +
+                                 "cable, patch-phase and task checks" +
+                                 (requireBothConfigured
+                                      ? " (both machines must still be configured first)"
+                                      : "") +
+                                 ". Untick 'Always Pass For Testing' before a graded build.", this);
 
             if (cable == null)
                 problems.Add("Cable is empty, so there is nothing to check. Drag this machine's " +
@@ -642,21 +985,77 @@ namespace CSSSimulation.Networking
             if (!string.IsNullOrEmpty(panelGroup) && !GroupExists(panelGroup))
                 problems.Add("No socket in the scene has Group Id '" + panelGroup + "'.");
 
+            // Deliberately NOT an else-if chain. Every one of these produces the same visible
+            // symptom - the prompt naming an address the player did not expect - so reporting only
+            // the first one found sends you off to fix one field while another is still wrong.
             if (peer == this)
-                problems.Add("Peer points at this same station. Point it at the OTHER machine, or " +
-                             "leave it empty to test only this machine's path to the gateway.");
-            else if (peer != null && string.IsNullOrEmpty(peer.ipAddress))
+                problems.Add("Peer points at this same station, which is ignored. Point it at the " +
+                             "OTHER machine, or leave it empty to test only this machine's path to " +
+                             "the gateway.");
+
+            if (peer == null)
+                problems.Add("Peer is empty, so this machine pings Target Address (" + targetAddress +
+                             ") instead of the other PC, and the two stations' Ip Address fields are " +
+                             "never consulted. For a server/client pair, point Peer at the other " +
+                             "machine's ConnectivityCheckStation.");
+
+            if (peer != null && peer != this && string.IsNullOrEmpty(peer.ipAddress))
                 problems.Add("Peer '" + peer.stationName + "' has no Ip Address, so the readout " +
                              "cannot name what it is pinging.");
-            else if (peer != null && peer.peer != this)
+
+            if (peer != null && peer != this &&
+                string.Equals(peer.ipAddress, ipAddress, System.StringComparison.OrdinalIgnoreCase))
+                problems.Add("This station and its peer '" + peer.stationName + "' both claim " +
+                             ipAddress + ". Two machines cannot share an address on one subnet, and " +
+                             "both command prompts will tell the player to ping the same number - " +
+                             "which is what makes it look as though the Ip Address field is being " +
+                             "ignored. Note this field is NOT the one the desktop builder fills in: " +
+                             "the builder sets the EXPECTED values on the DeviceConfigStation, and " +
+                             "this Ip Address on the check station is yours to set.");
+
+            if (peer != null && peer != this && peer.peer != this)
                 problems.Add("Peer is '" + peer.stationName + "', but that station's own Peer is " +
                              (peer.peer == null ? "empty" : "'" + peer.peer.stationName + "'") +
                              ". Ping is a round trip - point them at each other so both machines " +
                              "test the same link.");
 
+            if (requiresConfig != null)
+            {
+                foreach (DeviceConfigStation.ConfigField f in requiresConfig.fields)
+                {
+                    if (f == null || string.IsNullOrEmpty(f.expectedValue)) continue;
+                    if (f.expectedValue.IndexOf('.') < 0) continue;          // not an address
+                    if (f.label != null && f.label.ToLower().Contains("ip") &&
+                        !string.Equals(f.expectedValue, ipAddress, System.StringComparison.OrdinalIgnoreCase))
+                        problems.Add("This station's Ip Address is " + ipAddress + ", but the player " +
+                                     "is asked to type " + f.expectedValue + " into '" +
+                                     requiresConfig.stationName + "'. The machine would end up " +
+                                     "answering to an address it was never given - set both to the " +
+                                     "same value.");
+                }
+            }
+
             if (consolePanel != null && consolePanel.activeSelf)
                 problems.Add("Console Panel '" + consolePanel.name + "' is ACTIVE in the scene. It " +
                              "should start inactive - otherwise it is on screen from the first frame.");
+
+            CheckConsoleOwnership(problems);
+
+            // The gate is only as good as the two references it reads. Silently letting an early
+            // ping through would be worse than not having the gate, because the run would look
+            // ordered when it was not.
+            if (requireBothConfigured)
+            {
+                if (requiresConfig == null)
+                    problems.Add("Require Both Configured is on, but Requires Config is empty - so " +
+                                 "nothing can tell whether THIS machine has an address, and a ping " +
+                                 "attempted before round 1 will run anyway. Drag this machine's " +
+                                 "DeviceConfigStation in.");
+                if (peer != null && peer != this && peer.requiresConfig == null)
+                    problems.Add("Require Both Configured is on, but peer '" + peer.stationName +
+                                 "' has no Requires Config, so the far machine's address cannot be " +
+                                 "checked and round 2 is not actually gated behind round 1.");
+            }
 
             if (successDialog == null)
                 problems.Add("Success Dialog is empty, so a passing check says nothing to the " +
@@ -682,6 +1081,69 @@ namespace CSSSimulation.Networking
             string msg = "[ConnectivityCheckStation] " + stationName + " setup is incomplete:";
             foreach (string p in problems) msg += "\n  - " + p;
             Debug.LogWarning(msg, this);
+        }
+
+        /// <summary>
+        /// Checks that this station's console belongs to this station's machine.
+        ///
+        /// WHY THIS IS WORTH ITS OWN CHECK
+        ///
+        /// Two desktops, two consoles, two stations. Four fields on each station decide which screen
+        /// it prints on and which button runs it - Console Panel, Console Text, Command Input, Ping
+        /// Button - and three of those are invisible in the Hierarchy once assigned. Point any one of
+        /// them at the OTHER machine and everything still LOOKS right: a console opens, a ping runs, a
+        /// result appears. It is simply the wrong machine's result. One station gets credited twice,
+        /// the other never runs at all, the task sticks at 1 of 2, and only one success dialog ever
+        /// fires. Nothing in that picture points back at the field that caused it, which is exactly
+        /// why it is worth naming here instead of leaving it to be found by elimination.
+        ///
+        /// The rule is simple enough to state in one line: the three inner references must live inside
+        /// Console Panel, and no two stations may share any of the four.
+        /// </summary>
+        void CheckConsoleOwnership(List<string> problems)
+        {
+            if (consolePanel != null)
+            {
+                MustBeInside(consoleText != null ? consoleText.transform : null, "Console Text", problems);
+                MustBeInside(commandInput != null ? commandInput.transform : null, "Command Input", problems);
+                MustBeInside(pingButton != null ? pingButton.transform : null, "Ping Button", problems);
+            }
+
+            ConnectivityCheckStation[] all =
+                Object.FindObjectsByType<ConnectivityCheckStation>(FindObjectsInactive.Include,
+                                                                   FindObjectsSortMode.None);
+            foreach (ConnectivityCheckStation other in all)
+            {
+                if (other == null || other == this) continue;
+
+                Shared(consolePanel, other.consolePanel, "Console Panel", other, problems);
+                Shared(consoleText, other.consoleText, "Console Text", other, problems);
+                Shared(commandInput, other.commandInput, "Command Input", other, problems);
+                Shared(pingButton, other.pingButton, "Ping Button", other, problems);
+            }
+        }
+
+        void MustBeInside(Transform t, string field, List<string> problems)
+        {
+            if (t == null) return;
+            if (t.IsChildOf(consolePanel.transform)) return;
+
+            problems.Add(field + " is '" + t.name + "', which is NOT inside this station's Console " +
+                         "Panel '" + consolePanel.name + "'. It belongs to a different window - most " +
+                         "likely the other machine's. This station will print into, or be run from, " +
+                         "the wrong desktop.");
+        }
+
+        void Shared(Object mine, Object theirs, string field,
+                    ConnectivityCheckStation other, List<string> problems)
+        {
+            if (mine == null || mine != theirs) return;
+
+            problems.Add(field + " is the same object as on station '" + other.stationName + "' ('" +
+                         mine.name + "'). Two machines cannot share one console: whichever station " +
+                         "the window happens to talk to gets credited twice and the other never runs, " +
+                         "so the verify task sticks partway and only one success dialog fires. Give " +
+                         "each station the window under its own desktop.");
         }
 
         static bool GroupExists(string group)
@@ -713,10 +1175,32 @@ namespace CSSSimulation.Networking
                        (requiresPatchPhase.HasFinished
                             ? (requiresPatchPhase.LastResultPassed ? "PASSED" : "finished but FAILED")
                             : "not finished");
-            if (peer != null && peer != this)
+            // The three lines that answer "why is it pinging that address". Printed together,
+            // because the answer is always a relationship between them rather than any one value.
+            msg += "\n    this machine     : " + stationName + " (" + ipAddress + ")";
+
+            if (peer == null)
+                msg += "\n    peer             : none - falls back to Target Address";
+            else if (peer == this)
+                msg += "\n    peer             : POINTS AT ITSELF, which is ignored - falls back " +
+                       "to Target Address";
+            else
                 msg += "\n    peer             : " + peer.stationName + " (" + peer.ipAddress + ") - " +
                        (peer.FindLocalBreak("the " + peer.stationName) == null ? "its path is clear"
                                                                               : "ITS PATH IS BROKEN");
+
+            // Which desktop this station is actually wired to. Printed as full paths because the whole
+            // failure mode here is a reference that looks right in the Inspector - 'CommandPrompt',
+            // 'PingButton' - and is simply the other machine's copy of a window with the same name.
+            msg += "\n    console panel    : " + Path(consolePanel != null ? consolePanel.transform : null);
+            msg += "\n    console text     : " + Path(consoleText != null ? consoleText.transform : null);
+            msg += "\n    command input    : " + Path(commandInput != null ? commandInput.transform : null);
+            msg += "\n    ping button      : " + Path(pingButton != null ? pingButton.transform : null);
+
+            msg += "\n    ping target      : " + PingTarget() + "   " +
+                   (peer != null && peer != this && !string.IsNullOrEmpty(peer.ipAddress)
+                        ? "(the peer's Ip Address)"
+                        : "(this station's Target Address, because no usable peer is set)");
 
             // Always Pass is reported here, loudly, rather than being allowed to print CONNECTED over
             // a list of unplugged cables. A diagnostic that contradicts the evidence directly above
@@ -729,9 +1213,27 @@ namespace CSSSimulation.Networking
                 return;
             }
 
+            string notReady = NotReadyYet();
+            if (notReady != null)
+            {
+                msg += "\n    ---- verdict     : NOT READY (round 1 unfinished) - " + notReady +
+                       "\n                       A ping now would time out and record nothing.";
+                Debug.LogWarning(msg, this);
+                return;
+            }
+
             string failure = FindBreak();
             msg += "\n    ---- verdict     : " + (failure == null ? "CONNECTED" : "NO LINK - " + failure);
             Debug.LogWarning(msg, this);
+        }
+
+        static string Path(Transform t)
+        {
+            if (t == null) return "(not assigned)";
+            string path = t.name;
+            Transform p = t.parent;
+            while (p != null) { path = p.name + "/" + path; p = p.parent; }
+            return path;
         }
 
         static string Describe(PatchCord end)

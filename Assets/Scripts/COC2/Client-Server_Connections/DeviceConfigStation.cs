@@ -39,7 +39,7 @@ namespace CSSSimulation.Networking
     /// Then do the same on the client and the router with their own field lists.
     /// </summary>
     [DefaultExecutionOrder(210)]
-    public class DeviceConfigStation : Interactable
+    public class DeviceConfigStation : Interactable, ISaveable
     {
         [System.Serializable]
         public class ConfigField
@@ -99,6 +99,12 @@ namespace CSSSimulation.Networking
         public bool freezeTime = false;
         [Tooltip("Hidden while the panel is open - a crosshair, the mobile controls, a HUD.")]
         public GameObject[] hideWhileOpen = new GameObject[0];
+        [Tooltip("Switched off while the panel is open, and back on when it closes.\n\n" +
+                 "THIS is what stops the player walking away with the window still up. Drag the " +
+                 "movement script and the mouse-look script from your first-person player in here. " +
+                 "Disabling the scripts is gentler than freezing time - the rest of the scene keeps " +
+                 "running, and a controller written against unscaled time ignores timeScale anyway.")]
+        public MonoBehaviour[] disableWhileOpen = new MonoBehaviour[0];
 
         [Header("Rules")]
         [Tooltip("Let the player keep trying after a wrong answer. Untick only if a wrong " +
@@ -106,6 +112,19 @@ namespace CSSSimulation.Networking
         public bool allowRetry = true;
         [Tooltip("Blank fields count as wrong rather than being skipped.")]
         public bool requireEveryField = true;
+        [Tooltip("Pressing E again while the machine is open steps away from it.\n\n" +
+                 "E is what the player used to sit down, so it is the key their hand is already on. " +
+                 "Without this the only ways out are Escape or the taskbar's Leave PC, and a player " +
+                 "who opened the desktop by pressing E will press E to leave it before they think " +
+                 "to look for either.")]
+        public bool closeOnInteract = true;
+
+        [Tooltip("Close the whole panel when the settings are accepted.\n\n" +
+                 "Untick when this panel is one window on a WindowsShell desktop: clicking OK in " +
+                 "TCP/IPv4 Properties should dismiss that dialog and leave the player standing at " +
+                 "the desktop, not eject them from the machine. Wire the OK button's On Click to " +
+                 "the shell's CloseAll() as well and the behaviour matches Windows.")]
+        public bool closePanelOnPass = true;
         [Tooltip("Fill every field with its expected value and pass on the first Apply. Testing " +
                  "only - the Console shouts about it.")]
         public bool autoFillForTesting = false;
@@ -114,6 +133,14 @@ namespace CSSSimulation.Networking
         public DialogSequence briefingDialog;
         public DialogSequence successDialog;
         public DialogSequence failDialog;
+
+        [Tooltip("Played ONCE, by whichever machine is configured last - the moment every station " +
+                 "sharing this Task Id is done.\n\n" +
+                 "Put the same DialogSequence on the server and the client. Only one of them will " +
+                 "ever play it: the one that finishes second. This is the beat that closes round 1 " +
+                 "and sends the player off to test the link, which the per-machine Success Dialog " +
+                 "cannot say because neither station knows on its own whether it was the last.")]
+        public DialogSequence allMachinesDialog;
         public bool successDialogOnlyOnce = true;
 
         [Header("Task")]
@@ -151,6 +178,8 @@ namespace CSSSimulation.Networking
         bool shownBriefing;
         bool reported;
         float savedTimeScale = 1f;
+        Transform player;
+        bool allDoneShown;
         CursorLockMode savedLock;
         bool savedCursorVisible;
 
@@ -166,10 +195,86 @@ namespace CSSSimulation.Networking
             if (closeButton != null) closeButton.onClick.AddListener(Close);
 
             if (panel != null) panel.SetActive(false);
+
+            // Cached once. The tag is how every other station in this project finds the player, so
+            // a missing tag would already have broken more than this.
+            GameObject tagged = GameObject.FindGameObjectWithTag("Player");
+            if (tagged != null) player = tagged.transform;
+
             ValidateSetup();
         }
 
         public override void Interact()
+        {
+            // Before anything else: is the player actually standing at THIS machine?
+            //
+            // PlayerInteractor keeps one 'current' reference and the last station to claim the
+            // player wins. A station that switches itself off while its panel is open stops
+            // receiving OnTriggerExit, so its in-range flag sticks True after the player has walked
+            // away - and from then on E at the far machine keeps opening the near one. Every window
+            // is identical, so the player sees a desktop appear and has no way to tell it is the
+            // wrong PC; the only visible symptom is the command prompt naming an address they did
+            // not expect. Distance is the ground truth here, so ask it.
+            DeviceConfigStation nearer = NearerStation();
+            if (nearer != null)
+            {
+                if (IsOpen) Close();
+
+                // The handoff has to carry E's full meaning, not half of it. E is a toggle: it sits
+                // the player down at a machine, and it stands them back up again. Forwarding only
+                // the "sit down" half means that once the right machine is open, every further E
+                // press arrives here, gets handed on, and is quietly dropped because that station is
+                // already open - so the player is locked inside a desktop with no way out.
+                if (nearer.IsOpen) { if (nearer.closeOnInteract) nearer.Close(); }
+                else nearer.Enter();
+                return;
+            }
+
+            // E toggles. PlayerInteractor already suppresses the key while a dialog is open, so a
+            // success dialog gets read and dismissed on its own before this can fire.
+            if (IsOpen)
+            {
+                if (closeOnInteract) Close();
+                return;
+            }
+
+            Enter();
+        }
+
+        /// <summary>
+        /// True when every station sharing this Task Id has been configured correctly.
+        ///
+        /// Task Id is the grouping, not the scene hierarchy: two machines that report to
+        /// 'configure_network' are one round, and a router station reporting to something else is
+        /// not part of it. That keeps the round-closing dialog correct if a third machine is added
+        /// later, without anything new to wire.
+        /// </summary>
+        bool EveryMachineConfigured()
+        {
+            DeviceConfigStation[] all =
+                Object.FindObjectsByType<DeviceConfigStation>(FindObjectsInactive.Include,
+                                                              FindObjectsSortMode.None);
+            foreach (DeviceConfigStation other in all)
+            {
+                if (other == null || other == this) continue;
+                if (other.taskId != taskId) continue;
+                if (!other.IsConfigured) return false;
+            }
+            return true;
+        }
+
+        /// <summary>Flags the whole group, so re-applying at either machine cannot replay the beat.</summary>
+        void MarkRoundClosed()
+        {
+            DeviceConfigStation[] all =
+                Object.FindObjectsByType<DeviceConfigStation>(FindObjectsInactive.Include,
+                                                              FindObjectsSortMode.None);
+            foreach (DeviceConfigStation other in all)
+                if (other != null && other.taskId == taskId) other.allDoneShown = true;
+        }
+
+        /// <summary>Briefing first if there is one, then the desktop. The normal way in.</summary>
+        void Enter()
         {
             if (IsOpen) return;
 
@@ -183,15 +288,83 @@ namespace CSSSimulation.Networking
             Open();
         }
 
+        /// <summary>
+        /// The station the player is really standing at, when it is not this one.
+        ///
+        /// Returns null in the normal case - this station is the closest, so E belongs to it. The
+        /// margin stops two stations from bouncing the player between them when they are genuinely
+        /// equidistant, which would be worse than either answer.
+        /// </summary>
+        DeviceConfigStation NearerStation()
+        {
+            if (player == null) return null;
+
+            float mine = DistanceToPlayer(this, player.position);
+
+            // Inside our own trigger, this E press is ours and no comparison is needed. Without this
+            // the handoff could bounce a player who is genuinely standing at this machine over to
+            // another one whose pivot happens to sit closer - and then bounce them back, so E would
+            // never close anything.
+            if (mine <= 0.01f) return null;
+
+            DeviceConfigStation best = null;
+            float bestDistance = mine;
+
+            DeviceConfigStation[] all =
+                Object.FindObjectsByType<DeviceConfigStation>(FindObjectsInactive.Include,
+                                                              FindObjectsSortMode.None);
+            foreach (DeviceConfigStation other in all)
+            {
+                if (other == null || other == this) continue;
+                float d = DistanceToPlayer(other, player.position);
+                if (d < bestDistance - 0.25f) { bestDistance = d; best = other; }
+            }
+
+            if (best != null)
+                Debug.LogWarning("[DeviceConfigStation] E reached " + stationName + ", but the player " +
+                                 "is " + bestDistance.ToString("0.0") + "m from " + best.stationName +
+                                 " and " + mine.ToString("0.0") + "m from here. " + stationName +
+                                 "'s in-range flag is stuck on - a station switched off while its " +
+                                 "panel is open never receives OnTriggerExit, so it keeps claiming " +
+                                 "the player after they walk away, and every E press lands on the " +
+                                 "wrong machine. Opening " + best.stationName + " instead.", this);
+
+            return best;
+        }
+
+        /// <summary>
+        /// How far the player is from a station, measured to its TRIGGER rather than its pivot.
+        ///
+        /// A PC's transform origin is wherever the artist left it - often the model's base, sometimes
+        /// the far corner of a desk. The trigger is the thing that actually defines "at this machine",
+        /// so it is the thing to measure. Zero means the player is standing inside it.
+        /// </summary>
+        static float DistanceToPlayer(DeviceConfigStation station, Vector3 playerPosition)
+        {
+            Collider trigger = station.GetComponent<Collider>();
+            if (trigger == null) return Vector3.Distance(playerPosition, station.transform.position);
+            return Vector3.Distance(playerPosition, trigger.bounds.ClosestPoint(playerPosition));
+        }
+
         // ---------------------------------------------------------------- open / close
 
         public void Open()
         {
             if (IsOpen) return;
+
+            // Only one machine can be sat at. Two of these panels open together means two desktops
+            // stacked on one canvas, and uGUI hands every click to whichever draws last - so the
+            // player clicks Start on the machine they are looking at and the OTHER machine's Start
+            // menu is what actually opens. Nothing on screen shows that; the windows are identical.
+            CloseOthers();
+
             IsOpen = true;
 
             if (panel != null) panel.SetActive(true);
+            Debug.Log("[DeviceConfigStation] " + stationName + " opened, showing '" +
+                      (panel != null ? panel.name : "(no panel)") + "'.", this);
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(false);
+            foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = false;
 
             if (releaseCursor)
             {
@@ -221,11 +394,42 @@ namespace CSSSimulation.Networking
 
             if (panel != null) panel.SetActive(false);
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(true);
+            foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = true;
 
             if (releaseCursor) { Cursor.lockState = savedLock; Cursor.visible = savedCursorVisible; }
             if (freezeTime) Time.timeScale = savedTimeScale;
 
             OnClosed?.Invoke();
+        }
+
+        /// <summary>
+        /// Shuts any other machine the player left open.
+        ///
+        /// This is a guard rather than a fix, and it says so when it fires. The usual cause is that
+        /// the station could not be closed the normal way - most often because it was listed in its
+        /// own Disable While Open, which switches the component off the moment the panel appears, and
+        /// a disabled component receives neither the E key nor OnTriggerExit. Silently tidying up
+        /// after that would hide a scene fault that will keep producing wrong-machine results, so the
+        /// warning names both stations and stays in the log.
+        /// </summary>
+        void CloseOthers()
+        {
+            DeviceConfigStation[] all =
+                Object.FindObjectsByType<DeviceConfigStation>(FindObjectsInactive.Include,
+                                                              FindObjectsSortMode.None);
+            foreach (DeviceConfigStation other in all)
+            {
+                if (other == null || other == this || !other.IsOpen) continue;
+
+                Debug.LogWarning("[DeviceConfigStation] " + stationName + " opened while " +
+                                 other.stationName + " was STILL OPEN. Closing " + other.stationName +
+                                 " first. Two desktops on screen at once stack on one canvas and " +
+                                 "every click goes to whichever draws last, so the player operates " +
+                                 "one machine while looking at the other - which is what makes both " +
+                                 "consoles ping the same address and only one machine ever get " +
+                                 "credited. Find out why " + other.stationName + " never closed.", this);
+                other.Close();
+            }
         }
 
         // ---------------------------------------------------------------- marking
@@ -310,21 +514,76 @@ namespace CSSSimulation.Networking
                 }
 
                 OnPassed?.Invoke();
-                Say(successDialog, successDialogOnlyOnce && shownSuccess);
+
+                // Two dialogs can land on the same Apply - this machine's own "configured" line and
+                // the round-closing one. They are chained rather than fired together, because
+                // DialogManager shows one at a time and would drop the second.
+                bool skipMine = successDialogOnlyOnce && shownSuccess;
+                bool roundJustClosed = EveryMachineConfigured() && allMachinesDialog != null &&
+                                       !allDoneShown;
+
+                if (roundJustClosed && !skipMine && successDialog != null &&
+                    DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
+                {
+                    MarkRoundClosed();
+                    Debug.Log("[DeviceConfigStation] " + stationName + ": showing '" +
+                              successDialog.name + "', then '" + allMachinesDialog.name + "'.", this);
+                    DialogSequence after = allMachinesDialog;
+                    DialogManager.Instance.ShowDialog(successDialog,
+                        () => { if (DialogManager.Instance != null) DialogManager.Instance.ShowDialog(after); });
+                }
+                else
+                {
+                    Say(successDialog, skipMine, "Success");
+                    if (roundJustClosed)
+                    {
+                        MarkRoundClosed();
+                        Say(allMachinesDialog, false, "All Machines");
+                    }
+                }
+
                 shownSuccess = true;
-                Close();
+                if (closePanelOnPass) Close();
             }
             else
             {
                 OnFailed?.Invoke();
-                Say(failDialog, false);
+                Say(failDialog, false, "Fail");
             }
         }
 
-        void Say(DialogSequence sequence, bool alreadyShown)
+        /// <summary>
+        /// Shows a dialog, and says WHY when it cannot. See the note on the same method in
+        /// ConnectivityCheckStation - three silent failure modes that all look identical from the
+        /// player's chair, so each one names itself.
+        /// </summary>
+        void Say(DialogSequence sequence, bool alreadyShown, string which)
         {
-            if (sequence == null || alreadyShown) return;
-            if (DialogManager.Instance == null || DialogManager.Instance.IsDialogOpen) return;
+            if (alreadyShown) return;
+
+            if (sequence == null)
+            {
+                Debug.LogWarning("[DeviceConfigStation] " + stationName + ": the " + which +
+                                 " Dialog field is empty, so the player was told nothing. Assign a " +
+                                 "DialogSequence to it.", this);
+                return;
+            }
+            if (DialogManager.Instance == null)
+            {
+                Debug.LogWarning("[DeviceConfigStation] " + stationName + ": there is no " +
+                                 "DialogManager in the scene, so '" + sequence.name + "' cannot be " +
+                                 "shown.", this);
+                return;
+            }
+            if (DialogManager.Instance.IsDialogOpen)
+            {
+                Debug.LogWarning("[DeviceConfigStation] " + stationName + ": another dialog was " +
+                                 "already open, so '" + sequence.name + "' was dropped.", this);
+                return;
+            }
+
+            Debug.Log("[DeviceConfigStation] " + stationName + ": showing '" + sequence.name +
+                      "'. If nothing appears, the dialog canvas is sorting BELOW the desktop.", this);
             DialogManager.Instance.ShowDialog(sequence);
         }
 
@@ -338,11 +597,81 @@ namespace CSSSimulation.Networking
             IsConfigured = false;
             reported = false;
             shownSuccess = false;
+            allDoneShown = false;
             shownBriefing = false;
             WrongAttempts = 0;
             foreach (ConfigField f in fields)
                 if (f != null && f.input != null && !f.prefill) f.input.text = "";
             SetText(resultText, "");
+        }
+
+        // ---------------------------------------------------------------- saving
+
+        /// <summary>
+        /// Unique per station, because two of these share a scene - the server and
+        /// the client. SaveManager keys its ISaveables by this string and DROPS
+        /// duplicates silently, so a fixed key would mean one machine's state
+        /// quietly overwriting the other's.
+        ///
+        /// The object's name is the key, so RENAMING THIS GAMEOBJECT INVALIDATES
+        /// ITS SAVED STATE - the entry is still in the file, nothing claims it, and
+        /// the station comes back unconfigured. That is the right failure: a silent
+        /// wrong restore would be worse.
+        /// </summary>
+        public string SaveKey { get { return "DeviceConfigStation:" + gameObject.name; } }
+
+        [System.Serializable]
+        class SaveState
+        {
+            public bool configured;
+            public bool reported;
+            public bool shownSuccess;
+            public bool shownBriefing;
+            public bool allDoneShown;
+            public int wrongAttempts;
+        }
+
+        public string CaptureState()
+        {
+            return JsonUtility.ToJson(new SaveState
+            {
+                configured = IsConfigured,
+                reported = reported,
+                shownSuccess = shownSuccess,
+                shownBriefing = shownBriefing,
+                allDoneShown = allDoneShown,
+                wrongAttempts = WrongAttempts,
+            });
+        }
+
+        /// <summary>
+        /// WHY reported IS SAVED TOO, and not just IsConfigured.
+        ///
+        /// TaskManager restores its own completed tasks, so on a resumed save the
+        /// task is already done. If this station came back with reported = false it
+        /// would report progress a second time the next time the learner pressed
+        /// Apply, pushing a two-step task past its own finish line and completing it
+        /// from one machine. Saving the flag keeps the two records agreeing.
+        ///
+        /// The dialog flags travel for the same reason: a learner who has already
+        /// been told the machine is configured should not be told again just because
+        /// they closed the game in between.
+        /// </summary>
+        public void RestoreState(string data)
+        {
+            if (string.IsNullOrEmpty(data)) return;
+
+            SaveState state = JsonUtility.FromJson<SaveState>(data);
+            if (state == null) return;
+
+            IsConfigured = state.configured;
+            reported = state.reported;
+            shownSuccess = state.shownSuccess;
+            shownBriefing = state.shownBriefing;
+            allDoneShown = state.allDoneShown;
+            WrongAttempts = state.wrongAttempts;
+
+            if (IsConfigured) SetText(resultText, stationName + " configured. Settings applied.");
         }
 
         // ---------------------------------------------------------------- self-reporting
@@ -368,6 +697,21 @@ namespace CSSSimulation.Networking
                 problems.Add("Apply Button is empty. Nothing can submit the form. (You can call " +
                              "Apply() from a UnityEvent instead, if that is deliberate.)");
 
+            // The one entry in this list that turns a working station into a permanently open one.
+            // Worth catching by name, because the symptom appears nowhere near the cause: the panel
+            // simply stops responding to E, stays up for the rest of the session, and its desktop
+            // quietly steals the clicks meant for the other machine.
+            foreach (MonoBehaviour m in disableWhileOpen)
+            {
+                if (m != this) continue;
+                problems.Add("Disable While Open contains THIS station. Opening the panel switches " +
+                             "this component off, and a disabled component receives neither the E key " +
+                             "nor OnTriggerExit - so the panel can never be closed again and stays on " +
+                             "screen for the rest of the session, stacked over the other machine's " +
+                             "desktop. Remove it from the list; the station already stops responding " +
+                             "to E on its own while it is open.");
+            }
+
             for (int i = 0; i < fields.Count; i++)
             {
                 ConfigField f = fields[i];
@@ -380,6 +724,11 @@ namespace CSSSimulation.Networking
 
             if (successDialog == null)
                 problems.Add("Success Dialog is empty, so a correct configuration says nothing.");
+
+            if (player == null)
+                problems.Add("No GameObject tagged 'Player' was found, so this station cannot tell " +
+                             "whether the player is standing at it or at the other machine. E may " +
+                             "open the wrong PC and nothing will say so.");
 
             if (GetComponent<Collider>() == null)
                 problems.Add("No Collider, so the player can never walk up to this station.");

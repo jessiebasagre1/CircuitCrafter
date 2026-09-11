@@ -585,6 +585,12 @@ namespace CSSSimulation.Networking
                 // that isn't rendering - the single most common way a drag stage ends up dead.
                 if (board != null && stageCamera != null) board.stageCamera = stageCamera;
 
+                // The click or tap that opened the stage must not also grab a wire. The board is
+                // told here rather than working it out for itself, because it may sit outside the
+                // stage root and so never gets an OnEnable when the player arrives - and this is
+                // the only place that knows for certain that they just did.
+                if (board != null) board.IgnorePressUntilReleased();
+
                 // Every plugging phase gets the same camera, for the same reason - and a clean
                 // slate, so a player who backed out halfway through starts that phase again rather
                 // than finding four cords already plugged in.

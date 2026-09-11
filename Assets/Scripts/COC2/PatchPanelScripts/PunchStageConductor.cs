@@ -76,8 +76,22 @@ namespace CSSSimulation.Networking
         public VerletRope rope;
 
         public bool IsDragging { get; private set; }
+
+        /// <summary>Where on screen the press that picked this conductor up started. The board
+        /// compares it against where the release happened, so a press that never moved is treated
+        /// as a click rather than as a termination.</summary>
+        public Vector2 DragStartScreen { get; private set; }
+
         /// <summary>True once seated in a pin.</summary>
         public bool IsSeated { get; private set; }
+
+        /// <summary>The pin this conductor is currently resting in, or null.</summary>
+        public PunchStagePin SeatedIn { get; private set; }
+
+        /// <summary>The pin this conductor was lifted OUT of when the current drag started, or null
+        /// if it came from the cable. The board puts it back here if the drag turns out to have been
+        /// a click.</summary>
+        public PunchStagePin DragOriginPin { get; private set; }
         /// <summary>True once struck. A locked conductor can never be picked up again.</summary>
         public bool IsLocked { get; private set; }
 
@@ -304,6 +318,13 @@ namespace CSSSimulation.Networking
             if (seatRoutine != null) { StopCoroutine(seatRoutine); seatRoutine = null; }
 
             IsDragging = true;
+            DragStartScreen = PointerInput.Position;
+
+            // Remembered before the board empties the pin, so a press that turns out not to be a
+            // drag can be put back exactly where it came from.
+            DragOriginPin = SeatedIn;
+            if (DragOriginPin != null) board.ReleaseFromPin(this);
+
             dragOffset = transform.position - RayHitOnDragPlane();
             board.SetHint(null);
         }
@@ -314,8 +335,13 @@ namespace CSSSimulation.Networking
             board.ReleaseDrag(this);
 
             // The board owns the decision - this conductor only reports where it was let go.
-            if (!board.HandleConductorDropped(this, PointerInput.Position))
-                ReturnHome();
+            bool handled = board.HandleConductorDropped(this, PointerInput.Position);
+
+            // Cleared after the board has read it, not before: the "that was a click, put it back"
+            // path needs to know which channel this came out of.
+            DragOriginPin = null;
+
+            if (!handled) ReturnHome();
         }
 
         // Camera-facing plane through the conductor's current position - the same drag model
@@ -334,6 +360,7 @@ namespace CSSSimulation.Networking
         public void SeatInto(PunchStagePin pin)
         {
             IsSeated = true;
+            SeatedIn = pin;
             IsDragging = false;
 
             Transform target = pin.Seat;
@@ -362,6 +389,18 @@ namespace CSSSimulation.Networking
             seatRoutine = null;
         }
 
+        /// <summary>
+        /// Out of the channel and back in the player's hand. The board calls this when a drag lifts
+        /// an unstruck conductor out; it does NOT move the conductor, which is already following
+        /// the pointer.
+        /// </summary>
+        public void LeavePin()
+        {
+            IsSeated = false;
+            SeatedIn = null;
+            if (seatRoutine != null) { StopCoroutine(seatRoutine); seatRoutine = null; }
+        }
+
         /// <summary>Struck. It is not coming back out by hand, right or wrong.</summary>
         public void Lock()
         {
@@ -388,6 +427,8 @@ namespace CSSSimulation.Networking
         {
             IsDragging = false;
             IsSeated = false;
+            SeatedIn = null;
+            DragOriginPin = null;
             IsLocked = false;
             gameObject.SetActive(true);
             ReturnHome();

@@ -89,6 +89,12 @@ namespace CSSSimulation.Networking
                  "purpose - in the field that is a wasted connector and a wasted length of cable.")]
         public int failedCablePenalty = 25;
 
+        [Tooltip("Deducted for a patch panel block that does not pass T568A. As heavy as a ruined " +
+                 "cable, and for the same reason: an insulation-displacement contact is a one-shot " +
+                 "connection, so a conductor punched into the wrong position costs slack the 13 mm " +
+                 "untwist limit does not give back.")]
+        public int terminationPenalty = 25;
+
         [Tooltip("Awarded if the run finishes with no mistakes at all.")]
         public int perfectRunBonus = 50;
 
@@ -106,9 +112,21 @@ namespace CSSSimulation.Networking
         public GameObject[] enableInAssessment;
 
         [Tooltip("Silence every tutorial dialog. COC2StageDialogs' stage briefings go quiet with " +
-                 "them - which is the point of an assessment. The pass/fail result dialogs still " +
-                 "play, because those report the outcome rather than teach.")]
+                 "them - which is the point of an assessment.\n\n" +
+                 "Safe: DialogManager still fires each dialog's completion callback when it " +
+                 "silences one, so the stations' own retry and hand-off flow carries on exactly as " +
+                 "it does in story mode. Nothing stalls waiting for a popup nobody saw.")]
         public bool suppressTutorialDialogs = true;
+
+        [Tooltip("Leave OFF for a real assessment.\n\n" +
+                 "This manager's own stage dialogs are shown with ignoreSuppression, so they get " +
+                 "through even when Suppress Tutorial Dialogs is on - they were meant as the " +
+                 "assessment's own commentary. But 'Crimping complete, now go to the patch panel' " +
+                 "is guidance whoever says it, and an assessment that narrates the next step is " +
+                 "not measuring whether the trainee knows it.\n\n" +
+                 "Tick it only if you want a run that talks the learner through the module while " +
+                 "still scoring it - a practice-with-feedback run rather than a graded one.")]
+        public bool showStageCompletionDialogs = false;
 
         [Header("Report")]
         public GameObject reportPanel;
@@ -122,6 +140,36 @@ namespace CSSSimulation.Networking
         // ------------------------------------------------------------------
 
         public int Score { get; private set; }
+
+        /// <summary>
+        /// Everything that was available this run: every stage's points, plus the perfect-run bonus.
+        ///
+        /// A bare score is not a result. "180" means nothing to a learner or an assessor without
+        /// the number it was out of, and the same 180 is a pass on one stage list and a failure on
+        /// another. The perfect-run bonus is included because it IS achievable - leaving it out is
+        /// what made COC1's bridge once report "410 of 360".
+        /// </summary>
+        public int MaxScore
+        {
+            get
+            {
+                int total = 0;
+                foreach (var s in stages)
+                    if (s != null) total += Mathf.Max(0, s.points);
+                return total + Mathf.Max(0, perfectRunBonus);
+            }
+        }
+
+        /// <summary>Score as a percentage of MaxScore, 0-100. Zero when nothing is on offer.</summary>
+        public int ScorePercent
+        {
+            get
+            {
+                int max = MaxScore;
+                return max <= 0 ? 0 : Mathf.Clamp(Mathf.RoundToInt(100f * Score / max), 0, 100);
+            }
+        }
+
         public int Mistakes { get; private set; }
         public int FailedCables { get; private set; }
         public float ElapsedSeconds { get; private set; }
@@ -195,8 +243,130 @@ namespace CSSSimulation.Networking
                 returnToMenuButton.onClick.AddListener(ReturnToMenu);
             }
 
+            ValidateStages();
+
             RefreshHud();
-            Debug.Log("[COC2AssessmentManager] Assessment started.");
+            Debug.Log($"[COC2AssessmentManager] Assessment started. {stages.Count} stage(s), " +
+                      $"{MaxScore} points available.");
+        }
+
+        /// <summary>
+        /// The six task ids COC 2 actually reports. Kept here so the checks below and the
+        /// fill-in helper cannot drift apart from each other.
+        /// </summary>
+        private static readonly string[] ModuleTaskIds =
+        {
+            "crimp_cable", "test_cable", "punch_patch_panel",
+            "patch_to_switch", "configure_network", "verify_connectivity",
+        };
+
+        private static readonly string[] ModuleStageNames =
+        {
+            "Crimp both cables", "Test both cables", "Terminate the patch panel",
+            "Patch the panel to the switch", "Configure the server and client", "Verify connectivity",
+        };
+
+        /// <summary>
+        /// Says so when the stage list cannot grade what it claims to.
+        ///
+        /// A stage list is the entire definition of what this assessment measures, and every way of
+        /// getting it wrong is silent at runtime: a missing stage simply never appears in the
+        /// report, and a mistyped id means the assessment can never finish because a stage it is
+        /// waiting on can never complete.
+        /// </summary>
+        private void ValidateStages()
+        {
+            var sb = new StringBuilder();
+
+            if (stages == null || stages.Count == 0)
+            {
+                Debug.LogWarning("[COC2AssessmentManager] The Stages list is EMPTY. Nothing can be " +
+                                 "scored and the assessment can never finish. Right-click this " +
+                                 "component > 'Fill in the standard COC2 stages'.", this);
+                return;
+            }
+
+            foreach (var s in stages)
+            {
+                if (s == null) continue;
+
+                if (string.IsNullOrWhiteSpace(s.taskId) && string.IsNullOrWhiteSpace(s.manualId))
+                    sb.AppendLine($"  - Stage '{s.displayName}' has neither a Task Id nor a Manual " +
+                                  "Id, so nothing can ever complete it. The run will never end.");
+
+                if (!string.IsNullOrEmpty(s.taskId) && s.taskId != s.taskId.Trim())
+                    sb.AppendLine($"  - Stage '{s.displayName}' has whitespace around its Task Id " +
+                                  $"('{s.taskId}'). It is matched trimmed so the run still works - " +
+                                  "but tidy the field.");
+
+                if (s.points <= 0)
+                    sb.AppendLine($"  - Stage '{s.displayName}' is worth {s.points} points, so " +
+                                  "completing it changes nothing.");
+            }
+
+            // Which of the module's real tasks are not being graded at all.
+            string missing = null;
+            foreach (string id in ModuleTaskIds)
+            {
+                bool covered = false;
+                foreach (var s in stages)
+                {
+                    if (s == null || string.IsNullOrWhiteSpace(s.taskId)) continue;
+                    if (string.Equals(s.taskId.Trim(), id, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        covered = true;
+                        break;
+                    }
+                }
+                if (!covered) missing = missing == null ? id : missing + ", " + id;
+            }
+
+            if (missing != null)
+                sb.AppendLine($"  - Not graded at all: {missing}. Work the learner does there earns " +
+                              "nothing and is absent from the report. Deliberate for a cabling-only " +
+                              "assessment; a gap otherwise.");
+
+            if (sb.Length > 0)
+                Debug.LogWarning("[COC2AssessmentManager] Stage list:\n" + sb, this);
+        }
+
+        /// <summary>
+        /// Fills the Stages list with the six the module actually reports, in order.
+        ///
+        /// Typing six ids by hand into an Inspector list is exactly where a trailing space or a
+        /// 'patch_to_switch ' comes from, and neither shows up until an assessment refuses to end.
+        /// Use it in EDIT MODE - a list built during Play is discarded on Stop.
+        /// </summary>
+        [ContextMenu("Fill in the standard COC2 stages")]
+        private void FillStandardStages()
+        {
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("[COC2AssessmentManager] Stop the game first - a list built during " +
+                                 "Play is thrown away when you press Stop.", this);
+                return;
+            }
+
+            if (stages == null) stages = new List<Stage>();
+            stages.Clear();
+
+            for (int i = 0; i < ModuleTaskIds.Length; i++)
+            {
+                stages.Add(new Stage
+                {
+                    taskId = ModuleTaskIds[i],
+                    displayName = ModuleStageNames[i],
+                    points = 50,
+                });
+            }
+
+            Debug.Log($"[COC2AssessmentManager] Filled in {stages.Count} stages, 50 points each - " +
+                      $"{MaxScore} available including the perfect-run bonus. Adjust the points per " +
+                      "stage if some are worth more, then save the scene.", this);
+
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
         }
 
         private void Update()
@@ -238,10 +408,19 @@ namespace CSSSimulation.Networking
             // from awarding points for work this player never did.
             if (SaveManager.Instance != null && SaveManager.Instance.IsRestoringSave) return;
 
+            string done = completedTaskId.Trim();
+
             foreach (var stage in stages)
             {
                 if (stage == null || stage.completed) continue;
-                if (string.IsNullOrEmpty(stage.taskId) || stage.taskId != completedTaskId) continue;
+                if (string.IsNullOrWhiteSpace(stage.taskId)) continue;
+
+                // Trimmed and case-insensitive. A space typed into the Inspector is invisible, and
+                // an exact comparison then rejects the very task the field was typed for - the
+                // stage never completes, the assessment never ends, and nothing anywhere says why.
+                // This scene has already shipped one 'crimp_cable ' to prove the point.
+                if (!string.Equals(stage.taskId.Trim(), done, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
 
                 Complete(stage);
                 return;
@@ -284,7 +463,7 @@ namespace CSSSimulation.Networking
             // directly, the report panel switches on top of the dialog the learner is still
             // reading. DialogManager clears IsDialogOpen before invoking the callback, so there is
             // no frame of overlap.
-            if (stage.completionDialog != null && DialogManager.Instance != null)
+            if (showStageCompletionDialogs && stage.completionDialog != null && DialogManager.Instance != null)
                 DialogManager.Instance.ShowDialog(stage.completionDialog, CheckAllStagesDone,
                                                   ignoreSuppression: true);
             else
@@ -357,6 +536,27 @@ namespace CSSSimulation.Networking
         {
             if (Instance == null || !Instance.IsRunning) return;
             Instance.AddMistake(description, context);
+        }
+
+        /// <summary>
+        /// A patch panel block that did not pass T568A. Called by COC2AssessmentHooks.
+        ///
+        /// Separate from AddMistake only so it can carry its own weight - see terminationPenalty.
+        /// </summary>
+        public void ReportTerminationFailure(string reason, Object context = null)
+        {
+            if (!IsRunning) return;
+
+            Mistakes++;
+            Score = Mathf.Max(0, Score - terminationPenalty);
+
+            string description = string.IsNullOrWhiteSpace(reason)
+                ? "Patch panel termination failed."
+                : "Patch panel termination failed - " + reason.Trim();
+
+            log.Add($"MISTAKE at {FormatTime(ElapsedSeconds)}: {description}");
+            Debug.Log($"[COC2AssessmentManager] Mistake #{Mistakes}: {description}", context);
+            RefreshHud();
         }
 
         /// <summary>Public so you can wire a mistake to any UnityEvent in the Inspector.</summary>
@@ -458,7 +658,7 @@ namespace CSSSimulation.Networking
             sb.AppendLine("=== COC 2 Assessment Report ===");
             sb.AppendLine();
             sb.AppendLine($"Time taken:      {FormatTime(ElapsedSeconds)}");
-            sb.AppendLine($"Final score:     {Score}");
+            sb.AppendLine($"Final score:     {Score} of {MaxScore}  ({ScorePercent}%)");
             sb.AppendLine($"Mistakes:        {Mistakes}");
             sb.AppendLine($"Cables failed:   {FailedCables}");
 
@@ -497,7 +697,7 @@ namespace CSSSimulation.Networking
                     : FormatTime(ElapsedSeconds);
             }
 
-            if (scoreText != null) scoreText.text = $"Score: {Score}";
+            if (scoreText != null) scoreText.text = $"Score: {Score} / {MaxScore}";
             if (mistakesText != null) mistakesText.text = $"Mistakes: {Mistakes}";
         }
 

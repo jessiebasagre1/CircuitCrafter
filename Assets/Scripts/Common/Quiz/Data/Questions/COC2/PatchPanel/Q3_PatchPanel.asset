@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q3_PatchPanel
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Besides seating the conductor, what does the punch-down tool do in
+    the same stroke?
+  choices:
+  - Tests continuity on that pair
+  - Trims off the excess conductor past the contact
+  - Applies a colour label to the port
+  - Re-twists the pair behind the contact
+  correctChoiceIndex: 1
+  points: 10
+  explanation: The cutting side of the blade shears the tail as the conductor bottoms
+    out. Fit the blade the wrong way round and the tail stays on, ready to short
+    against its neighbour.

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q4_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Which pins does 10BASE-T and 100BASE-TX Ethernet actually use?
+  choices:
+  - All eight
+  - 1, 2, 3 and 6
+  - 1, 2, 7 and 8
+  - 4, 5, 7 and 8
+  correctChoiceIndex: 1
+  points: 10
+  explanation: "Pins 1 and 2 transmit, 3 and 6 receive. All eight are still terminated
+    \u2014 Gigabit uses every pair, and a properly made cable is expected to carry
+    it."

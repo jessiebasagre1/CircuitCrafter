@@ -1,4 +1,5 @@
 // PunchStagePin.cs
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CSSSimulation.Networking
@@ -78,8 +79,54 @@ namespace CSSSimulation.Networking
         void Awake()
         {
             if (pickRenderers == null || pickRenderers.Length == 0)
-                pickRenderers = GetComponentsInChildren<Renderer>(true);
+                pickRenderers = CollectPickRenderers();
             ResetPin();
+        }
+
+        /// <summary>
+        /// Every renderer under this pin EXCEPT the feedback objects.
+        ///
+        /// WHY THE HIGHLIGHT HAS TO BE EXCLUDED
+        /// This used to be a plain GetComponentsInChildren&lt;Renderer&gt;(true) - and the
+        /// true means "include inactive", which is right for a pin whose mesh is
+        /// switched off at author time and wrong for everything else.
+        ///
+        /// A pin with no mesh of its own is meant to fall back to Pick Radius, and
+        /// UsesRadius decides that by asking whether pickRenderers is empty. Assign
+        /// a highlight child that has a renderer and the array is no longer empty,
+        /// so the pin switches to renderer bounds - but the highlight starts
+        /// INACTIVE, IsUnderRay skips inactive renderers, and the pin becomes
+        /// impossible to hit. Nothing errors; the pin simply stops responding, and
+        /// only the pins you gave a highlight to.
+        ///
+        /// The highlight and the punched mark are feedback, never pick geometry, so
+        /// they are dropped here and the fallback keeps working.
+        /// </summary>
+        Renderer[] CollectPickRenderers()
+        {
+            Renderer[] all = GetComponentsInChildren<Renderer>(true);
+            var kept = new List<Renderer>(all.Length);
+
+            foreach (var r in all)
+            {
+                if (r == null) continue;
+                if (IsFeedback(r.transform)) continue;
+                kept.Add(r);
+            }
+            return kept.ToArray();
+        }
+
+        /// <summary>True if this transform is the highlight or punched mark, or sits
+        /// underneath one - a highlight built from several meshes is still all
+        /// feedback.</summary>
+        bool IsFeedback(Transform t)
+        {
+            for (Transform c = t; c != null && c != transform; c = c.parent)
+            {
+                if (highlight != null && c.gameObject == highlight) return true;
+                if (punchedMark != null && c.gameObject == punchedMark) return true;
+            }
+            return false;
         }
 
         /// <summary>True when this pin is a bare marker on a shared mesh rather than an object with
@@ -134,6 +181,20 @@ namespace CSSSimulation.Networking
         public void Seat_(PunchStageConductor conductor)
         {
             Seated = conductor;
+        }
+
+        /// <summary>
+        /// Lets go of the conductor resting here, leaving everything else alone.
+        ///
+        /// Deliberately NOT ResetPin: that also clears IsPunched and hides the punched mark, which
+        /// would undo a termination. This is only for lifting an unstruck conductor back out, so a
+        /// struck pin refuses - once the tool has been through it, the conductor is trimmed and
+        /// seated and nothing short of a full reset brings it back.
+        /// </summary>
+        public void ClearSeat()
+        {
+            if (IsPunched) return;
+            Seated = null;
         }
 
         public void MarkPunched()

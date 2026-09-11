@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q2_PatchPanel
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Should the insulation be stripped from each conductor before punching
+    it down?
+  choices:
+  - Yes, about 10 mm from each one
+  - "No \u2014 the contact blades cut through the insulation as the conductor seats"
+  - Only on the solid-coloured conductors
+  - Only if the panel is Cat6
+  correctChoiceIndex: 1
+  points: 10
+  explanation: That is what "insulation displacement" means. Stripping first removes
+    the material the contact grips, and the connection works loose.

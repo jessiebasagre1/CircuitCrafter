@@ -417,12 +417,23 @@ public class SaveManager : MonoBehaviour
         IsRestoringSave = true;
         try
         {
-            RestoreParts(data);
-            RestoreCables(data);
-            RestoreRamLatches(data);
-            RestoreUsbDrives(data);
-            RestoreOSInstall(data);
-            RestoreGenericSaveables(data);
+            // EACH STEP IS ISOLATED, ON PURPOSE.
+            //
+            // These used to run as one straight sequence, which meant the FIRST one to throw
+            // silently cancelled every step after it. RestoreParts threw a NullReferenceException
+            // on every COC2 load (no HotbarManager in that scene), so RestoreCables,
+            // RestoreRamLatches, RestoreUsbDrives, RestoreOSInstall and - the one that actually
+            // matters outside COC1 - RestoreGenericSaveables never ran at all. Continue looked like
+            // it worked; the module simply came back with none of its own saved state.
+            //
+            // A step that fails now says so and the rest still run. The console still gets the full
+            // exception, so nothing is hidden - it just stops being fatal to everything downstream.
+            RunRestoreStep("parts", () => RestoreParts(data));
+            RunRestoreStep("cables", () => RestoreCables(data));
+            RunRestoreStep("RAM latches", () => RestoreRamLatches(data));
+            RunRestoreStep("USB drives", () => RestoreUsbDrives(data));
+            RunRestoreStep("OS install", () => RestoreOSInstall(data));
+            RunRestoreStep("saveables", () => RestoreGenericSaveables(data));
         }
         finally
         {
@@ -434,8 +445,28 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"[SaveManager] Loaded save from {SavePath} (saved at {data.savedAtUtc})");
     }
 
+    /// <summary>
+    /// Runs one restore step and reports it if it throws, instead of letting it cancel the steps
+    /// that come after it. See the comment in LoadSave.
+    /// </summary>
+    private void RunRestoreStep(string what, System.Action step)
+    {
+        try
+        {
+            step();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SaveManager] Restoring {what} failed, so that part of the save was " +
+                           "skipped. The remaining steps still ran. Details below.");
+            Debug.LogException(e, this);
+        }
+    }
+
     private void RestoreParts(GameSaveData data)
     {
+        if (data.parts == null || data.parts.Count == 0) return;
+
         var allParts = FindObjectsByType<PCPartItem>(FindObjectsInactive.Include);
         var byId = new Dictionary<string, PCPartItem>();
         foreach (var part in allParts)
@@ -462,6 +493,18 @@ public class SaveManager : MonoBehaviour
                 // PickupInstant() only detaches/hides the 3D object — it has no
                 // knowledge of the hotbar UI, so we have to place it into a slot
                 // ourselves, exactly like DragController does on a live drop.
+                //
+                // Only COC1 HAS a hotbar. This line used to dereference
+                // HotbarManager.Instance unguarded, so loading a save that recorded a removed part
+                // into any other module threw a NullReferenceException here - which, before the
+                // isolation added in LoadSave, cancelled every remaining restore step.
+                if (HotbarManager.Instance == null)
+                {
+                    Debug.Log($"[SaveManager] '{entry.partId}' was saved as removed, but this scene " +
+                              "has no hotbar to put it in. Detached it and moved on.", this);
+                    continue;
+                }
+
                 var slot = HotbarManager.Instance.GetFirstEmptySlot();
                 if (slot != null)
                     slot.SetItem(part);

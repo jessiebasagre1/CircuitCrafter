@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q5_Connectivity
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Two PCs on the same subnet can ping each other but neither has a
+    default gateway set. Is that a fault?
+  choices:
+  - "Yes \u2014 nothing works without a gateway"
+  - "No \u2014 a gateway is only needed to reach other networks"
+  - Yes, but only for the server
+  - No, because the switch acts as the gateway
+  correctChoiceIndex: 1
+  points: 10
+  explanation: Traffic inside one subnet is switched directly. The default gateway
+    is the address a host sends traffic to when the destination is not on its own
+    network.

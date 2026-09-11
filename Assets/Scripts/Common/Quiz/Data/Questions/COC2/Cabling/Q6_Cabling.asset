@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q6_Cabling
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Before crimping, how far into the RJ45 plug must the conductors be
+    pushed?
+  choices:
+  - Just past the strain-relief notch
+  - Halfway, so the crimp can seat them the rest of the way
+  - All the way to the front of the plug, with the jacket inside the strain relief
+  - Far enough that 25 mm of conductor sticks out the front
+  correctChoiceIndex: 2
+  points: 10
+  explanation: Each contact has to pierce the conductor sitting under it, so every
+    wire must touch the front wall. The jacket must sit inside the plug as well,
+    or the strain relief clamps bare conductors and the termination pulls apart.
