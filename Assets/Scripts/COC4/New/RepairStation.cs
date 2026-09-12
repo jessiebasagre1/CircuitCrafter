@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
@@ -97,11 +98,18 @@ namespace CircuitCrafter.Repair
         [Tooltip("Optional. The walk-up prompt, e.g. \"Press E to use the monitor\".")]
         [SerializeField] private TMP_Text promptText;
 
-        [Tooltip("Optional, for mobile. Shown only while the learner is close enough and outside. Wire its OnClick to Enter().")]
+        [Tooltip("Optional, for mobile. Shown only while the learner is close enough and outside, AND " +
+                 "only on a touch device. Wire its OnClick to Enter().")]
         [SerializeField] private Button enterButton;
 
-        [Tooltip("Optional. Shown only while the learner is at this station. Wire its OnClick to Exit().")]
+        [Tooltip("The Step back button. Optional, for mobile. Shown only while the learner is at this " +
+                 "station, AND only on a touch device - on a PC they press E, which this component " +
+                 "reads directly. Wire its OnClick to Exit().")]
         [SerializeField] private Button exitButton;
+
+        [Tooltip("Shows the Enter and Step back buttons in the Editor whatever the platform, so the " +
+                 "mobile layout can be checked without a build. No effect in a real build.")]
+        [SerializeField] private bool showTouchButtonsInEditor = true;
 
         [Header("Rules")]
         [Tooltip("Leave on. Standing the case up with a part still in the learner's hand would drop it somewhere unrecoverable, and there is no honest place for it to land.")]
@@ -157,6 +165,29 @@ namespace CircuitCrafter.Repair
         /// <summary>True from the moment the learner starts entering until the
         /// walking view is fully back.</summary>
         public bool IsInside => state != State.Outside;
+
+        /// <summary>
+        /// Whether the on-screen Enter and Step back buttons belong on this device.
+        ///
+        /// They are touch controls. On a PC the same two jobs are E and E - this component reads
+        /// that key directly, and the prompt already says "Press E to step back" - so an on-screen
+        /// button beside it is a second control for a job that has one, and two ways out of the same
+        /// station is how a learner ends up unsure which they are meant to use. A phone has no E, so
+        /// there the buttons are the only way in and out and have to be present.
+        ///
+        /// Read fresh rather than cached in Start, because the Editor switch below can be toggled
+        /// while play mode is running and it is far more useful if the buttons appear immediately.
+        /// </summary>
+        private bool TouchControlsWanted
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (showTouchButtonsInEditor) return true;
+#endif
+                return Application.isMobilePlatform;
+            }
+        }
 
         public string StationName => stationName;
 
@@ -227,8 +258,13 @@ namespace CircuitCrafter.Repair
                 homeRecorded = true;
             }
 
-            if (enterButton != null) enterButton.onClick.AddListener(Enter);
-            if (exitButton != null) exitButton.onClick.AddListener(Exit);
+            // Hooked ONCE PER BUTTON, not once per station. Two stations sharing a button used to
+            // add two listeners to it, so one tap called both Enter() methods - and the first one
+            // registered took the station, while the second returned early because Current was
+            // already set. The learner walks to the system unit, presses Use, and arrives at the
+            // monitor. Nothing is wrong at the press; the press was simply delivered to everyone.
+            HookOnce(enterButton, isEnter: true);
+            HookOnce(exitButton, isEnter: false);
         }
 
         private void Start()
@@ -249,6 +285,8 @@ namespace CircuitCrafter.Repair
             Transform point = stationPoint != null ? stationPoint : transform;
             Debug.Log($"[RepairStation] '{name}' ready - press {interactKey} within {interactRange}m of {point.position}.", this);
 
+            ReportTouchButtons();
+
             if (stationCamera != null) stationCamera.gameObject.SetActive(false);
             if (enterButton != null) enterButton.gameObject.SetActive(false);
             if (exitButton != null) exitButton.gameObject.SetActive(false);
@@ -266,6 +304,8 @@ namespace CircuitCrafter.Repair
 
         private void Update()
         {
+            ClaimTouchButtons();
+
             if (state == State.Outside)
             {
                 bool inRange = IsPlayerInRange() && (Current == null || Current == this);
@@ -280,8 +320,12 @@ namespace CircuitCrafter.Repair
                 // reads it as a bug, walks away, and never finds out there was a rule.
                 // Being told why - and then being handed the diagnosis - is the whole
                 // lesson, and it only happens if they are allowed to try.
-                if (enterButton != null) enterButton.gameObject.SetActive(inRange);
-
+                // "|| player == null" makes the Start warning true. With no player found there is
+                // nothing to be near, so IsPlayerInRange is permanently false - and the button that
+                // warning calls the only remaining way in was the very thing being hidden by it.
+                // The KEY still needs real range; only the button is excused, because a button the
+                // learner can see and press is not a shortcut past a rule, it is the rule's only
+                // remaining door.
                 if (promptText != null)
                 {
                     if (!inRange)
@@ -587,7 +631,6 @@ namespace CircuitCrafter.Repair
             if (disableOnEnter != null)
                 foreach (var go in disableOnEnter) if (go != null) go.SetActive(!inside);
 
-            if (exitButton != null) exitButton.gameObject.SetActive(inside);
             if (promptText != null) promptText.text = inside ? $"Press {interactKey} to step back" : "";
         }
 
@@ -605,6 +648,228 @@ namespace CircuitCrafter.Repair
         {
             if (enteredPose != null) return enteredPose.rotation;
             return homeRotation * Quaternion.Euler(enteredEuler);
+        }
+
+        /// <summary>
+        /// Says, once at Start, whether these two buttons CAN appear - and if not, which of the
+        /// three reasons it is.
+        ///
+        /// Worth the lines because this is the one part of the station that cannot be debugged where
+        /// it goes wrong. The buttons only matter on a phone, a phone shows no Console, and all
+        /// three causes - not assigned, parent switched off, platform says no - look identical from
+        /// the learner's side: nothing on screen. Printed at Start, it is in the logcat of the build
+        /// that failed, which is the only place anyone can read it.
+        ///
+        /// Note both buttons are deliberately hidden immediately after this runs; this reports
+        /// whether they could ever be SHOWN, not whether they are visible right now.
+        /// </summary>
+        private void ReportTouchButtons()
+        {
+            string enter = DescribeButton(enterButton, "Enter Button");
+            string exit = DescribeButton(exitButton, "Exit Button (Step back)");
+
+            string platform = TouchControlsWanted
+                ? "this device wants touch controls"
+                : "this device does NOT want touch controls, so both stay hidden" +
+                  (Application.isMobilePlatform ? "" : " - isMobilePlatform is false, and it is " +
+                   "ALWAYS false in the Editor and the Device Simulator. Tick Show Touch Buttons In " +
+                   "Editor to preview them here");
+
+            Debug.Log($"[RepairStation] '{name}' touch buttons: {platform}." +
+                      $"\n    {enter}\n    {exit}", this);
+        }
+
+        private static string DescribeButton(Button button, string label)
+        {
+            if (button == null)
+                return label + ": NOT ASSIGNED - nothing will ever appear for it.";
+
+            Transform parent = button.transform.parent;
+
+            // activeInHierarchy on the BUTTON is useless here: Start switches both off a moment
+            // later, so it is false either way. The parent chain is the thing that can be wrong in a
+            // way the station cannot fix - SetActive(true) on a child of an inactive object leaves
+            // activeInHierarchy false, silently, with no error.
+            if (parent != null && !parent.gameObject.activeInHierarchy)
+                return label + ": '" + button.name + "' is under '" + parent.name + "', which is " +
+                       "SWITCHED OFF. It can never be shown until that object is active - check it " +
+                       "is not a canvas this station lists in Disable On Enter.";
+
+            return label + ": '" + button.name + "' ready.";
+        }
+
+        // ==================================================================
+        // Shared touch buttons
+        // ==================================================================
+        //
+        // ONE PAIR OF BUTTONS CAN SERVE EVERY STATION IN THE SCENE, and making that work is what
+        // these three methods are for.
+        //
+        // Each station used to write the buttons' visibility directly from its own point of view,
+        // every frame. That is correct for a station with its own private buttons and wrong the
+        // moment two share a pair: standing at the monitor, the monitor station switches Enter on
+        // and the system unit station - which you are nowhere near - switches it straight back off.
+        // Which one wins depends on script execution order, so the symptom is either a flickering
+        // button or one that never appears, and neither points at the cause. Exit had the same
+        // problem from the other side: it was written only on a state change, so leaving one station
+        // hid the button even when the learner was inside the other.
+        //
+        // So a station no longer SETS anything. It CLAIMS, every frame, and the claims for a given
+        // button are OR-ed together: the button is shown if ANY station wants it. One station
+        // wanting it shown always beats four not caring, which is the only rule that can be right
+        // when they share.
+        //
+        // Applied in LateUpdate, after every station has had its say. A station with private
+        // buttons goes through the same path and behaves exactly as before - one claim, applied.
+
+        /// <summary>What a button was asked for this frame, and by whom.</summary>
+        private struct ButtonClaim
+        {
+            public int frame;
+            public bool wanted;
+            public float distance;
+            public RepairStation station;
+        }
+
+        private static readonly Dictionary<Button, ButtonClaim> claims =
+            new Dictionary<Button, ButtonClaim>();
+
+        private static readonly HashSet<Button> hooked = new HashSet<Button>();
+
+        private void ClaimTouchButtons()
+        {
+            bool touch = TouchControlsWanted;
+
+            // "|| player == null" makes the Start warning true. With no player found there is
+            // nothing to be near, so IsPlayerInRange is permanently false - and the button that
+            // warning calls the only remaining way in was the very thing being hidden by it. The KEY
+            // still needs real range; only the button is excused, because a button the learner can
+            // see and press is not a shortcut past a rule, it is the rule's only remaining door.
+            bool wantEnter = touch
+                          && state == State.Outside
+                          && (IsPlayerInRange() || player == null)
+                          && (Current == null || Current == this);
+
+            bool wantExit = touch && state == State.Inside;
+
+            ClaimButton(enterButton, wantEnter, DistanceToPlayer(), this);
+            ClaimButton(exitButton, wantExit, 0f, this);
+        }
+
+        /// <summary>
+        /// Records that this station wants a button shown, and how far away it is.
+        ///
+        /// TWO RULES, and they are different rules for the two things a claim decides.
+        ///
+        /// VISIBLE is OR-ed: the button is shown if ANY station wants it. One station wanting it
+        /// always beats four not caring, which is the only rule that can be right when they share.
+        ///
+        /// WHOSE it is, is NEAREST-WINS. Both stations at a site are usually in range of each other,
+        /// so "in range" alone cannot pick one - and picking the wrong one sends the learner to the
+        /// monitor when they walked to the system unit. The station whose point the player is
+        /// standing closest to is the one they meant, every time.
+        /// </summary>
+        private static void ClaimButton(Button button, bool wanted, float distance, RepairStation station)
+        {
+            if (button == null) return;
+
+            int frame = Time.frameCount;
+
+            if (!claims.TryGetValue(button, out ButtonClaim claim) || claim.frame != frame)
+            {
+                claims[button] = new ButtonClaim
+                {
+                    frame = frame,
+                    wanted = wanted,
+                    distance = distance,
+                    station = wanted ? station : null
+                };
+                return;
+            }
+
+            // A station that does not want the button cannot take it away from one that does.
+            if (!wanted) return;
+
+            if (!claim.wanted || distance < claim.distance)
+            {
+                claim.wanted = true;
+                claim.distance = distance;
+                claim.station = station;
+                claims[button] = claim;
+            }
+        }
+
+        private void LateUpdate()
+        {
+            ApplyClaim(enterButton);
+            ApplyClaim(exitButton);
+        }
+
+        private static void ApplyClaim(Button button)
+        {
+            if (button == null) return;
+            if (!claims.TryGetValue(button, out ButtonClaim claim)) return;
+            if (button.gameObject.activeSelf != claim.wanted) button.gameObject.SetActive(claim.wanted);
+        }
+
+        /// <summary>Adds the one listener a shared button is allowed to have.</summary>
+        private static void HookOnce(Button button, bool isEnter)
+        {
+            if (button == null) return;
+
+            // Buttons from a previous scene are destroyed but still sitting in these collections as
+            // Unity's fake-null. Cleared here rather than on a scene-loaded callback because this
+            // runs at exactly the right moment anyway - the first station of a new scene waking up.
+            hooked.RemoveWhere(b => b == null);
+
+            if (!hooked.Add(button)) return;
+
+            if (isEnter) button.onClick.AddListener(() => DispatchEnter(button));
+            else button.onClick.AddListener(() => DispatchExit(button));
+        }
+
+        private static void DispatchEnter(Button button)
+        {
+            RepairStation station = ClaimantOf(button);
+
+            if (station == null)
+            {
+                Debug.LogWarning("[RepairStation] The Enter button was pressed but no station is " +
+                                 "claiming it - nothing is in range. This should not be reachable, " +
+                                 "since the button is hidden when nothing claims it.", button);
+                return;
+            }
+
+            station.Enter();
+        }
+
+        private static void DispatchExit(Button button)
+        {
+            RepairStation station = ClaimantOf(button);
+
+            // Falls back to whichever station the learner is actually inside. The Exit claim is made
+            // in Update, and a tap landing in the same frame the station changed state would
+            // otherwise find a claim from before the change - a Step back that does nothing once in
+            // a hundred presses, which is far worse to diagnose than one that never works.
+            if (station == null) station = Current;
+
+            if (station == null) return;
+
+            station.Exit();
+        }
+
+        private static RepairStation ClaimantOf(Button button)
+        {
+            if (button == null) return null;
+            return claims.TryGetValue(button, out ButtonClaim claim) ? claim.station : null;
+        }
+
+        private float DistanceToPlayer()
+        {
+            if (player == null) return float.MaxValue;
+
+            Transform point = stationPoint != null ? stationPoint : transform;
+            return Vector3.Distance(player.position, point.position);
         }
 
         private bool IsPlayerInRange()

@@ -23,5 +23,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Test/COC1-Copy.unity
     guid: 31d7e08ee869369499bd9345c51c4763
+  - enabled: 1
+    path: Assets/Scenes/COC4-Results.unity
+    guid: 49dfde2ab9e58244d85f83060a289da5
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

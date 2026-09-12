@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
@@ -37,6 +38,22 @@ public class AssessmentMenuController : MonoBehaviour
 
         [Tooltip("Untick for modules that are not built yet. The button is shown but disabled.")]
         public bool available = false;
+
+        [Tooltip("OPTIONAL, and normally left empty.\n\n" +
+                 "Wire something here and it is called INSTEAD of the usual 'set the flag, load the " +
+                 "scene' pair - the whole of launching this module becomes that call's job, " +
+                 "AssessmentMode included.\n\n" +
+                 "COC4 needs it: its assessment has no single scene to load. It draws five random " +
+                 "tickets and loads the first one's repair site, so wire COC4AssessmentLauncher > " +
+                 "StartAssessment() here and leave Scene Name empty.")]
+        public UnityEvent customLaunch;
+
+        /// <summary>True when this module launches through customLaunch rather than by loading
+        /// Scene Name. Counts only PERSISTENT listeners - the ones wired in the Inspector - because
+        /// a listener added in code would make this true for every module the moment anything
+        /// subscribed for its own reasons.</summary>
+        public bool HasCustomLaunch =>
+            customLaunch != null && customLaunch.GetPersistentEventCount() > 0;
     }
 
     [Header("Panels")]
@@ -84,7 +101,9 @@ public class AssessmentMenuController : MonoBehaviour
         {
             if (m == null || m.button == null) continue;
 
-            m.button.interactable = m.available && !string.IsNullOrEmpty(m.sceneName);
+            // A module with a custom launch needs no Scene Name - there is no single scene to
+            // name. Without this it would sit greyed out reading "Coming soon" forever.
+            m.button.interactable = m.available && (m.HasCustomLaunch || !string.IsNullOrEmpty(m.sceneName));
 
             if (m.statusText != null)
                 m.statusText.text = m.button.interactable ? availableLabel : unavailableLabel;
@@ -98,9 +117,21 @@ public class AssessmentMenuController : MonoBehaviour
         var m = modules[index];
         if (m == null || !m.available) return;
 
+        if (m.HasCustomLaunch)
+        {
+            // AssessmentMode is deliberately NOT set here. The custom launcher owns the whole of
+            // starting this module, including which module id it declares - COC4's launcher has its
+            // own Module Id field, and setting the flag twice from two places is how those two
+            // quietly drift apart.
+            Debug.Log($"[AssessmentMenuController] '{m.modeId}' launches through its own launcher.", this);
+            m.customLaunch.Invoke();
+            return;
+        }
+
         if (string.IsNullOrEmpty(m.sceneName))
         {
-            Debug.LogWarning($"[AssessmentMenuController] '{m.modeId}' has no scene name set.", this);
+            Debug.LogWarning($"[AssessmentMenuController] '{m.modeId}' has no scene name set and " +
+                             "nothing wired to Custom Launch, so this button can do nothing.", this);
             return;
         }
 

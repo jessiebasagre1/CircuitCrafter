@@ -28,6 +28,14 @@ public class TicketDetailPanelView : MonoBehaviour
 
     [SerializeField] private TicketManager manager;
 
+    [Header("Status colours")]
+    [Tooltip("Kept in step with TicketRowView's. A ticket that reads gold in the list and white in " +
+             "the panel beside it looks like two different tickets.")]
+    [SerializeField] private Color openColor = new Color32(0xA9, 0xC6, 0xF0, 0xFF);
+    [SerializeField] private Color inProgressColor = new Color32(0x46, 0xC8, 0xF5, 0xFF);
+    [SerializeField] private Color diagnosedColor = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
+    [SerializeField] private Color resolvedColor = new Color32(0x5A, 0xE0, 0xA8, 0xFF);
+
     private TicketData _current;
 
     public void Show(TicketData ticket, TicketStatus status)
@@ -58,6 +66,15 @@ public class TicketDetailPanelView : MonoBehaviour
                 TicketStatus.Diagnosed => "Diagnosed - repair pending",
                 TicketStatus.Resolved => "Resolved",
                 _ => status.ToString()
+            };
+
+            statusText.color = status switch
+            {
+                TicketStatus.Open => openColor,
+                TicketStatus.InProgress => inProgressColor,
+                TicketStatus.Diagnosed => diagnosedColor,
+                TicketStatus.Resolved => resolvedColor,
+                _ => openColor
             };
         }
 

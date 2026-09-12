@@ -1,4 +1,5 @@
 using UnityEngine;
+using CSSSimulation.Networking;
 
 public class StationCameraSwitch : MonoBehaviour
 {
@@ -117,6 +118,18 @@ public class StationCameraSwitch : MonoBehaviour
         usingStationCamera = useStation;
         playerCamera.gameObject.SetActive(!useStation);
         stationCamera.gameObject.SetActive(useStation);
+
+        // Hide the task arrow for as long as the close-up is open, and bring it back on the way out.
+        //
+        // Inside a station the player is looking through a fixed camera at a workbench; a world
+        // arrow still hovering over something across the room is pure noise, and on the screen-space
+        // arrow it is worse - it swings around pointing at a place the player cannot walk to.
+        //
+        // Null-guarded, so a scene with no TaskWaypointArrow - COC3 and COC4 today - is unaffected.
+        // In an assessment run the arrow refuses to come back, which is deliberate: it is locked off
+        // for the whole run and one station closing must not undo that.
+        if (TaskWaypointArrow.Instance != null)
+            TaskWaypointArrow.Instance.SetSuppressed(useStation);
 
         Cursor.lockState = useStation ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible = useStation;

@@ -91,7 +91,44 @@ namespace CSSSimulation.Networking
             /// <summary>A CableCarrier has its FIRST end plugged in, whichever socket that was.
             /// Use it for the "plug it into the patch panel" step, so the arrow then sends the
             /// player on to the far end of the run.</summary>
-            CableFirstEndIn
+            CableFirstEndIn,
+
+            /// <summary>COC1. The USB flash drive is off the bench - either in the player's hand or
+            /// already plugged into a port. Use it for the "go and get the flash drive" step.
+            ///
+            /// Deliberately counts "plugged in" as taken as well. CarriedItemHolder clears HeldDrive
+            /// the instant PlayerInteractor plugs the drive in, so a hand-only test would blink off
+            /// at the exact moment the next step begins - the same flicker CableInPocket has, and the
+            /// reason that one needs a latch. Reading "not on the bench any more" instead means this
+            /// step goes done once and stays done, with nothing to tick.</summary>
+            DriveTaken,
+
+            /// <summary>COC1. The USB flash drive is plugged into a port. Use it for the "plug it
+            /// into the PC" step.
+            ///
+            /// ASSIGN PORT, NOT JUST DRIVE. USBDriveItem.IsInsertedInPort is true for ANY port, so a
+            /// drive still sitting in the reference PC would mark the target PC's step done and send
+            /// the player to the BIOS with an empty USB socket. With Port filled, the step asks that
+            /// one port whether it has a drive in it.</summary>
+            DriveInPort,
+
+            /// <summary>COC1. The assigned Port is empty again. Use it for the SECOND pickup - "go
+            /// back and take the flash drive out of the first PC" - with Port set to the Rufus PC's
+            /// port and Target pointing at that PC.
+            ///
+            /// Phrased as "that port is empty" rather than "the drive is in hand" on purpose. The
+            /// drive leaves the player's hand again the moment it goes into the second PC, so a
+            /// hand test would go back to false there and throw the arrow across the room to the
+            /// step the player just finished. An emptied port stays empty.
+            ///
+            /// This reads as already-done before the drive is ever plugged in, which is harmless:
+            /// the steps above it are still waiting, so the arrow never reaches it early.</summary>
+            DriveRemovedFromPort,
+
+            /// <summary>COC1. OSInstallManager has reached the Complete stage. The Windows install
+            /// is the one part of COC1 that never reports to TaskManager - TaskGate reads the stage
+            /// directly, and so does this - so Task Complete cannot end the run.</summary>
+            OSInstallComplete
         }
 
         [System.Serializable]
@@ -124,6 +161,14 @@ namespace CSSSimulation.Networking
             public GameObject witness;
             [Tooltip("Done When = Cable On Table.")]
             public CrimpedCablePickup pickup;
+            [Tooltip("Done When = Drive Taken or Drive In Port. The USBDriveItem in the scene.\n\n" +
+                     "Optional for Drive In Port when Port is filled - fill both only if that port " +
+                     "must hold THAT drive and no other.")]
+            public USBDriveItem drive;
+            [Tooltip("Done When = Drive In Port or Drive Removed From Port. The USBPort on the PC " +
+                     "the player is being sent to. Fill this whenever the scene has more than one " +
+                     "port - see the Drive In Port tooltip.")]
+            public USBPort port;
             [Tooltip("Done When = Player Arrived. Metres. 0 falls back to Arrival Distance.")]
             public float arriveWithin = 0f;
 
@@ -219,6 +264,19 @@ namespace CSSSimulation.Networking
         [Tooltip("Raised when the last step is finished.")]
         public UnityEvent OnAllStepsDone;
 
+        /// <summary>
+        /// The arrow in this scene, so a station can hide it without holding a reference.
+        ///
+        /// COC2's stations suppress the arrow through UnityEvents wired in the Inspector, which is
+        /// fine when there are two of them. COC1 has a dozen StationCameraSwitch objects and they
+        /// all do their hiding in code, so wiring each one by hand would be twelve chances to miss
+        /// one - and a missed one leaves an arrow hovering over a bench behind the player while they
+        /// are looking at a motherboard in close-up.
+        ///
+        /// First one wins, the way TaskManager and DialogManager do it here.
+        /// </summary>
+        public static TaskWaypointArrow Instance { get; private set; }
+
         Camera cam;
         int activeIndex = -1;
         bool suppressed;
@@ -243,9 +301,25 @@ namespace CSSSimulation.Networking
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Debug.LogWarning("[TaskWaypointArrow] A second arrow on '" + name + "' - the one " +
+                                 "that woke first keeps the Instance. Stations will hide that one, " +
+                                 "not this. Two arrows in a scene is almost always a leftover.", this);
+            }
+            else
+            {
+                Instance = this;
+            }
+
             // Awake, not Start. Nothing else has run yet, so this is the last moment the editor
             // pose is guaranteed untouched.
             if (worldArrow != null) authoredRotation = worldArrow.rotation;
+        }
+
+        void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         void Start()
@@ -396,6 +470,35 @@ namespace CSSSimulation.Networking
                     if (s.target == null || player == null) return false;
                     float within = s.arriveWithin > 0f ? s.arriveWithin : arrivalDistance;
                     return Vector3.Distance(player.position, s.target.position) <= within;
+
+                case DoneWhen.DriveTaken:
+                    {
+                        if (s.drive == null) return false;
+                        if (s.drive.IsInsertedInPort) return true;
+                        return CarriedItemHolder.Instance != null &&
+                               CarriedItemHolder.Instance.HeldDrive == s.drive;
+                    }
+
+                case DoneWhen.DriveInPort:
+                    {
+                        // Port first: it is the specific question. Drive alone answers the vague one.
+                        if (s.port != null)
+                            return s.port.CurrentDrive != null &&
+                                   (s.drive == null || s.port.CurrentDrive == s.drive);
+
+                        return s.drive != null && s.drive.IsInsertedInPort;
+                    }
+
+                case DoneWhen.DriveRemovedFromPort:
+                    {
+                        if (s.port == null) return false;
+                        if (s.port.CurrentDrive == null) return true;
+                        return s.drive != null && s.port.CurrentDrive != s.drive;
+                    }
+
+                case DoneWhen.OSInstallComplete:
+                    return OSInstallManager.Instance != null &&
+                           OSInstallManager.Instance.CurrentStage == OSInstallManager.InstallStage.Complete;
 
                 case DoneWhen.Manual:
                     return s.manualDone;
@@ -686,6 +789,45 @@ namespace CSSSimulation.Networking
                                          "Done. The pocket is emptied again when the cable goes into " +
                                          "the tester, so the arrow will jump back here mid-run.");
                         break;
+                    case DoneWhen.DriveTaken:
+                        if (s.drive == null)
+                            problems.Add(where + " is judged by Drive Taken but Drive is empty.");
+                        break;
+                    case DoneWhen.DriveInPort:
+                        if (s.port == null && s.drive == null)
+                            problems.Add(where + " is judged by Drive In Port but both Port and " +
+                                         "Drive are empty. Fill Port.");
+                        else if (s.port == null && USBPort.AllPorts.Count > 1)
+                            problems.Add(where + " is judged by Drive In Port with no Port assigned, " +
+                                         "and this scene has " + USBPort.AllPorts.Count + " ports. " +
+                                         "The drive being in ANY of them will mark this step done - " +
+                                         "assign the port the player is actually being sent to.");
+
+                        // The reason the arrow walks backwards.
+                        //
+                        // Drive In Port is a RIGHT NOW question, and in a two-PC flow the answer
+                        // goes back to no: the learner plugs into the Rufus PC, builds the image,
+                        // then pulls the drive out - and that step, ten rows up, quietly un-finishes
+                        // itself. FirstUnfinishedStep scans from the top, so it finds the reopened
+                        // step before the one the learner is actually on and marches them back to
+                        // the PC they just left, holding the drive, with no way to satisfy it except
+                        // to plug it in again.
+                        //
+                        // Only worth warning about when a later step is waiting for that same port
+                        // to empty - that is what makes the reopening certain rather than possible.
+                        if (s.port != null && !s.latchWhenDone && RemovedLater(s.port, i))
+                            problems.Add(where + " is judged by Drive In Port without Latch When " +
+                                         "Done, and a later step waits for that same port to be " +
+                                         "emptied. Taking the drive back out will reopen this step " +
+                                         "and the arrow will walk backwards to it. Tick Latch When " +
+                                         "Done.");
+                        break;
+                    case DoneWhen.DriveRemovedFromPort:
+                        if (s.port == null)
+                            problems.Add(where + " is judged by Drive Removed From Port but Port is " +
+                                         "empty. Without it there is no port to be empty, so this " +
+                                         "step can never finish and the arrow will stop here.");
+                        break;
                 }
 
                 // A step that is already finished at Play is not an error - the player may be
@@ -746,14 +888,91 @@ namespace CSSSimulation.Networking
 
                 bool done = IsStepDone(s);
                 msg += "\n    " + (i == activeIndex ? " >" : "  ") + i + ". " + s.label +
-                       "   target: " + (s.target != null ? s.target.name : "NONE") +
+                       "   target: " + (s.target != null ? Path(s.target) : "NONE") +
                        "   done when: " + s.doneWhen + " " + WaitingOn(s) +
                        "   now: " + (done ? "DONE" : "waiting") +
                        (s.latched ? " (latched)" : s.latchWhenDone ? " (latching)" : "");
             }
             msg += "\n    ---- active step: " + (activeIndex < 0 ? "none, all done" : activeIndex.ToString()) +
                    (suppressed ? "   (SUPPRESSED - something called Suppress and never called Resume)" : "");
+            msg += DriveStateLine();
             Debug.LogWarning(msg, this);
+        }
+
+        /// <summary>
+        /// What the drive and every port in the scene actually think, right now.
+        ///
+        /// Two USBPorts on two PCs are usually both called "USBPort", and the step list shows the
+        /// same word twice whether they are the same component or not. That is the one thing you
+        /// cannot see by reading the Inspector, and it is the most common reason a drive step points
+        /// at the PC the player just left - so the full hierarchy path is printed, not the name.
+        ///
+        /// Only printed when a step actually uses a drive condition; COC2 gets nothing extra.
+        /// </summary>
+        string DriveStateLine()
+        {
+            bool relevant = false;
+            foreach (Step s in steps)
+            {
+                if (s == null) continue;
+                if (s.doneWhen == DoneWhen.DriveTaken || s.doneWhen == DoneWhen.DriveInPort ||
+                    s.doneWhen == DoneWhen.DriveRemovedFromPort) { relevant = true; break; }
+            }
+            if (!relevant) return "";
+
+            string msg = "\n    ---- drives and ports:";
+
+            msg += "\n       in hand: " +
+                   (CarriedItemHolder.Instance == null ? "no CarriedItemHolder in this scene"
+                    : CarriedItemHolder.Instance.HeldDrive == null ? "nothing"
+                    : "'" + CarriedItemHolder.Instance.HeldDrive.name + "'");
+
+            if (USBPort.AllPorts.Count == 0)
+            {
+                msg += "\n       NO USBPorts are enabled in this scene. A port on a disabled " +
+                       "object does not register, so every Drive In Port step will wait forever.";
+                return msg;
+            }
+
+            foreach (USBPort p in USBPort.AllPorts)
+            {
+                if (p == null) continue;
+                msg += "\n       port " + Path(p.transform) + " holds: " +
+                       (p.CurrentDrive != null ? "'" + p.CurrentDrive.name + "'" : "nothing");
+            }
+
+            foreach (USBDriveItem d in USBDriveItem.AllDrives)
+            {
+                if (d == null) continue;
+                msg += "\n       drive '" + d.name + "' IsInsertedInPort=" + d.IsInsertedInPort +
+                       ", CurrentPort=" + (d.CurrentPort != null ? Path(d.CurrentPort.transform) : "none");
+            }
+
+            return msg;
+        }
+
+        /// <summary>Is some step after <paramref name="afterIndex"/> waiting for this port to be
+        /// emptied? If so, the Drive In Port step above it is guaranteed to reopen.</summary>
+        bool RemovedLater(USBPort port, int afterIndex)
+        {
+            for (int i = afterIndex + 1; i < steps.Count; i++)
+            {
+                Step s = steps[i];
+                if (s == null) continue;
+                if (s.doneWhen == DoneWhen.DriveRemovedFromPort && s.port == port) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Hierarchy path, so two objects with the same name are told apart.</summary>
+        static string Path(Transform t)
+        {
+            if (t == null) return "NONE";
+            string p = t.name;
+            Transform parent = t.parent;
+            int guard = 0;
+            while (parent != null && guard++ < 6) { p = parent.name + "/" + p; parent = parent.parent; }
+            return p;
         }
 
         string WaitingOn(Step s)
@@ -770,6 +989,14 @@ namespace CSSSimulation.Networking
                 case DoneWhen.ObjectInactive: return s.witness != null ? "'" + s.witness.name + "'" : "(none)";
                 case DoneWhen.CableOnTable: return s.pickup != null ? "'" + s.pickup.name + "'" : "(none)";
                 case DoneWhen.CableInPocket: return "CableInventory";
+                case DoneWhen.DriveTaken: return s.drive != null ? "'" + s.drive.name + "'" : "(none)";
+                case DoneWhen.DriveInPort:
+                    return s.port != null ? "port " + Path(s.port.transform)
+                         : s.drive != null ? "'" + s.drive.name + "' in ANY port"
+                         : "(none)";
+                case DoneWhen.DriveRemovedFromPort:
+                    return s.port != null ? "port " + Path(s.port.transform) + " to be empty" : "(none)";
+                case DoneWhen.OSInstallComplete: return "OSInstallManager stage Complete";
                 case DoneWhen.PlayerArrived: return "within " + (s.arriveWithin > 0f ? s.arriveWithin : arrivalDistance) + "m";
                 default: return "";
             }

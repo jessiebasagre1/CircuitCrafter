@@ -1,0 +1,234 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &169823444348629742
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4040785724800073820}
+  - component: {fileID: 8359260494268656333}
+  m_Layer: 0
+  m_Name: TaskWaypoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4040785724800073820
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169823444348629742}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
+--- !u!114 &8359260494268656333
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169823444348629742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e3ce5905ad58049ae07ec2869f2e5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.TaskWaypointArrow
+  steps:
+  - label: Pick up the crimping tool
+    target: {fileID: 0}
+    doneWhen: 5
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 1
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Crimp both cables
+    target: {fileID: 0}
+    doneWhen: 6
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 1
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Take the crimped cable
+    target: {fileID: 0}
+    doneWhen: 5
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Test both cables
+    target: {fileID: 0}
+    doneWhen: 0
+    taskId: test_cable
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Terminate the patch panel
+    target: {fileID: 0}
+    doneWhen: 1
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Collect the server cable
+    target: {fileID: 0}
+    doneWhen: 3
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Pick up the server cable
+    target: {fileID: 0}
+    doneWhen: 10
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Plug it into the patch panel
+    target: {fileID: 0}
+    doneWhen: 11
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Plug the other end into the server
+    target: {fileID: 0}
+    doneWhen: 2
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: "Pick up the client cable\t"
+    target: {fileID: 0}
+    doneWhen: 10
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Plug it into the patch panel
+    target: {fileID: 0}
+    doneWhen: 11
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  - label: Plug the other end into the client
+    target: {fileID: 0}
+    doneWhen: 2
+    taskId: 
+    phase: {fileID: 0}
+    cable: {fileID: 0}
+    witness: {fileID: 0}
+    pickup: {fileID: 0}
+    arriveWithin: 0
+    hideArrowDuringStep: 0
+    latchWhenDone: 0
+    OnStepBegan:
+      m_PersistentCalls:
+        m_Calls: []
+  worldArrow: {fileID: 0}
+  hoverHeight: 0.6
+  bobAmount: 0.08
+  bobSpeed: 1.5
+  spinSpeed: 45
+  billboardToCamera: 0
+  rotationOffset: {x: 0, y: 0, z: 0}
+  screenArrow: {fileID: 0}
+  screenArrowRadius: 0.25
+  labelText: {fileID: 0}
+  distanceText: {fileID: 0}
+  distanceFormat: '{0} m'
+  arrivalDistance: 2
+  hideWhenAllDone: 1
+  player: {fileID: 0}
+  logStepChanges: 1
+  OnAllStepsDone:
+    m_PersistentCalls:
+      m_Calls: []

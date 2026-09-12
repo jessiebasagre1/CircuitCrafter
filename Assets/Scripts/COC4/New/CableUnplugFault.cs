@@ -44,6 +44,7 @@ namespace CircuitCrafter.Repair
         protected override string DefaultBootSymptom =>
             "Nothing happens at all. No lights, no fan noise, nothing on the screen.";
 
+
         protected override void Inject()
         {
             if (cable == null)

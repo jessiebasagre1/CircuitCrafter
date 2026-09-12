@@ -49,29 +49,29 @@ namespace CircuitCrafter.Assessment.EditorTools
         // and the secondary periwinkle about 6:1, both past WCAG AA. This gets read off a
         // projector, and anything less is unreadable from the back row.
 
-        private static readonly Color PageTint = new Color32(0x0C, 0x14, 0x3A, 0xD9);
-        private static readonly Color HeaderBg = new Color32(0x1B, 0x25, 0x85, 0xFF);
-        private static readonly Color CardBg = new Color32(0x27, 0x33, 0xA0, 0xFF);
-        private static readonly Color RailBg = new Color32(0x10, 0x1A, 0x50, 0xF2);
+        private static readonly Color PageTint = new Color32(0x16, 0x25, 0x6E, 0xCC);
+        private static readonly Color HeaderBg = new Color32(0x2A, 0x3A, 0xB5, 0xFF);
+        private static readonly Color CardBg = new Color32(0x35, 0x47, 0xC4, 0xFF);
+        private static readonly Color RailBg = new Color32(0x1B, 0x2A, 0x7A, 0xE6);
         private static readonly Color TextPrimary = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
         private static readonly Color TextSecondary = new Color32(0xA9, 0xC6, 0xF0, 0xFF);
         private static readonly Color EdgeCyan = new Color32(0x5F, 0xD4, 0xFF, 0xFF);
         private static readonly Color Gold = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
         private static readonly Color GoldInk = new Color32(0x3A, 0x26, 0x00, 0xFF);
         private static readonly Color AccentBar = new Color32(0x46, 0xC8, 0xF5, 0xFF);
-        private static readonly Color BarTrack = new Color32(0x0A, 0x11, 0x40, 0xFF);
-        private static readonly Color ButtonBg = new Color32(0x2B, 0x39, 0xA8, 0xFF);
+        private static readonly Color BarTrack = new Color32(0x12, 0x1D, 0x5E, 0xFF);
+        private static readonly Color ButtonBg = new Color32(0x3B, 0x4C, 0xCB, 0xFF);
 
         // ---- Type scale ---------------------------------------------------
         //
         // Authored against a 1920x1080 reference. Nothing below 20 - a competency screen is read,
         // not glanced at, and 18px TMP at a 0.85 interface scale is 15px on screen.
 
-        private const float SizeTitle = 46f;
+        private const float SizeTitle = 36f;
         private const float SizeSection = 28f;
         private const float SizeBody = 24f;
         private const float SizeCaption = 21f;
-        private const float SizeBadgeTitle = 30f;
+        private const float SizeBadgeTitle = 26f;
 
         // ==================================================================
 
@@ -149,8 +149,8 @@ namespace CircuitCrafter.Assessment.EditorTools
             RectTransform column = NewRect("Column", screen);
             Stretch(column);
             VerticalLayoutGroup col = column.gameObject.AddComponent<VerticalLayoutGroup>();
-            col.padding = new RectOffset(56, 56, 40, 40);
-            col.spacing = 22f;
+            col.padding = new RectOffset(44, 44, 24, 24);
+            col.spacing = 14f;
             col.childControlWidth = true;
             col.childControlHeight = true;
             col.childForceExpandWidth = true;
@@ -258,28 +258,44 @@ namespace CircuitCrafter.Assessment.EditorTools
             RectTransform header = NewRect("Header", parent);
             AddImage(header, HeaderBg);         // <- header plate sprite goes here
             AddTopEdge(header, 5f);
-            Fixed(header, 150f);
+            Fixed(header, 104f);
 
             RectTransform pad = NewRect("Pad", header);
             Stretch(pad);
             VerticalLayoutGroup v = pad.gameObject.AddComponent<VerticalLayoutGroup>();
-            v.padding = new RectOffset(36, 36, 22, 22);
-            v.spacing = 8f;
+            v.padding = new RectOffset(28, 28, 12, 12);
+            v.spacing = 6f;
             v.childControlWidth = true;
             v.childControlHeight = true;
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
 
-            TMP_Text title = AddText(pad, "Title", "COMPETENCY PROFILE", SizeTitle,
-                                     TextPrimary, FontStyles.Bold);
-            title.characterSpacing = 6f;
+            // Title and learner share one line. The title is the least useful thing on this screen -
+            // you already know which screen you opened - so it gives up its own row to the list.
+            RectTransform top = NewRect("TitleRow", pad);
+            Fixed(top, 42f);
+            HorizontalLayoutGroup th = top.gameObject.AddComponent<HorizontalLayoutGroup>();
+            th.spacing = 18f;
+            th.childControlWidth = true;
+            th.childControlHeight = true;
+            th.childForceExpandWidth = false;
+            th.childForceExpandHeight = true;
+            th.childAlignment = TextAnchor.MiddleLeft;
 
-            learnerText = AddText(pad, "LearnerText", "No learner selected", SizeSection, TextSecondary);
+            TMP_Text title = AddText(top, "Title", "COMPETENCY PROFILE", SizeTitle,
+                                     TextPrimary, FontStyles.Bold);
+            title.characterSpacing = 5f;
+            Width(title.rectTransform, 520f);
+
+            learnerText = AddText(top, "LearnerText", "No learner selected", SizeSection, TextSecondary);
+            learnerText.alignment = TextAlignmentOptions.MidlineRight;
+            LayoutElement lle = learnerText.gameObject.AddComponent<LayoutElement>();
+            lle.flexibleWidth = 1f;
 
             RectTransform row = NewRect("OverallRow", pad);
-            Fixed(row, 30f);
+            Fixed(row, 28f);
             HorizontalLayoutGroup h = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            h.spacing = 20f;
+            h.spacing = 18f;
             h.childControlWidth = true;
             h.childControlHeight = true;
             h.childForceExpandWidth = false;
@@ -287,7 +303,7 @@ namespace CircuitCrafter.Assessment.EditorTools
             h.childAlignment = TextAnchor.MiddleLeft;
 
             overallText = AddText(row, "OverallText", "0 of 0 outcomes competent", SizeBody, TextPrimary);
-            Width(overallText.rectTransform, 420f);
+            Width(overallText.rectTransform, 400f);
 
             overallBar = MakeBar(row, "OverallBar", AccentBar);
             LayoutElement be = overallBar.GetComponent<LayoutElement>();
@@ -297,10 +313,10 @@ namespace CircuitCrafter.Assessment.EditorTools
         private static void BuildBadgeStrip(RectTransform parent)
         {
             RectTransform strip = NewRect("BadgeStrip", parent);
-            Fixed(strip, 300f);
+            Fixed(strip, 116f);
 
             HorizontalLayoutGroup h = strip.gameObject.AddComponent<HorizontalLayoutGroup>();
-            h.spacing = 20f;
+            h.spacing = 14f;
             h.childControlWidth = true;
             h.childControlHeight = true;
             h.childForceExpandWidth = true;
@@ -315,55 +331,69 @@ namespace CircuitCrafter.Assessment.EditorTools
             AddImage(badge, CardBg);
             AddTopEdge(badge);
 
-            VerticalLayoutGroup v = badge.gameObject.AddComponent<VerticalLayoutGroup>();
-            v.padding = new RectOffset(16, 16, 18, 16);
-            v.spacing = 8f;
+            // Laid out SIDEWAYS - art on the left, text on the right - rather than stacked. Stacked
+            // badges were 300px tall and pushed the outcome list down to a third of the screen,
+            // which had the emphasis backwards: the badge is the reward, the list is the work.
+            HorizontalLayoutGroup v = badge.gameObject.AddComponent<HorizontalLayoutGroup>();
+            v.padding = new RectOffset(14, 14, 12, 12);
+            v.spacing = 12f;
             v.childControlWidth = true;
             v.childControlHeight = true;
-            v.childForceExpandWidth = true;
-            v.childForceExpandHeight = false;
-            v.childAlignment = TextAnchor.UpperCenter;
+            v.childForceExpandWidth = false;
+            v.childForceExpandHeight = true;
+            v.childAlignment = TextAnchor.MiddleLeft;
 
             // ---- artwork --------------------------------------------------
             RectTransform art = NewRect("Art", badge);
-            Fixed(art, 132f);
+            Width(art, 84f);
 
             RectTransform frameRect = NewRect("Frame", art);
-            Centre(frameRect, 132f, 132f);
-            Image frame = AddImage(frameRect, new Color32(0x16, 0x20, 0x6E, 0xFF));  // <- plate sprite
+            Centre(frameRect, 84f, 84f);
+            Image frame = AddImage(frameRect, new Color32(0x23, 0x33, 0x96, 0xFF));  // <- plate sprite
 
             RectTransform badgeRect = NewRect("Badge", frameRect);
-            Centre(badgeRect, 104f, 104f);
-            Image badgeImage = AddImage(badgeRect, new Color32(0x3D, 0x4F, 0xC8, 0xFF)); // <- YOUR ART
+            Centre(badgeRect, 66f, 66f);
+            Image badgeImage = AddImage(badgeRect, new Color32(0x55, 0x68, 0xE2, 0xFF)); // <- YOUR ART
 
             // The padlock is text rather than a sprite on purpose: it has to work on the day the
             // screen is built, before any art exists, and a missing sprite would leave the locked
             // state indistinguishable from the unlocked one.
             RectTransform lockRect = NewRect("LockOverlay", art);
-            Centre(lockRect, 132f, 44f);
-            lockRect.anchoredPosition = new Vector2(0f, -44f);
-            AddImage(lockRect, new Color32(0x0A, 0x10, 0x30, 0xD6));
+            Centre(lockRect, 84f, 26f);
+            lockRect.anchoredPosition = new Vector2(0f, -29f);
+            AddImage(lockRect, new Color32(0x12, 0x1C, 0x55, 0xE6));
 
-            TMP_Text lockLabel = AddText(lockRect, "LockLabel", "LOCKED", SizeCaption,
+            TMP_Text lockLabel = AddText(lockRect, "LockLabel", "LOCKED", 15f,
                                          TextPrimary, FontStyles.Bold);
             Stretch(lockLabel.rectTransform);
             lockLabel.alignment = TextAlignmentOptions.Center;
-            lockLabel.characterSpacing = 4f;
+            lockLabel.characterSpacing = 3f;
 
             // ---- text -----------------------------------------------------
-            TMP_Text title = AddText(badge, "Title", ReadableName(moduleId), SizeBadgeTitle,
+            RectTransform textCol = NewRect("Text", badge);
+            LayoutElement tcl = textCol.gameObject.AddComponent<LayoutElement>();
+            tcl.flexibleWidth = 1f;
+
+            VerticalLayoutGroup tv = textCol.gameObject.AddComponent<VerticalLayoutGroup>();
+            tv.spacing = 2f;
+            tv.childControlWidth = true;
+            tv.childControlHeight = true;
+            tv.childForceExpandWidth = true;
+            tv.childForceExpandHeight = false;
+            tv.childAlignment = TextAnchor.MiddleLeft;
+
+            TMP_Text title = AddText(textCol, "Title", ReadableName(moduleId), SizeBadgeTitle,
                                      TextPrimary, FontStyles.Bold);
-            title.alignment = TextAlignmentOptions.Center;
 
-            TMP_Text subtitle = AddText(badge, "Subtitle", "", SizeCaption, TextSecondary);
-            subtitle.alignment = TextAlignmentOptions.Center;
-            subtitle.enableWordWrapping = true;
-            Fixed(subtitle.rectTransform, 46f);
+            TMP_Text status = AddText(textCol, "Status", "0 of 0 outcomes", SizeCaption, TextSecondary);
 
-            TMP_Text status = AddText(badge, "Status", "0 of 0 outcomes", SizeCaption, TextSecondary);
-            status.alignment = TextAlignmentOptions.Center;
+            Slider bar = MakeBar(textCol, "ProgressBar", AccentBar);
 
-            Slider bar = MakeBar(badge, "ProgressBar", AccentBar);
+            // The unit title lives on the module header row in the list below, where there is room
+            // for it. Kept as an empty object so CompetencyBadgeView's Subtitle reference is still
+            // satisfied and you can switch it back on if you want it here instead.
+            TMP_Text subtitle = AddText(textCol, "Subtitle", "", 1f, TextSecondary);
+            subtitle.gameObject.SetActive(false);
 
             // ---- wiring ---------------------------------------------------
             CompetencyBadgeView view = badge.gameObject.AddComponent<CompetencyBadgeView>();
@@ -387,7 +417,7 @@ namespace CircuitCrafter.Assessment.EditorTools
 
             LayoutElement le = area.gameObject.AddComponent<LayoutElement>();
             le.flexibleHeight = 1f;
-            le.minHeight = 220f;
+            le.minHeight = 420f;
 
             RectTransform viewport = NewRect("Viewport", area);
             Stretch(viewport, 10f);
@@ -478,7 +508,7 @@ namespace CircuitCrafter.Assessment.EditorTools
                                         out Button export, out TMP_Text exportStatus)
         {
             RectTransform footer = NewRect("Footer", parent);
-            Fixed(footer, 64f);
+            Fixed(footer, 56f);
 
             HorizontalLayoutGroup h = footer.gameObject.AddComponent<HorizontalLayoutGroup>();
             h.spacing = 14f;
@@ -506,7 +536,7 @@ namespace CircuitCrafter.Assessment.EditorTools
         private static CompetencyModuleHeaderView BuildModuleHeaderPrefab()
         {
             RectTransform root = NewRect("CompetencyModuleHeaderRow", null);
-            AddImage(root, new Color32(0x2C, 0x39, 0xAE, 0xFF));
+            AddImage(root, new Color32(0x3B, 0x4C, 0xC6, 0xFF));
             AddTopEdge(root, 3f);
             Fixed(root, 72f);
 
@@ -528,9 +558,9 @@ namespace CircuitCrafter.Assessment.EditorTools
             LayoutElement tle = unitTitle.gameObject.AddComponent<LayoutElement>();
             tle.flexibleWidth = 1f;
 
-            TMP_Text summary = AddText(pad, "Summary", "0 of 0", SizeBody, TextSecondary);
-            Width(summary.rectTransform, 150f);
-            summary.alignment = TextAlignmentOptions.Right;
+            TMP_Text summary = AddText(pad, "Summary", "0 of 0 competent", SizeBody, TextSecondary);
+            Width(summary.rectTransform, 230f);
+            summary.alignment = TextAlignmentOptions.MidlineRight;
 
             Slider bar = MakeBar(pad, "ProgressBar", AccentBar);
             Width(bar.GetComponent<RectTransform>(), 220f);
@@ -558,8 +588,8 @@ namespace CircuitCrafter.Assessment.EditorTools
         private static CompetencyOutcomeRowView BuildOutcomeRowPrefab()
         {
             RectTransform root = NewRect("CompetencyOutcomeRow", null);
-            AddImage(root, new Color32(0x1E, 0x2A, 0x86, 0xFF));
-            Fixed(root, 62f);
+            AddImage(root, new Color32(0x2B, 0x3A, 0xA8, 0xFF));
+            Fixed(root, 58f);
 
             RectTransform pad = NewRect("Pad", root);
             Stretch(pad);
@@ -584,18 +614,22 @@ namespace CircuitCrafter.Assessment.EditorTools
             tle.flexibleWidth = 1f;
 
             TMP_Text status = AddText(pad, "Status", "Not attempted", SizeCaption, TextSecondary);
-            Width(status.rectTransform, 190f);
+            Width(status.rectTransform, 170f);
+
+            // BEFORE the bar, not after it. CompetencyOutcomeRowView writes a whole phrase here -
+            // "2 of 2 evidenced" - not the bare "2/2" this column was sized for, and a right-aligned
+            // label overflows LEFTWARD, which put it on top of the bar. Ordering it ahead of the bar
+            // means even a longer phrase has nothing but empty padding to grow into.
+            TMP_Text evidence = AddText(pad, "Evidence", "0 of 0 evidenced", SizeCaption, TextSecondary);
+            Width(evidence.rectTransform, 210f);
+            evidence.alignment = TextAlignmentOptions.MidlineRight;
 
             Slider bar = MakeBar(pad, "EvidenceBar", AccentBar);
             Width(bar.GetComponent<RectTransform>(), 150f);
 
-            TMP_Text evidence = AddText(pad, "Evidence", "0/0", SizeCaption, TextSecondary);
-            Width(evidence.rectTransform, 80f);
-            evidence.alignment = TextAlignmentOptions.Right;
-
             TMP_Text best = AddText(pad, "BestScore", "", SizeCaption, TextSecondary);
-            Width(best.rectTransform, 110f);
-            best.alignment = TextAlignmentOptions.Right;
+            Width(best.rectTransform, 130f);
+            best.alignment = TextAlignmentOptions.MidlineRight;
 
             CompetencyOutcomeRowView view = root.gameObject.AddComponent<CompetencyOutcomeRowView>();
             var so = new SerializedObject(view);
@@ -687,7 +721,13 @@ namespace CircuitCrafter.Assessment.EditorTools
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.raycastTarget = false;
             text.enableWordWrapping = false;
-            text.overflowMode = TextOverflowModes.Overflow;
+
+            // Ellipsis, never Overflow. With Overflow a label whose text is wider than its layout
+            // slot simply keeps drawing past both edges, straight over whatever is beside it -
+            // which is how "2 of 2 evidenced" ended up printed across the middle of the progress
+            // bar next to it. Ellipsis clips it to its own slot instead, so a too-narrow column
+            // looks like a too-narrow column rather than like a broken one.
+            text.overflowMode = TextOverflowModes.Ellipsis;
 
             if (TMP_Settings.defaultFontAsset != null) text.font = TMP_Settings.defaultFontAsset;
 

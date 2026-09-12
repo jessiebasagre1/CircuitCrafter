@@ -170,6 +170,33 @@ namespace CircuitCrafter.Repair
 
         private IEnumerator LeaveAfterDelay()
         {
+            // In an assessment there IS no hub, so "job done" means the next ticket rather than a
+            // trip back to an assignment sheet. Handled here rather than in a second component
+            // because the hard part - deciding the job is actually done - is this one's, and a
+            // parallel detector would be a second opinion free to disagree with it.
+            if (COC4AssessmentRun.IsActive)
+            {
+                Debug.Log($"[AutoReturnToHub] Job done on '{RepairTicketMode.ActiveTicketId}' ({trigger}) - " +
+                          $"assessment {COC4AssessmentRun.Progress}, advancing.", this);
+
+                if (delaySeconds > 0f) yield return new WaitForSeconds(delaySeconds);
+
+                if (leavingDialog != null && DialogManager.Instance != null)
+                    DialogManager.Instance.ShowDialog(leavingDialog);
+
+                if (waitForDialogToClose && DialogManager.Instance != null)
+                    while (DialogManager.Instance.IsDialogOpen) yield return null;
+
+                PlayerInputLock.ReleaseAll();
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+                // CompleteCurrentTicket consumes RepairTicketMode itself, exactly as the hub does
+                // on a normal run, then loads the next site or the results scene.
+                COC4AssessmentRun.CompleteCurrentTicket(gaveUp: false);
+                yield break;
+            }
+
             Debug.Log($"[AutoReturnToHub] Job done on '{RepairTicketMode.ActiveTicketId}' ({trigger}) - returning to '{hubSceneName}'.", this);
 
             if (delaySeconds > 0f) yield return new WaitForSeconds(delaySeconds);

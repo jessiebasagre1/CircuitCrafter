@@ -3,36 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\editor\\competencyscreenbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{87CEA5B4-ABCF-9DE5-77C4-FB708E29C100}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\competencyscreenbuilder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\coc4assessment\\coc4assessmentreportview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc4assessment\\coc4assessmentreportview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\core\\competencybadgeview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\core\\competencybadgeview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc4assessment\\coc4assessmenthud.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc4assessment\\coc4assessmenthud.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\core\\competencyledger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\core\\competencyledger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc4assessment\\coc4assessmentlauncher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc4assessment\\coc4assessmentlauncher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\ui\\taskwaypointarrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\taskwaypointarrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\02story_completion\\storycompletetrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\02story_completion\\storycompletetrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\common\\quiz\\quizmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\common\\quiz\\quizmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\common\\quiz\\quiztrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\common\\quiz\\quiztrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc4assessment\\coc4assessmentrun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc4assessment\\coc4assessmentrun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,106 +26,56 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "CompetencyBadgeView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\CompetencyBadgeView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\Core\\CompetencyBadgeView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\CompetencyBadgeView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\Core\\CompetencyBadgeView.cs",
-              "ViewState": "AgIAAMQAAAAAAAAAAAAIwNIAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T13:25:42.756Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "CompetencyScreenBuilder.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\CompetencyScreenBuilder.cs",
-              "RelativeDocumentMoniker": "Assets\\Editor\\CompetencyScreenBuilder.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Editor\\CompetencyScreenBuilder.cs",
-              "RelativeToolTip": "Assets\\Editor\\CompetencyScreenBuilder.cs",
-              "ViewState": "AgIAADMDAAAAAAAAAAAIwEEDAAAVAAAAAAAAAA==",
+              "Title": "COC4AssessmentReportView.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentReportView.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentReportView.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentReportView.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentReportView.cs",
+              "ViewState": "AgIAAFIBAAAAAAAAAAAAAF4BAAAsAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T13:25:30.23Z",
+              "WhenOpened": "2026-09-12T11:08:29.069Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "CompetencyLedger.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\CompetencyLedger.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\Core\\CompetencyLedger.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\CompetencyLedger.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\Core\\CompetencyLedger.cs",
-              "ViewState": "AgIAAMYBAAAAAAAAAAAAANQBAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:54:42.739Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "COC2AssessmentManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "ViewState": "AgIAALICAAAAAAAAAAAqwMUCAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:20:14.124Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "StoryCompleteTrigger.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
-              "RelativeToolTip": "Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
-              "ViewState": "AgIAAFYBAAAAAAAAAAAAAF8BAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:17:46.418Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "QuizManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Common\\Quiz\\QuizManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Common\\Quiz\\QuizManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Common\\Quiz\\QuizManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Common\\Quiz\\QuizManager.cs",
-              "ViewState": "AgIAAOUAAAAAAAAAAAAAAPgAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:17:36.045Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "QuizTrigger.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Common\\Quiz\\QuizTrigger.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Common\\Quiz\\QuizTrigger.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Common\\Quiz\\QuizTrigger.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Common\\Quiz\\QuizTrigger.cs",
-              "ViewState": "AgIAAFcBAAAAAAAAAAAAAGoBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:17:28.344Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "TaskWaypointArrow.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "RelativeToolTip": "Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "ViewState": "AgIAAPYCAAAAAAAAAAAqwAUDAAAjAAAAAAAAAA==",
+              "Title": "COC4AssessmentRun.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
+              "ViewState": "AgIAAH0BAAAAAAAAAAAAAJABAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-11T12:17:19.103Z"
+              "WhenOpened": "2026-09-12T11:08:27.041Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "COC4AssessmentHud.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentHud.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentHud.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentHud.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentHud.cs",
+              "ViewState": "AgIAAKIAAAAAAAAAAAAAALUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-12T11:08:24.935Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "COC4AssessmentLauncher.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentLauncher.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentLauncher.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentLauncher.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentLauncher.cs",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAAAGkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-12T11:08:21.797Z"
             }
           ]
         }

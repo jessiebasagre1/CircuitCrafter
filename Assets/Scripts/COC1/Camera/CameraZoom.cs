@@ -1,19 +1,57 @@
 using UnityEngine;
 
+/// <summary>
+/// Scroll to zoom, drag to pan, on a station close-up camera.
+///
+/// ATTACH THIS TO: the camera (or the rig object the camera is a child of) at each station.
+///
+/// IT WORKS IN THE CAMERA'S OWN AXES, and that is the whole design.
+///
+/// The first version zoomed along the parent's -Y and panned in the parent's XZ plane. That is
+/// correct for exactly one mounting - a camera pointing straight down at something flat, which is
+/// how COC1's motherboard station sits - and silently wrong for every other. Point the rig
+/// horizontally, at a tower lying on its side, and parent-Y becomes a sideways axis: the scroll
+/// wheel slides the camera across the scene instead of moving it closer, and the pan throws away
+/// the component that would have moved across the screen and keeps the one along the view, so
+/// dragging zooms. The controls appear to have swapped places. Nothing errors, because nothing is
+/// wrong with the maths - it is being applied to the wrong axes.
+///
+/// So the view axis is read ONCE from where the camera is actually looking, and zoom and pan are
+/// tracked as a distance along it and an offset across it. A rig can then be mounted at any angle
+/// - overhead, horizontal, tilted over a bench - and scroll always means closer, drag always means
+/// sideways. A camera pointing straight down behaves exactly as it did before, because for that
+/// mounting the old axes and the new ones are the same ones.
+///
+/// ZOOM AND PAN ARE STORED SEPARATELY rather than both being read back out of localPosition. Two
+/// clamps sharing one position is how a pan can quietly eat into the zoom range and leave the
+/// camera unable to come all the way back in.
+/// </summary>
 public class CameraZoom : MonoBehaviour
 {
     [Header("Zoom")]
     public float zoomSpeed = 2f;        // scroll wheel (PC)
     public float pinchZoomSpeed = 0.01f; // two-finger pinch (mobile)
+
+    [Tooltip("Closest the camera may come to its starting position, along the direction it looks.")]
     public float minDistance = 0.2f;
+
+    [Tooltip("Furthest the camera may travel toward the subject from its starting position.")]
     public float maxDistance = 2f;
+
     public float minZoomSpeed = 0.5f;   // sensitivity slider range
     public float maxZoomSpeed = 5f;
 
     [Header("Pan")]
     public float panSpeed = 0.002f;     // tuned for raw pixel deltas, works for mouse and touch alike
-    public float panLimitX = 0.3f;      // max horizontal shift from the starting view
-    public float panLimitZ = 0.3f;      // max forward/back shift from the starting view
+
+    [Tooltip("Max shift left/right from the starting view, in metres.")]
+    public float panLimitX = 0.3f;
+
+    [Tooltip("Max shift up/down from the starting view, in metres.\n\nStill called Z so your existing " +
+             "Inspector values survive. It used to mean the parent's Z axis; it now means the " +
+             "camera's own up/down, which is what it was always being used for on an overhead rig.")]
+    public float panLimitZ = 0.3f;
+
     public float minPanSpeed = 0.0005f; // sensitivity slider range
     public float maxPanSpeed = 0.01f;
     public bool invertPanX = false;
@@ -25,6 +63,17 @@ public class CameraZoom : MonoBehaviour
     public KeyCode resetPanKey = KeyCode.R; // PC only - call ResetPan() from a UI button for mobile
 
     private Vector3 startPos;
+
+    // The rig's three axes, in PARENT space, captured at Start before anything has moved it.
+    // Parent space rather than world space because localPosition is what gets written, and rebuilding
+    // it from world vectors every frame would drift on a rig whose parent is itself animated.
+    private Vector3 axisForward = Vector3.down;
+    private Vector3 axisRight = Vector3.right;
+    private Vector3 axisUp = Vector3.forward;
+
+    // Where the camera is, expressed the way the controls think about it.
+    private float zoomDistance;         // along axisForward, 0 = the starting position
+    private Vector2 panOffset;          // across it, in (right, up)
 
     // Pan state
     private bool trackingPointer;
@@ -40,6 +89,38 @@ public class CameraZoom : MonoBehaviour
         LoadSettings();
         startPos = transform.localPosition;
         if (cam == null) cam = Camera.main;
+
+        CaptureAxes();
+    }
+
+    /// <summary>
+    /// Reads the rig's own axes into parent space, once.
+    ///
+    /// Once, and not per frame, because zooming MOVES the camera - and on a rig that also rotates to
+    /// follow its subject, re-reading the axis mid-gesture would make each frame's movement relative
+    /// to the pose the previous frame produced. That compounds into a slow curve away from the
+    /// subject that feels like drift and is very hard to see in the Inspector.
+    /// </summary>
+    private void CaptureAxes()
+    {
+        Transform parent = transform.parent;
+
+        if (parent != null)
+        {
+            axisForward = parent.InverseTransformDirection(transform.forward);
+            axisRight = parent.InverseTransformDirection(transform.right);
+            axisUp = parent.InverseTransformDirection(transform.up);
+        }
+        else
+        {
+            axisForward = transform.forward;
+            axisRight = transform.right;
+            axisUp = transform.up;
+        }
+
+        axisForward = axisForward.sqrMagnitude > 0.0001f ? axisForward.normalized : Vector3.down;
+        axisRight = axisRight.sqrMagnitude > 0.0001f ? axisRight.normalized : Vector3.right;
+        axisUp = axisUp.sqrMagnitude > 0.0001f ? axisUp.normalized : Vector3.forward;
     }
 
     void Update()
@@ -51,6 +132,16 @@ public class CameraZoom : MonoBehaviour
         {
             ResetPan();
         }
+    }
+
+    /// <summary>Rebuilds localPosition from the two things the controls actually track. One place
+    /// writes the transform, so zoom and pan can never disagree about where the camera is.</summary>
+    private void Apply()
+    {
+        transform.localPosition = startPos
+                                + axisForward * zoomDistance
+                                + axisRight * panOffset.x
+                                + axisUp * panOffset.y;
     }
 
     void HandleZoom()
@@ -83,18 +174,17 @@ public class CameraZoom : MonoBehaviour
             zoomDelta = scroll * zoomSpeed;
         }
 
-        if (zoomDelta != 0f)
-        {
-            Vector3 pos = transform.localPosition;
-            pos += Vector3.down * zoomDelta;
-            pos.y = Mathf.Clamp(pos.y, startPos.y - maxDistance, startPos.y - minDistance);
-            transform.localPosition = pos;
-        }
+        if (zoomDelta == 0f) return;
+
+        // Positive delta - scroll up, or fingers spreading - means CLOSER, and closer is along the
+        // direction the camera is pointing. That sentence is the entire fix.
+        zoomDistance = Mathf.Clamp(zoomDistance + zoomDelta, minDistance, maxDistance);
+        Apply();
     }
 
     void HandlePan()
     {
-        // A part drag (world or hotbar) owns input right now — never pan while it's active.
+        // A part drag (world or hotbar) owns input right now - never pan while it's active.
         if (DragController.Instance != null && DragController.Instance.IsDragging)
         {
             trackingPointer = false;
@@ -151,29 +241,49 @@ public class CameraZoom : MonoBehaviour
         if (invertPanX) delta.x = -delta.x;
         if (invertPanY) delta.y = -delta.y;
 
-        // Move opposite the drag using the camera's own right/up, so left/right and
-        // up/down always match the screen no matter how this rig is rotated.
-        Vector3 worldMove = (-transform.right * delta.x) + (-transform.up * delta.y);
+        // Negated so the subject follows the finger: dragging right sends the camera left, which
+        // reads as pushing the machine to the right. Screen X and Y map straight onto the camera's
+        // own right and up, so this holds at any mounting angle without a special case.
+        panOffset.x = Mathf.Clamp(panOffset.x - delta.x * panSpeed, -panLimitX, panLimitX);
+        panOffset.y = Mathf.Clamp(panOffset.y - delta.y * panSpeed, -panLimitZ, panLimitZ);
 
-        Vector3 localMove = transform.parent != null
-            ? transform.parent.InverseTransformVector(worldMove)
-            : worldMove;
-        localMove.y = 0f; // never fight with the zoom clamp above
-
-        Vector3 pos = transform.localPosition + localMove * panSpeed;
-
-        pos.x = Mathf.Clamp(pos.x, startPos.x - panLimitX, startPos.x + panLimitX);
-        pos.z = Mathf.Clamp(pos.z, startPos.z - panLimitZ, startPos.z + panLimitZ);
-
-        transform.localPosition = pos;
+        Apply();
     }
 
     public void ResetPan()
     {
-        Vector3 pos = transform.localPosition;
-        pos.x = startPos.x;
-        pos.z = startPos.z;
-        transform.localPosition = pos;
+        panOffset = Vector2.zero;
+        Apply();
+    }
+
+    /// <summary>Puts the camera back exactly where it was mounted - pan AND zoom. Worth wiring to a
+    /// station's On Enter, so a learner who left the last station zoomed into a corner does not
+    /// arrive at the next one already lost.</summary>
+    public void ResetView()
+    {
+        panOffset = Vector2.zero;
+        zoomDistance = 0f;
+        Apply();
+    }
+
+    /// <summary>
+    /// Prints which way this rig thinks it is pointing. The fastest way to answer "why does scroll
+    /// move sideways here" - the Forward line is the direction the scroll wheel pushes the camera,
+    /// and it should be the direction the camera visibly looks.
+    /// </summary>
+    [ContextMenu("Report camera axes")]
+    public void LogAxes()
+    {
+        if (!Application.isPlaying) CaptureAxes();
+
+        Debug.LogWarning(
+            "[CameraZoom] '" + name + "' axes, in " +
+            (transform.parent != null ? "'" + transform.parent.name + "' space" : "world space") + ":" +
+            "\n    Forward (scroll moves the camera this way) : " + axisForward +
+            "\n    Right   (drag moves the camera this way)   : " + axisRight +
+            "\n    Up                                          : " + axisUp +
+            "\n    Zoom " + zoomDistance.ToString("F3") + " of [" + minDistance + ", " + maxDistance + "]" +
+            ", pan " + panOffset + " of [" + panLimitX + ", " + panLimitZ + "]", this);
     }
 
     // ---- Settings UI hooks ----

@@ -66,14 +66,31 @@ namespace CircuitCrafter.Repair
         [Tooltip("The on-screen POWER button.")]
         [SerializeField] private Button powerButton;
 
-        [Tooltip("Optional. A second way to leave, for mobile. Pressing E does the same thing.")]
+        [Tooltip("The mobile way out. SHOWN ONLY ON A TOUCH DEVICE - on a PC the learner presses E, " +
+                 "which RepairStation already handles, and an on-screen Close beside it is a second " +
+                 "control for a job that already has one.")]
         [SerializeField] private Button closeButton;
 
         [Tooltip("The station this screen belongs to. Assigned so the Step back button leaves the station properly - hiding the panel alone would leave the learner staring at the monitor camera with nothing on it.")]
         [SerializeField] private RepairStation monitorStation;
 
-        [Tooltip("Optional. A black Image covering the screen while the machine is off, so the monitor looks dead rather than blank. Same trick OSInstallView uses with its reboot overlay.")]
+        [Tooltip("Optional. A black Image covering the screen while the machine is off, so the monitor looks dead rather than blank. Same trick OSInstallView uses with its reboot overlay.\n\nIgnored when Boot Screen below is assigned - that has its own screen-off panel.")]
         [SerializeField] private GameObject screenOffOverlay;
+
+        [Tooltip("OPTIONAL, and the whole point of it is that it is optional.\n\n" +
+                 "Assign a PCBootScreenView and the power-on plays as a machine actually starting: " +
+                 "dead screen, vendor splash, POST with the memory counting up, then beep codes or " +
+                 "Windows loading, then the desktop - the same staged treatment COC1's OS install " +
+                 "gets.\n\n" +
+                 "Leave it empty and this station behaves exactly as it did before, printing the " +
+                 "whole thing to Screen Text. Sites can be upgraded one at a time, and a site you " +
+                 "never touch keeps working.")]
+        [SerializeField] private PCBootScreenView bootScreen;
+
+        [Tooltip("Shows the Close button in the Editor regardless of platform, so the mobile layout " +
+                 "can be checked without a build. No effect in a real build. Same switch " +
+                 "SettingsPanel uses for its mobile-only rows.")]
+        [SerializeField] private bool showCloseButtonInEditor = true;
 
         [Header("Site")]
         [Tooltip("The coordinator for this site. Found automatically if left empty.")]
@@ -86,6 +103,29 @@ namespace CircuitCrafter.Repair
         [Tooltip("Seconds between printed lines. Cosmetic, like OSInstallManager's staged progress - but it is what makes pressing POWER feel like starting a computer rather than opening a menu.")]
         [Min(0f)]
         [SerializeField] private float secondsPerLine = 0.45f;
+
+        [Header("Timing - Boot Screen only")]
+        [Tooltip("How long the vendor splash sits there before POST starts.")]
+        [Min(0f)]
+        [SerializeField] private float splashSeconds = 1.6f;
+
+        [Tooltip("How long the memory count takes to run up. A real POST counts for a few seconds; " +
+                 "much longer than this and the learner starts clicking things.")]
+        [Min(0.1f)]
+        [SerializeField] private float memoryCountSeconds = 1.4f;
+
+        [Tooltip("How long Windows takes to load on a machine that passes POST.")]
+        [Min(0f)]
+        [SerializeField] private float osLoadSeconds = 3f;
+
+        [Tooltip("Installed memory, in MB, shown counting up during POST. Cosmetic - nothing checks " +
+                 "it against the RAM actually in the machine.")]
+        [Min(256)]
+        [SerializeField] private int installedMemoryMb = 8192;
+
+        [Tooltip("The line under the vendor logo. The two keys a technician actually presses at this " +
+                 "moment, which is why it is worth showing at all.")]
+        [SerializeField] private string splashHint = "DEL = SETUP      F12 = Boot Menu";
 
         [Header("Service call cost")]
         [Tooltip("Seconds the first power-on adds to the service call. Confirming the reported fault is real work and should cost something.")]
@@ -211,10 +251,26 @@ namespace CircuitCrafter.Repair
             if (panelRoot != null) panelRoot.SetActive(true);
             SetScreenOff(true);
 
-            if (screenText != null)
+            if (bootScreen != null) bootScreen.ShowOff();
+            else if (screenText != null)
                 screenText.text = "The computer is switched off.\n\nPress POWER to start it.";
 
-            if (powerButton != null) powerButton.interactable = !running;
+            ApplyPlatformVisibility();
+            SetPowerButtonShown(!running);
+
+            // Says it opened, and in which mode.
+            //
+            // Until now this method only spoke up when it REFUSED, so a monitor that showed nothing
+            // produced exactly the same Console output as one that worked - and "nothing in the log"
+            // could equally mean Open() was never wired to the station's On Enter at all. One line
+            // tells those two apart, which is the whole difference between a wiring problem and a
+            // drawing problem.
+            Debug.Log("[PCPowerStation] Monitor opened in " +
+                      (bootScreen != null ? "BOOT SCREEN mode" : "text mode") +
+                      (powerButton != null
+                          ? ". Power button '" + powerButton.name + "' is " +
+                            (powerButton.gameObject.activeInHierarchy ? "visible" : "INACTIVE - the learner cannot press it")
+                          : ". NO Power Button assigned - there is nothing to press."), this);
         }
 
         /// <summary>Wired to the monitor station's On Exit.</summary>
@@ -279,7 +335,7 @@ namespace CircuitCrafter.Repair
         private IEnumerator BootSequence()
         {
             running = true;
-            if (powerButton != null) powerButton.interactable = false;
+            SetPowerButtonShown(false);
 
             SetScreenOff(false);
 
@@ -299,6 +355,135 @@ namespace CircuitCrafter.Repair
                 else afterBoot.Add(fault);
             }
 
+            // ONE snapshot, TWO ways of showing it. Both presentations are handed the same three
+            // lists and neither decides anything; whichever runs, Finish() is called with the same
+            // verdict it would have got before the boot screen existed.
+            if (bootScreen != null)
+                yield return StagedBoot(blocking, afterBoot, allFaults);
+            else
+                yield return TextBoot(blocking, afterBoot, allFaults);
+
+            Finish(blocking.Count == 0 && afterBoot.Count == 0);
+        }
+
+        // ==================================================================
+        // Presentation 1 - the staged boot screen
+        // ==================================================================
+
+        /// <summary>
+        /// The machine starting up, in the phases a real one goes through.
+        ///
+        /// The PHASE ORDER is the teaching here. A learner watching this can tell a machine that
+        /// never posts from one that posts and then hangs, and from one that reaches the desktop and
+        /// is still wrong - three different faults that a single block of text renders identically.
+        /// </summary>
+        private IEnumerator StagedBoot(List<TicketFault> blocking, List<TicketFault> afterBoot,
+                                       List<TicketFault> allFaults)
+        {
+            // The light first, and on its own. On a machine that never displays anything this is the
+            // only evidence the button did something, and "the fans spin and the light is on but the
+            // screen stays black" is a symptom the learner has to be able to SEE, not read.
+            bootScreen.ShowPowerOn();
+            yield return new WaitForSeconds(0.45f);
+
+            bootScreen.ShowSplash(splashHint);
+            yield return new WaitForSeconds(splashSeconds);
+
+            bootScreen.ShowPost();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("CircuitCrafter BIOS  v1.0");
+            sb.AppendLine("=========================================");
+            sb.AppendLine();
+            bootScreen.SetPostText(sb.ToString());
+            yield return Wait();
+
+            // The memory count, run up rather than printed. This is the single most recognisable
+            // thing a POST screen does and it costs one coroutine.
+            float elapsed = 0f;
+            while (elapsed < memoryCountSeconds)
+            {
+                elapsed += Time.deltaTime;
+                int counted = Mathf.Clamp(
+                    Mathf.RoundToInt(installedMemoryMb * (elapsed / memoryCountSeconds) / 64f) * 64,
+                    0, installedMemoryMb);
+                bootScreen.SetMemoryCount(counted, installedMemoryMb);
+                yield return null;
+            }
+            bootScreen.SetMemoryCount(installedMemoryMb, installedMemoryMb);
+            yield return Wait();
+
+            sb.AppendLine("Detecting IDE / SATA devices ...");
+            bootScreen.SetPostText(sb.ToString());
+            yield return Wait();
+            yield return Wait();
+
+            if (blocking.Count > 0)
+            {
+                // Symptoms only, exactly as before. The named list is still reserved for a boot that
+                // gets far enough that naming things gives nothing away.
+                var symptom = new StringBuilder();
+                foreach (var fault in blocking) symptom.AppendLine(fault.BootSymptom);
+
+                bootScreen.ShowPostFailure(symptom.ToString().TrimEnd(), blocking[0].BeepCode);
+                yield break;
+            }
+
+            foreach (var fault in allFaults)
+            {
+                if (!fault.PreventsBoot) continue;
+                sb.AppendLine(Pad(fault.VerificationLabel) + "OK");
+                bootScreen.SetPostText(sb.ToString());
+                yield return Wait();
+            }
+
+            bootScreen.PlayPostOkBeep();
+            yield return Wait();
+
+            bootScreen.ShowOsLoading("Starting Windows");
+
+            // Ticked the same way OSInstallManager ticks its own stages, so a COC1 install panel
+            // dropped in here fills its bar exactly as it does during the install.
+            float loaded = 0f;
+            while (loaded < osLoadSeconds)
+            {
+                loaded += Time.deltaTime;
+                bootScreen.SetProgress(loaded / osLoadSeconds);
+                yield return null;
+            }
+            bootScreen.SetProgress(1f);
+
+            bool allClear = afterBoot.Count == 0;
+
+            if (!allClear)
+            {
+                var symptom = new StringBuilder();
+                symptom.AppendLine("Windows started, but the machine is still not working properly.");
+                symptom.AppendLine();
+                foreach (var fault in afterBoot) symptom.AppendLine(fault.BootSymptom);
+
+                bootScreen.ShowBootedWithFaults(symptom.ToString().TrimEnd());
+                yield break;
+            }
+
+            // Same two endings the text version has, and for the same reason: a working machine
+            // with no recorded cause is not a finished job, and saying "the ticket can be closed"
+            // there would send the learner back to a ticket that is still In Progress.
+            bootScreen.ShowDesktop(RepairTicketMode.IsDiagnosed
+                ? "The computer starts normally and passes every check.\nThe ticket can be closed."
+                : "The computer starts normally and passes every check.\n\n" +
+                  "The job is NOT finished - you have not recorded what was wrong with it. " +
+                  "Open Diagnose and name the cause. The repair you have already made will count " +
+                  "the moment you do.");
+        }
+
+        // ==================================================================
+        // Presentation 2 - the original text screen, unchanged
+        // ==================================================================
+
+        private IEnumerator TextBoot(List<TicketFault> blocking, List<TicketFault> afterBoot,
+                                     List<TicketFault> allFaults)
+        {
             var sb = new StringBuilder();
             sb.AppendLine("CircuitCrafter BIOS  v1.0");
             sb.AppendLine("=========================================");
@@ -389,7 +574,11 @@ namespace CircuitCrafter.Repair
                 Print(sb);
             }
 
-            Finish(allClear);
+            // No Finish() here any more. BootSequence calls it once, after whichever presentation
+            // ran - leaving the old call in place as well would record every text-mode power-on
+            // twice, which would double the service call's time cost and log two assessment
+            // attempts for one press.
+            yield break;
         }
 
         // ==================================================================
@@ -443,7 +632,7 @@ namespace CircuitCrafter.Repair
             }
 
             running = false;
-            if (powerButton != null) powerButton.interactable = true;
+            SetPowerButtonShown(true);
 
             ShowDialogFor(allClear);
 
@@ -519,8 +708,54 @@ namespace CircuitCrafter.Repair
             return new WaitForSeconds(secondsPerLine);
         }
 
+        /// <summary>
+        /// Shows or hides the POWER button outright, rather than grey-ing it out.
+        ///
+        /// A disabled-but-visible button during the boot is an invitation: the learner sees POWER,
+        /// presses it, nothing happens, and presses it harder. Worse, it keeps a game control on
+        /// screen during the one stretch where the whole point is that they are watching a machine
+        /// rather than operating a menu - and a real PC's power button does not light up asking to
+        /// be pressed again while it is starting.
+        ///
+        /// Interactable is set as well as the visibility, so a button parented somewhere this cannot
+        /// hide still refuses the press.
+        /// </summary>
+        private void SetPowerButtonShown(bool shown)
+        {
+            if (powerButton == null) return;
+
+            powerButton.interactable = shown;
+            if (powerButton.gameObject.activeSelf != shown) powerButton.gameObject.SetActive(shown);
+        }
+
+        /// <summary>
+        /// The Close button is a touch control and nothing else.
+        ///
+        /// On a PC, E leaves the station - RepairStation reads it directly while the learner is
+        /// inside - so an on-screen Close is a second control for a job that already has one, and
+        /// two ways out of the same panel is how a learner ends up unsure which one they are meant
+        /// to use. A phone has no E, so there it is the only way out and has to be there.
+        /// </summary>
+        private void ApplyPlatformVisibility()
+        {
+            if (closeButton == null) return;
+
+            bool show = Application.isMobilePlatform;
+
+#if UNITY_EDITOR
+            if (showCloseButtonInEditor) show = true;
+#endif
+
+            if (closeButton.gameObject.activeSelf != show) closeButton.gameObject.SetActive(show);
+        }
+
         private void SetScreenOff(bool off)
         {
+            // The boot screen owns the dead-monitor look when there is one. Two black overlays
+            // fighting over the same screen is how you get a splash that never appears because
+            // something else is still drawn on top of it.
+            if (bootScreen != null) return;
+
             if (screenOffOverlay != null) screenOffOverlay.SetActive(off);
         }
 

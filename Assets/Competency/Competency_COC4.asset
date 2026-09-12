@@ -17,10 +17,31 @@ MonoBehaviour:
   unitTitle: Maintain and repair computer systems and networks
   outcomes:
   - code: LO1
-    title: Diagnose and repair system faults
-    criteria: Identifies the probable cause from reported symptoms, applies the correct
-      repair, and verifies it.
+    title: Plan and prepare for maintenance
+    criteria: 
     evidenceTaskIds:
-    - ticket_coc1_ram_missing
-    - ticket_coc1_psu_cable_fix
+    - coc4_ticket_1
+    - coc4_ticket_2
+    - coc4_ticket_3
+    - coc4_ticket_4
+    - coc4_ticket_5
+    requiredEvidenceCount: 3
+  - code: LO2
+    title: Diagnose faults in computer systems
+    criteria: 
+    evidenceTaskIds:
+    - coc4_identify
     requiredEvidenceCount: 0
+  - code: LO3
+    title: Repair and replace defective parts
+    criteria: 
+    evidenceTaskIds:
+    - coc4_repair
+    requiredEvidenceCount: 0
+  - code: LO4
+    title: Test and verify the repair
+    criteria: 
+    evidenceTaskIds:
+    - coc4_verify
+    - coc4_all_resolved
+    requiredEvidenceCount: 1

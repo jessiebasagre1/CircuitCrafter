@@ -353,7 +353,17 @@ namespace CircuitCrafter.Settings
             if (helpBody != null)
                 bodyHeight = helpBody.GetPreferredValues(body, innerWidth, 0f).y;
 
-            float titleHeight = helpTitle != null ? 24f : 0f;
+            // The title is MEASURED, not assumed.
+            //
+            // This used to be a flat 24, which is about right for the size the title happened to be
+            // when the panel was first built and wrong for every other size. Raise the fonts for
+            // readability and the bubble keeps reserving 24 pixels for a line that now needs 30, so
+            // the title and the first line of the body sit on top of each other - and it looks like
+            // the font change broke the help, rather than a hard-coded number a long way from it.
+            float titleHeight = helpTitle != null
+                ? helpTitle.GetPreferredValues(helpTitle.text, innerWidth, 0f).y
+                : 0f;
+
             float height = bubblePadding.y * 2f + titleHeight + bodyHeight;
 
             helpBubble.sizeDelta = new Vector2(bubbleWidth, height);

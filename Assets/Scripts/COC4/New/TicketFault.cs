@@ -51,6 +51,7 @@ namespace CircuitCrafter.Repair
             BootsButFaulty = 2,
         }
 
+
         [Header("Scoping")]
         [Tooltip("Only inject this fault when this ticket is the active one, e.g. \"ticket_coc1_ram_missing\". Leave blank ONLY if this scene will never host another ticket - a repair site shared by two tickets would otherwise show both faults at once.")]
         [SerializeField] protected string activeForTicketId = "";
@@ -69,6 +70,13 @@ namespace CircuitCrafter.Repair
         [Tooltip("Leave on Auto unless this particular fault is unusual. Auto means: a missing part or an unplugged cable stops the machine booting, a network fault does not.")]
         [SerializeField] private BootImpact bootImpact = BootImpact.Auto;
 
+        [Tooltip("Optional. The beep pattern a real machine makes for this kind of failure, e.g. " +
+                 "\"1 long, 3 short\" for a memory error. Shown and PLAYED on the boot screen.\n\n" +
+                 "This is a symptom, not the cause, so it gives nothing away - a learner still has " +
+                 "to know what the pattern means, which is exactly the point. Only used when this " +
+                 "fault stops the machine booting; leave it blank for a steady tone.")]
+        [SerializeField] private string beepCode = "";
+
         /// <summary>True when this fault belongs to the ticket the player is
         /// currently out on. Decided in Awake, before anything reads it.</summary>
         public bool IsActiveForThisVisit { get; private set; }
@@ -86,6 +94,9 @@ namespace CircuitCrafter.Repair
         /// <summary>What the learner sees on the monitor. Never names the fault.</summary>
         public string BootSymptom =>
             string.IsNullOrWhiteSpace(bootSymptom) ? DefaultBootSymptom : bootSymptom;
+
+        /// <summary>The beep pattern for this fault, or empty for a steady tone.</summary>
+        public string BeepCode => beepCode == null ? "" : beepCode.Trim();
 
         /// <summary>Overridden per fault kind. A subclass knows what its own kind of
         /// breakage looks like from the front of the machine; the Inspector field
