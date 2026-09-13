@@ -182,6 +182,25 @@ namespace CSSSimulation.Networking
         /// <summary>True while the player is holding an end of this cable.</summary>
         public bool IsHeld { get; private set; }
 
+        /// <summary>
+        /// The cable end currently in the player's hand, across every CableCarrier in the scene, or
+        /// null.
+        ///
+        /// There are two of these and neither is a singleton, so a shared Plug or Drop button would
+        /// otherwise have to search the scene every frame to find out which cable it is meant to act
+        /// on. PickUp and the three ways of letting go already know, so they say so here.
+        /// </summary>
+        public static CableCarrier Held { get; private set; }
+
+        /// <summary>
+        /// True when the held plug is close enough to a socket it is allowed to go into.
+        ///
+        /// Exactly what the Update loop tests before it offers the plug key, so a Plug button
+        /// driven by this cannot be offered at a moment when pressing it would be refused - and
+        /// cannot be missing at a moment when it would work.
+        /// </summary>
+        public bool SocketInReach { get { return IsHeld && SocketInRange() != null; } }
+
         /// <summary>True once BOTH ends are plugged in correctly.</summary>
         public bool IsComplete { get; private set; }
 
@@ -421,6 +440,10 @@ namespace CSSSimulation.Networking
         // Picking it up
         // ------------------------------------------------------------------
 
+        // Picking the cable up to run it is a pickup, so it answers to G and to the Pick Up
+        // button. Plugging the ends in afterwards is handled by the sockets, not by this key.
+        protected override InputChannel DefaultChannel { get { return InputChannel.Pickup; } }
+
         public override void Interact()
         {
             if (IsComplete)
@@ -470,6 +493,8 @@ namespace CSSSimulation.Networking
             }
 
             IsHeld = true;
+
+            Held = this;
             Carried = end;
 
             // The PLUG is parented to the hand, not the cable. The cable stays where it is and the
@@ -603,6 +628,8 @@ namespace CSSSimulation.Networking
             end.transform.SetParent(cableRoot, true);
 
             IsHeld = false;
+
+            if (Held == this) Held = null;
             Carried = null;
             Highlight(null);
 
@@ -620,6 +647,7 @@ namespace CSSSimulation.Networking
                 // two ends would only be an extra walk back to it.
                 Carried = next;
                 IsHeld = true;
+                Held = this;
                 Carried.transform.SetParent(holdAnchor, true);
                 Carried.transform.localPosition = holdOffset;
                 Carried.transform.localRotation = Quaternion.Euler(holdRotation);
@@ -638,6 +666,7 @@ namespace CSSSimulation.Networking
         {
             IsComplete = true;
             IsHeld = false;
+            if (Held == this) Held = null;
             Carried = null;
             Highlight(null);
             SetEndsLocked(true);
@@ -666,6 +695,7 @@ namespace CSSSimulation.Networking
             Carried.RebuildRope();
             Carried = null;
             IsHeld = false;
+            if (Held == this) Held = null;
             Highlight(null);
 
             SetHint(cableName + " put down.");

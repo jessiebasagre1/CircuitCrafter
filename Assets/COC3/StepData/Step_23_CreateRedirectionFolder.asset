@@ -20,7 +20,7 @@ MonoBehaviour:
     On the server, create the folder that will receive the
     redirected data and type its full path.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

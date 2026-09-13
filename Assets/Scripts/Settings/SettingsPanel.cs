@@ -112,8 +112,8 @@ namespace CircuitCrafter.Settings
         [SerializeField] private Toggle invertStationDragToggle;
 
         [Header("Display")]
-        [SerializeField] private Slider uiScaleSlider;
-        [SerializeField] private TMP_Text uiScaleValue;
+        // Interface Size was here. Removed at Harold's request - see the note on
+        // GameSettings.UiScale for why the setting still exists in code and is pinned to 1.
         [SerializeField] private Toggle reduceMotionToggle;
         [SerializeField] private Toggle performanceModeToggle;
 
@@ -159,7 +159,6 @@ namespace CircuitCrafter.Settings
             WireSlider(stationPanSlider, v => GameSettings.StationPan01 = v);
             WireSlider(stationZoomSlider, v => GameSettings.StationZoom01 = v);
             WireSlider(masterVolumeSlider, v => GameSettings.MasterVolume01 = v);
-            WireSlider(uiScaleSlider, v => GameSettings.UiScale = v);
 
             WireToggle(invertLookYToggle, v => GameSettings.InvertLookY = v);
             WireToggle(invertStationDragToggle, v => GameSettings.InvertStationDrag = v);
@@ -444,14 +443,6 @@ namespace CircuitCrafter.Settings
             SetSlider(stationPanSlider, GameSettings.StationPan01, stationPanValue, Percent);
             SetSlider(stationZoomSlider, GameSettings.StationZoom01, stationZoomValue, Percent);
             SetSlider(masterVolumeSlider, GameSettings.MasterVolume01, masterVolumeValue, Percent);
-
-            if (uiScaleSlider != null)
-            {
-                uiScaleSlider.minValue = 0.85f;
-                uiScaleSlider.maxValue = 1.6f;
-                uiScaleSlider.SetValueWithoutNotify(GameSettings.UiScale);
-            }
-            if (uiScaleValue != null) uiScaleValue.text = $"{GameSettings.UiScale:0.00}x";
 
             SetToggle(invertLookYToggle, GameSettings.InvertLookY);
             SetToggle(invertStationDragToggle, GameSettings.InvertStationDrag);

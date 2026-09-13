@@ -150,9 +150,21 @@ namespace CircuitCrafter.Settings
             AudioListener.volume = GameSettings.MasterVolume01;
         }
 
+        /// <summary>False until the loop below has run once and put every canvas back to its
+        /// authored reference resolution. Only then is skipping safe.</summary>
+        private bool restoredAuthoredResolutions;
+
         private void ApplyInterfaceScale()
         {
             float scale = GameSettings.UiScale;
+
+            // Pinned to 1 now that the Interface Size control is gone, so there is nothing to do -
+            // and doing nothing is not the same as doing it with scale 1. A canvas this method has
+            // already divided keeps its divided reference resolution until something puts it back;
+            // returning early would leave a learner who had set 1.6 stuck at 1.6 for the rest of
+            // the session. So the loop still runs once and restores every authored value, and only
+            // then stops being worth running.
+            if (Mathf.Approximately(scale, 1f) && restoredAuthoredResolutions) return;
 
             foreach (var scaler in FindAll<CanvasScaler>())
             {
@@ -171,6 +183,7 @@ namespace CircuitCrafter.Settings
                     // AUTHORED value, never the current one, is what keeps this
                     // idempotent across repeated applies.
                     scaler.referenceResolution = authored / Mathf.Max(0.1f, scale);
+                    restoredAuthoredResolutions = true;
                 }
                 else if (scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize)
                 {

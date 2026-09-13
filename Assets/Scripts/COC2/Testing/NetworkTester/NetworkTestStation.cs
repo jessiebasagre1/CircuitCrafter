@@ -117,6 +117,12 @@ namespace CSSSimulation.Networking
         // leave can be E to walk straight back in, and the station looks like it ignored the press.
         int exitedOnFrame = -10;
 
+        // The mirror of exitedOnFrame, and needed for the same reason in the other direction. E
+        // enters the tester, and GetKeyDown stays true for the whole frame - so this component's
+        // own Update, running later in that same frame, saw the press again and left immediately.
+        // The player pressed E once and never got in.
+        int enteredOnFrame = -10;
+
         void Awake()
         {
             Instance = this;
@@ -192,6 +198,9 @@ namespace CSSSimulation.Networking
         void Update()
         {
             if (!InTesterView) return;
+
+            // Just arrived, and the key that brought us here is still being reported this frame.
+            if (Time.frameCount - enteredOnFrame <= 1) return;
 
             // Read before the IsTesting guard, so a press during the test is answered with a
             // reason instead of being swallowed by an early return.
@@ -336,6 +345,8 @@ namespace CSSSimulation.Networking
 
         void SetTesterViewActive(bool active)
         {
+            if (active) enteredOnFrame = Time.frameCount;
+
             InTesterView = active;
 
             if (playerCamera != null) playerCamera.gameObject.SetActive(!active);

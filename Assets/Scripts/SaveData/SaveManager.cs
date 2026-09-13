@@ -157,6 +157,18 @@ public class SaveManager : MonoBehaviour
 
     public bool IsModeCompleted(string modeId) => completedModes.Contains(modeId);
 
+    /// <summary>How many COCs this learner has finished. This - not whether a save FILE exists - is
+    /// what "there is something to continue" means now.
+    ///
+    /// A save file exists the moment anyone plays for a second, because every checkpoint writes
+    /// one. Under the always-fresh rule that file holds nothing a learner would recognise as
+    /// progress; the only thing in it worth returning to is which COCs they have unlocked.</summary>
+    public int CompletedModeCount => completedModes.Count;
+
+    /// <summary>True when at least one COC has been completed, so at least one BEYOND the first is
+    /// unlocked and the mode picker has something Continue can usefully show.</summary>
+    public bool HasUnlockedProgress => completedModes.Count > 0;
+
     /// <summary>Sets CurrentGameMode to modeId, but ONLY if it isn't already
     /// set — never overwrites a value SelectMode() already assigned this
     /// session. Call this once near the start of each gameplay scene (e.g.
@@ -196,32 +208,137 @@ public class SaveManager : MonoBehaviour
     /// their own Start().</summary>
     public bool IsContinuingSave { get; private set; }
 
-    /// <summary>Call this from a mode button on the main menu. Automatically
-    /// continues if this mode already has saved progress, otherwise starts
-    /// fresh.</summary>
+    /// <summary>
+    /// The two ways Story Mode progress can work. ONE setting decides both halves of it - what
+    /// picking a COC does, and when Continue appears - because they are the same decision.
+    ///
+    /// Split across two switches they can be set to contradict each other, and the contradiction is
+    /// invisible until a learner meets it: a Continue button offering to resume a COC that starts
+    /// fresh the moment they pick it. Anything with a coherent and an incoherent setting should not
+    /// be able to be set to the incoherent one.
+    ///
+    /// Serialised by NUMBER, so append new values, never insert.
+    /// </summary>
+    public enum StoryProgressMode
+    {
+        /// <summary>THE ORIGINAL BEHAVIOUR. Picking a COC resumes wherever that learner stopped -
+        /// parts still seated, tasks still ticked - and Continue appears as soon as a save file
+        /// exists, which is a few seconds into the first session.
+        ///
+        /// Right for a game somebody plays at home over several evenings.</summary>
+        ResumeSavedProgress = 0,
+
+        /// <summary>THE CLASSROOM BEHAVIOUR. Picking a COC always starts it from the beginning,
+        /// from either button. Only which COCs have been COMPLETED survives, so the unlock chain
+        /// still works, and Continue appears only once at least one COC has been earned.
+        ///
+        /// Right for a lesson: a CSS procedure is performed start to finish, and a learner resuming
+        /// halfway through an assembly has practised the second half twice and the first half
+        /// never.</summary>
+        AlwaysStartCocFresh = 1,
+    }
+
+    [Header("Story mode")]
+    [Tooltip("How Story Mode progress behaves. This one setting drives BOTH what picking a COC does " +
+             "and when the Continue button is shown - see the enum's own notes for each option.")]
+    [SerializeField] private StoryProgressMode progressMode = StoryProgressMode.AlwaysStartCocFresh;
+
+    /// <summary>Which progress rule this build uses. Read it rather than keeping a second copy of
+    /// the decision anywhere else.</summary>
+    public StoryProgressMode ProgressMode => progressMode;
+
+    /// <summary>
+    /// Whether the Continue button has anything worth offering.
+    ///
+    /// The question is genuinely different per mode, which is why it lives here beside the setting
+    /// rather than in the menu: resuming asks "is there a saved run", starting fresh asks "has
+    /// anything been unlocked". Same button, two different meanings of the same word.
+    /// </summary>
+    public bool ShouldShowContinue =>
+        progressMode == StoryProgressMode.ResumeSavedProgress
+            ? HasSaveFile()
+            : HasUnlockedProgress;
+
+    /// <summary>Call this from a mode button on the main menu.</summary>
     public void SelectMode(string modeId, string sceneName)
     {
-        if (GetSavedGameMode() == modeId)
+        CurrentGameMode = modeId;
+
+        // WHICH COCs ARE UNLOCKED SURVIVES; HOW FAR INTO ONE THEY GOT DOES NOT.
+        //
+        // completedModes is not touched here - it is the record the unlock chain reads, and it is
+        // written by MarkModeCompleted when a learner finishes a COC. Everything else in the save
+        // is per-attempt working state, and ClearProgressKeepingUnlocks drops it so the fresh run
+        // cannot inherit a half-assembled PC from the last one.
+        if (progressMode == StoryProgressMode.AlwaysStartCocFresh)
         {
-            CurrentGameMode = modeId;
+            ClearProgressKeepingUnlocks();
+
+            pendingNewGame = true;
+            IsContinuingSave = false;
+        }
+        else if (GetSavedGameMode() == modeId)
+        {
             pendingLoadExisting = true;
             IsContinuingSave = true;
         }
         else
         {
-            CurrentGameMode = modeId;
             pendingNewGame = true;
             IsContinuingSave = false;
         }
+
         SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// Throws away the working state of whatever attempt came before, and keeps the list of
+    /// completed COCs.
+    ///
+    /// DELIBERATELY NOT DeleteSave(). That one clears completedModes as well, which would relock
+    /// every COC the learner had earned - the exact opposite of what Continue is now for. The
+    /// difference between the two is the whole point of this feature, so they are separate methods
+    /// with names that say which is which.
+    /// </summary>
+    public void ClearProgressKeepingUnlocks()
+    {
+        var kept = new List<string>(completedModes);
+
+        if (File.Exists(SavePath)) File.Delete(SavePath);
+
+        completedModes = kept;
+
+        // Written straight back out, so the unlock record survives even if the learner closes the
+        // game during the COC they just started. Deleting the file and waiting for the next
+        // checkpoint would put every earned unlock one crash away from being lost.
+        SaveCheckpoint();
+
+        Debug.Log($"[SaveManager] Story progress reset for a fresh run. " +
+                  $"{completedModes.Count} completed COC(s) kept: {string.Join(", ", completedModes)}");
     }
 
     public bool HasSaveFile() => File.Exists(SavePath);
 
+    /// <summary>
+    /// The destructive wipe: every COC relocked, every task cleared, and COC4's tickets reset.
+    ///
+    /// COC4's ticket progress lives in its OWN per-profile file, not in savegame.json, so deleting
+    /// this one never touched it. That is exactly right for Continue - a learner returning to the
+    /// hub should find the jobs they closed still closed - and exactly wrong here, where New Game
+    /// means start the whole course over and a "new" COC4 that opens with three tickets already
+    /// resolved is not a new anything.
+    ///
+    /// Done HERE rather than in the New Game button, because all four callers of this method are
+    /// wipe-everything actions - New Game and three Reset Progress buttons - and a fifth added
+    /// later would have to remember. The one place that already means "erase it all" is the place
+    /// that should know what "all" includes.
+    /// </summary>
     public void DeleteSave()
     {
         if (File.Exists(SavePath)) File.Delete(SavePath);
         completedModes.Clear();
+
+        TicketSessionState.ResetForActiveProfile();
     }
 
     // ---------------------------------------------------------------

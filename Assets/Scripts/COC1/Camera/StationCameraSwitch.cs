@@ -134,8 +134,100 @@ public class StationCameraSwitch : MonoBehaviour
         Cursor.lockState = useStation ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible = useStation;
 
-        foreach (var obj in enableOnStationView) obj.SetActive(useStation);
-        foreach (var obj in disableOnStationView) obj.SetActive(!useStation);
+        ApplyStationViewObjects(useStation);
+    }
+
+    // ------------------------------------------------------------------
+    // Enable/Disable On Station View
+    // ------------------------------------------------------------------
+
+    /// <summary>What each listed object was doing when the close-up opened, so leaving can put it
+    /// back to that rather than to an assumption.</summary>
+    private bool[] enableWasActive;
+    private bool[] disableWasActive;
+    private bool statesCaptured;
+
+    /// <summary>
+    /// Turns the listed objects on and off with the station view, and PUTS THEM BACK on the way out.
+    ///
+    /// It used to be two lines:
+    ///
+    ///     foreach (var obj in enableOnStationView)  obj.SetActive(useStation);
+    ///     foreach (var obj in disableOnStationView) obj.SetActive(!useStation);
+    ///
+    /// which reads as symmetric and is not. Leaving a station did not restore anything - it ASSERTED
+    /// a state it had never observed, switching every Disable On Station View object ON whether or
+    /// not it had been on beforehand. Anything legitimately hidden for other reasons came back the
+    /// first time the learner stepped into a close-up and out again: the assessment HUD appearing
+    /// mid Story Mode is exactly that, and the mobile controls on a desktop build would be next.
+    ///
+    /// So the states are captured on the way in and restored on the way out. An object hidden
+    /// before the station stays hidden after it; one that was visible comes back. The station no
+    /// longer has an opinion about anything except while the learner is standing in it - which is
+    /// the only window it knows anything about.
+    /// </summary>
+    private void ApplyStationViewObjects(bool useStation)
+    {
+        if (useStation)
+        {
+            CaptureStationViewStates();
+
+            SetAll(enableOnStationView, true);
+            SetAll(disableOnStationView, false);
+            return;
+        }
+
+        // Never entered - initial setup, or a forced exit before any entry. Nothing was captured,
+        // so there is nothing to restore and the safest thing is to leave every object exactly as
+        // the scene author left it.
+        if (!statesCaptured) return;
+
+        RestoreAll(enableOnStationView, enableWasActive);
+        RestoreAll(disableOnStationView, disableWasActive);
+        statesCaptured = false;
+    }
+
+    private void CaptureStationViewStates()
+    {
+        // Only the FIRST call of an entry captures. ToggleCamera can be called again with the same
+        // value - a re-entry, a settings apply - and a second capture would record the states this
+        // method itself just imposed, which is how a restore ends up restoring nothing.
+        if (statesCaptured) return;
+
+        enableWasActive = Snapshot(enableOnStationView);
+        disableWasActive = Snapshot(disableOnStationView);
+        statesCaptured = true;
+    }
+
+    private static bool[] Snapshot(GameObject[] objects)
+    {
+        if (objects == null) return new bool[0];
+
+        var states = new bool[objects.Length];
+        for (int i = 0; i < objects.Length; i++)
+            states[i] = objects[i] != null && objects[i].activeSelf;
+
+        return states;
+    }
+
+    /// <summary>Null-guarded, unlike the two lines this replaced. An empty slot in either array
+    /// threw inside ToggleCamera, which aborted the switch halfway and left the learner in a
+    /// half-entered station with a NullReferenceException and no camera.</summary>
+    private static void SetAll(GameObject[] objects, bool active)
+    {
+        if (objects == null) return;
+
+        foreach (var obj in objects)
+            if (obj != null && obj.activeSelf != active) obj.SetActive(active);
+    }
+
+    private static void RestoreAll(GameObject[] objects, bool[] states)
+    {
+        if (objects == null || states == null) return;
+
+        for (int i = 0; i < objects.Length && i < states.Length; i++)
+            if (objects[i] != null && objects[i].activeSelf != states[i])
+                objects[i].SetActive(states[i]);
     }
 
     private void OnTriggerEnter(Collider other)

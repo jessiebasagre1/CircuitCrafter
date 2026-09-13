@@ -116,6 +116,10 @@ namespace CSSSimulation.Networking
             if (trigger != null) trigger.enabled = available;
         }
 
+        // The finished cable goes into the player's pocket, so it answers to G and to the
+        // Pick Up button rather than to the station control.
+        protected override InputChannel DefaultChannel { get { return InputChannel.Pickup; } }
+
         public override void Interact()
         {
             // EVERY refusal says why now.

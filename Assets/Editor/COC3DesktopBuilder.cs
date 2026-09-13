@@ -48,6 +48,7 @@ public class COC3DesktopBuilder : EditorWindow
     private const string UserGroup = "STUDENTS";
     private const string ShareName = "SharedDocs";
     private const string MinPassword = "8";
+    private const string RedirectShare = "Redirected";
 
     private RectTransform parent;
     private COC3WinTheme theme;
@@ -165,11 +166,7 @@ public class COC3DesktopBuilder : EditorWindow
             var zoneWiz = BuildNewZoneWizard(windows, t, error);
 
             var dnsGate = dns.GetComponentInChildren<WinTaskGate>(true);
-            if (dnsGate != null)
-            {
-                dnsGate.openOnSuccess = zoneWiz;
-                dnsGate.openOnSuccessParent = dns;
-            }
+            if (dnsGate != null) Opens(dnsGate, zoneWiz, "NewZoneWizard", dns);
 
             var clientSys = BuildClientSystemProperties(windows, t);
             BuildClientDomainJoin(windows, t, clientSys, error);
@@ -192,20 +189,29 @@ public class COC3DesktopBuilder : EditorWindow
             // Cancelling out of STUDENTS Properties should return to the console it was opened
             // from, and that console does not exist yet when the group dialog is built.
             var groupGate = newGroup.GetComponentInChildren<WinTaskGate>(true);
-            if (groupGate != null) groupGate.openOnSuccessParent = adUsers;
+            if (groupGate != null) Opens(groupGate, groupProps, "GroupProperties", adUsers);
 
             var minPwd = BuildMinPasswordDialog(windows, t, error);
-            BuildGpoEditor(windows, t, error, minPwd);
+
+            // ---- LO3, steps 19, 23, 25 and 29 ----
+            var redirProps = BuildRedirectionProperties(windows, t, error);
+            BuildGpoEditor(windows, t, error, minPwd, redirProps);
+
+            var share = BuildShareWindow(windows, t);
+            BuildRunDialog(windows, t, error, share);
+
+            var session = BuildRdpSession(windows, t);
+            BuildRemoteDesktop(windows, t, error, session);
 
             // The guarded Properties button on Ethernet Properties opens TCP/IPv4.
             var ethGate = ethProps.GetComponentInChildren<WinTaskGate>(true);
-            if (ethGate != null)
-            {
-                ethGate.openOnSuccess = tcpip;
-                ethGate.openOnSuccessParent = ethProps;
-            }
+            if (ethGate != null) Opens(ethGate, tcpip, "TcpIpv4", ethProps);
 
             BuildShell(design, t, desktop);
+
+            // LAST child of DesignRoot, so it draws in front of the windows. Everything on it has
+            // Raycast Target off, so it covers nothing you can click.
+            string wired = BuildInstructionBanner(design, t);
 
             desktop.windows = new System.Collections.Generic.List<WinWindow>(
                 root.GetComponentsInChildren<WinWindow>(true));
@@ -226,11 +232,14 @@ public class COC3DesktopBuilder : EditorWindow
                      "    set_computer_name, set_ipv4, install_roles, promote_dc,\n" +
                      "    create_scope, create_reverse_zone, join_domain,\n" +
                      "    create_user_folder, create_user_account, add_group_member,\n" +
-                     "    set_password_policy, share_folder, set_folder_permissions\n\n" +
+                     "    set_password_policy, share_folder, set_folder_permissions,\n" +
+                     "    test_unc_path, create_redirection_folder,\n" +
+                     "    set_redirection_target, rdp_connect\n\n" +
                      "  Internal guards (leave unbound):\n" +
                      "    open_ipv4, open_new_zone, open_folder_properties,\n" +
                      "    open_new_user, open_new_group, create_group,\n" +
-                     "    open_password_policy\n\n" +
+                     "    open_password_policy, open_redirection_properties\n\n" +
+                     "  " + wired + "\n\n" +
                      "Next: add COC3StepGate to your Managers object and bind the graded action ids " +
                      "to your step ids. See the guide.";
         }
@@ -244,6 +253,56 @@ public class COC3DesktopBuilder : EditorWindow
             Undo.CollapseUndoOperations(group);
             Repaint();
         }
+    }
+
+    /// <summary>
+    /// A strip across the top of the desktop carrying the current step's instruction.
+    ///
+    /// WHY IT IS NEEDED
+    /// The desktop is drawn in FRONT of the step panels - it has to be, or its icons and buttons
+    /// are unreachable. That also hides the instruction strip the Step Panel Converter puts across
+    /// the top of each panel, so the learner is looking at a dialog with no statement of what it
+    /// wants. Typing the user name into the Group name box is the obvious result, and it is not a
+    /// mistake worth setting anyone up for.
+    ///
+    /// Filled by COC3StepGate every frame from the step's own instruction label, so there is no
+    /// second copy of the text to keep in step.
+    /// </summary>
+    private static string BuildInstructionBanner(RectTransform design, COC3WinTheme t)
+    {
+        var banner = Rect(design, "InstructionBanner", 0f, 0f, DW, 96f);
+
+        var backing = banner.gameObject.AddComponent<Image>();
+        backing.color = new Color(0.04f, 0.06f, 0.09f, 0.9f);
+        backing.raycastTarget = false;      // never swallow a click meant for a window
+
+        var label = Label(banner, t, "Text", 28f, 10f, DW - 56f, 76f, "");
+        label.color = Color.white;
+        label.fontSize = 16f;
+        label.raycastTarget = false;
+
+        Box(banner, "Rule", 0f, 95f, DW, 1f, new Color(1f, 1f, 1f, 0.25f)).raycastTarget = false;
+
+        // Wired here rather than left for you to drag: a banner that exists and is not connected
+        // looks exactly like a banner that is broken.
+        var gate = FindAnyStepGate();
+
+        if (gate == null)
+            return "Instruction banner built - no COC3StepGate in the scene, so drag it onto " +
+                   "Desktop Instruction yourself.";
+
+        Undo.RecordObject(gate, UndoLabel);
+        gate.desktopInstruction = label;
+        EditorUtility.SetDirty(gate);
+
+        return "Instruction banner wired to COC3StepGate on '" + gate.gameObject.name + "'.";
+    }
+
+    /// <summary>Inactive included - a Managers object switched off in the editor is still the
+    /// one that will run.</summary>
+    private static COC3StepGate FindAnyStepGate()
+    {
+        return Object.FindAnyObjectByType<COC3StepGate>(FindObjectsInactive.Include);
     }
 
     // ==================================================================
@@ -280,7 +339,7 @@ public class COC3DesktopBuilder : EditorWindow
         clock.fontSize = 13f;
 
         // --- start menu ---
-        var menu = Rect(root, "StartMenu", 0f, DH - 44f - 440f, 320f, 440f);
+        var menu = Rect(root, "StartMenu", 0f, DH - 44f - 540f, 340f, 540f);
         var menuBg = menu.gameObject.AddComponent<Image>();
         menuBg.color = Hex(0x2B2B2B);
 
@@ -296,6 +355,11 @@ public class COC3DesktopBuilder : EditorWindow
         StartEntry(menu, t, "Entry_ADUC", 8f, 312f,
                    "Active Directory Users and Computers", "AdUsersComputers");
         StartEntry(menu, t, "Entry_GPO", 8f, 356f, "Group Policy Management", "GpoEditor");
+
+        // The two the tests are run from. Both belong on CLIENT01 - see the note in the guide.
+        StartEntry(menu, t, "Entry_Run", 8f, 400f, "Run", "RunDialog");
+        StartEntry(menu, t, "Entry_RDP", 8f, 444f,
+                   "Remote Desktop Connection", "RemoteDesktopConnection");
 
         desktop.startMenu = menu.gameObject;
         menu.gameObject.SetActive(false);
@@ -1290,8 +1354,7 @@ public class COC3DesktopBuilder : EditorWindow
 
         var gate = Gate(root, "Gate_Properties", "open_folder_properties", properties, error);
         gate.mustBeOn = new[] { users };
-        gate.openOnSuccess = folderProperties;
-        gate.openOnSuccessParent = win;
+        Opens(gate, folderProperties, "FolderProperties", win);
         gate.missingOptionMessage =
             "Select the folder you want to inspect first.\n\n" +
             "If " + UsersFolder + " is not listed, it has not been created yet - use New folder.";
@@ -1318,19 +1381,35 @@ public class COC3DesktopBuilder : EditorWindow
 
         Label(body, t, "Note", 0f, 88f, w, 80f,
               "Windows creates the folder inside the location shown above, so type the folder's " +
-              "own name here and not the whole path. The result is " + DataRoot + @"\" +
-              UsersFolder + " - which is what the job order asks for.").color = t.disabledText;
+              "own name here and not the whole path. " + DataRoot + @"\" + UsersFolder +
+              " holds the user data; " + DataRoot + @"\" + RedirectShare +
+              " receives the redirected documents later on.").color = t.disabledText;
 
         var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
-        var gate = Gate(root, "Gate_NewFolder", "create_user_folder", ok, error);
-        gate.closeOnSuccess = win;
-        gate.fields = new[] { Req(folderName, UsersFolder, "folder name") };
-        gate.wrongValueMessage =
+        // TWO GATES ON ONE OK, each scoped to its own step.
+        //
+        // A technician creates both folders in the same dialog, because Windows has one New Folder
+        // dialog. Building a second window that looked identical and wanted a different word would
+        // teach the learner that the simulation has two of something real life has one of.
+        string wrongName =
             "That is not a valid {field}.\n\n" +
             "A folder name cannot contain a backslash - the box above already says where the " +
             "folder is being created. Check the job order for the name it asks for.";
+
+        var users = Gate(root, "Gate_NewFolder_Users", "create_user_folder", ok, error);
+        users.requiredStepId = "Step_12_CreateUserFolders";
+        users.closeOnSuccess = win;
+        users.fields = new[] { Req(folderName, UsersFolder, "folder name") };
+        users.wrongValueMessage = wrongName;
+
+        var redirected = Gate(root, "Gate_NewFolder_Redirected", "create_redirection_folder",
+                              ok, error);
+        redirected.requiredStepId = "Step_23_CreateRedirectionFolder";
+        redirected.closeOnSuccess = win;
+        redirected.fields = new[] { Req(folderName, RedirectShare, "folder name") };
+        redirected.wrongValueMessage = wrongName;
 
         CancelButton(body, t, win, w, h - 34f);
         return win;
@@ -1385,6 +1464,10 @@ public class COC3DesktopBuilder : EditorWindow
         Label(list.transform, t, "Obj2", 10f, 64f, listW, 22f, "Domain Admins");
         Label(list.transform, t, "Obj3", 10f, 90f, listW, 22f, "Domain Users");
 
+        Label(list.transform, t, "PropsHint", 10f, 176f, listW, 60f,
+              "Select an object and press Properties to open its property sheet - that is where a " +
+              "group's members are managed.").color = t.disabledText;
+
         var userRow = Label(list.transform, t, "Obj_User", 10f, 116f, listW, 22f, SampleUser);
         var groupRow = Label(list.transform, t, "Obj_Group", 10f, 142f, listW, 22f, UserGroup);
 
@@ -1397,6 +1480,20 @@ public class COC3DesktopBuilder : EditorWindow
         var newGroupBtn = COC3WinWidgets.Button(body, t, "NewGroup", 140f, h - 34f, 130f,
                                                 t.buttonSize.y, "New > Group");
 
+        // Reopens the group's property sheet without recreating the group.
+        //
+        // Until now the ONLY route to STUDENTS Properties was the OK on New Object - Group, so
+        // closing the sheet meant making the group again to get back to it - and if that one gate
+        // failed there was no route at all. This is a plain WinButtonAction: it finds the window by
+        // id through WinDesktop rather than holding a reference, so it works even when a serialized
+        // reference has gone missing.
+        var propsBtn = COC3WinWidgets.Button(body, t, "GroupProps", 280f, h - 34f, 160f,
+                                             t.buttonSize.y, "Properties");
+        var pa = Undo.AddComponent<WinButtonAction>(propsBtn.gameObject);
+        pa.action = WinButtonAction.Kind.OpenWindow;
+        pa.windowId = "GroupProperties";
+        pa.window = win;
+
         string wrongContainer =
             "Select the container the new object belongs in.\n\n" +
             "Domain accounts and groups live in the Users container. An object created in " +
@@ -1405,14 +1502,12 @@ public class COC3DesktopBuilder : EditorWindow
 
         var userGate = Gate(root, "Gate_NewUser", "open_new_user", newUserBtn, error);
         userGate.mustBeOn = new[] { usersNode };
-        userGate.openOnSuccess = newUser;
-        userGate.openOnSuccessParent = win;
+        Opens(userGate, newUser, "NewUserDialog", win);
         userGate.missingOptionMessage = wrongContainer;
 
         var groupGate = Gate(root, "Gate_NewGroup", "open_new_group", newGroupBtn, error);
         groupGate.mustBeOn = new[] { usersNode };
-        groupGate.openOnSuccess = newGroup;
-        groupGate.openOnSuccessParent = win;
+        Opens(groupGate, newGroup, "NewGroupDialog", win);
         groupGate.missingOptionMessage = wrongContainer;
 
         CancelButton(body, t, win, w, h - 34f, "Close");
@@ -1498,8 +1593,13 @@ public class COC3DesktopBuilder : EditorWindow
 
         var gate = Gate(root, "Gate_NewGroup", "create_group", ok, error);
         gate.closeOnSuccess = win;
-        gate.openOnSuccess = groupProperties;
+        Opens(gate, groupProperties, "GroupProperties", null);
         gate.fields = new[] { Req(groupName, UserGroup, "group name") };
+        gate.wrongValueMessage =
+            "That {field} does not match the job order.\n\n" +
+            "The group is not named after the person in it - it is named after the ROLE, so that " +
+            "the next student inherits the same access by being added to it. The step instruction " +
+            "at the top of the screen names it.";
         gate.mustBeOn = new[] { global, security };
         gate.missingOptionMessage =
             "Choose the group's scope and type.\n\n" +
@@ -1580,11 +1680,11 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     private static WinWindow BuildGpoEditor(Transform parent, COC3WinTheme t, GameObject error,
-                                            WinWindow minPassword)
+                                            WinWindow minPassword, WinWindow redirection)
     {
         var body = COC3WinWidgets.Window(parent, t, "GpoEditor",
                                          "Group Policy Management Editor",
-                                         840f, 480f, out RectTransform root);
+                                         860f, 560f, out RectTransform root);
         var win = Register(root, "GpoEditor", "Group Policy Management Editor");
         FixCloseGlyph(root);
 
@@ -1609,6 +1709,17 @@ public class COC3DesktopBuilder : EditorWindow
                  "Account Lockout Policy", "gpo_node");
         RadioRow(tree.rectTransform, t, "Node_Kerberos", 86f, 232f, 244f,
                  "Kerberos Policy", "gpo_node");
+
+        // The second half of the tree, and the reason the node is guarded at all. Folder
+        // Redirection lives under USER Configuration - a technician who has just been in Computer
+        // Configuration setting the password policy will look there first and not find it.
+        Label(tree.transform, t, "U1", 16f, 274f, 320f, 22f, "User Configuration");
+        Label(tree.transform, t, "U2", 30f, 298f, 306f, 22f, "Policies");
+        Label(tree.transform, t, "U3", 44f, 322f, 292f, 22f, "Windows Settings");
+        Label(tree.transform, t, "U4", 58f, 346f, 278f, 22f, "Folder Redirection");
+
+        var documentsNode = RadioRow(tree.rectTransform, t, "Node_Documents", 72f, 372f, 258f,
+                                     "Documents", "gpo_node");
 
         // --- policy list ---
         var list = Box(body, "Policies", 350f, 0f, w - 350f, paneHeight, t.fieldBackground);
@@ -1645,12 +1756,22 @@ public class COC3DesktopBuilder : EditorWindow
 
         var gate = Gate(root, "Gate_OpenPolicy", "open_password_policy", minRow, error);
         gate.mustBeOn = new[] { pwdNode };
-        gate.openOnSuccess = minPassword;
-        gate.openOnSuccessParent = win;
+        Opens(gate, minPassword, "MinPasswordDialog", win);
         gate.missingOptionMessage =
             "Select the policy branch in the tree first.\n\n" +
             "Password length lives under Password Policy. Account Lockout Policy governs what " +
             "happens after failed sign-ins, which is a different control.";
+
+        var props = COC3WinWidgets.Button(body, t, "Properties", 0f, h - 34f, 140f,
+                                          t.buttonSize.y, "Properties");
+
+        var redirGate = Gate(root, "Gate_Redirection", "open_redirection_properties", props, error);
+        redirGate.mustBeOn = new[] { documentsNode };
+        Opens(redirGate, redirection, "DocumentsRedirectionProperties", win);
+        redirGate.missingOptionMessage =
+            "Select the policy you want to open.\n\n" +
+            "Folder Redirection is under USER Configuration, not Computer Configuration - it " +
+            "follows the person, not the machine.";
 
         CancelButton(body, t, win, w, h - 34f, "Close");
         return win;
@@ -1930,6 +2051,224 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     // ==================================================================
+    // LO3 - the tests, steps 19, 23, 25 and 29
+    // ==================================================================
+
+    /// <summary>
+    /// The Run box.
+    ///
+    /// Step 19 is a TEST, and a test with no visible result is not a test - so passing it opens the
+    /// share. Typing a path into a labelled box and being told "correct" teaches nothing about
+    /// whether the share works; watching the folder open is the whole point of the exercise.
+    /// </summary>
+    private static WinWindow BuildRunDialog(Transform parent, COC3WinTheme t, GameObject error,
+                                            WinWindow shareWindow)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "RunDialog", "Run",
+                                         540f, 260f, out RectTransform root);
+        var win = Register(root, "RunDialog", "Run");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Label(body, t, "Blurb", 0f, 0f, w, 56f,
+              "Type the name of a program, folder, document, or Internet resource, and Windows " +
+              "will open it for you.");
+
+        var open = COC3WinWidgets.Field(body, t, "Open", 0f, 68f, 60f, w - 70f,
+                                        "Open:", "", "", false);
+
+        Label(body, t, "Note", 0f, 112f, w, 44f,
+              "A share is reached by its UNC path: two backslashes, the server, then the SHARE " +
+              "name - not the folder name on disk.").color = t.disabledText;
+
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+                                       t.buttonSize.x, t.buttonSize.y, "OK", true);
+
+        var gate = Gate(root, "Gate_Run", "test_unc_path", ok, error);
+        gate.requiredStepId = "Step_19_TestClientAccess";
+        gate.closeOnSuccess = win;
+        Opens(gate, shareWindow, "ShareWindow", null);
+        gate.fields = new[] { Req(open, @"\\" + ServerName + @"\" + ShareName, "path") };
+        gate.wrongValueMessage =
+            "Windows cannot find that {field}. Check the spelling and try again.\n\n" +
+            "A UNC path starts with two backslashes, then the server name, then the share.";
+
+        CancelButton(body, t, win, w, h - 34f);
+        return win;
+    }
+
+    /// <summary>What passing step 19 actually looks like: the share, open.</summary>
+    private static WinWindow BuildShareWindow(Transform parent, COC3WinTheme t)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "ShareWindow",
+                                         ShareName + " on " + ServerName,
+                                         620f, 340f, out RectTransform root);
+        var win = Register(root, "ShareWindow", ShareName + " on " + ServerName);
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        var address = Box(body, "AddressBar", 0f, 0f, w, 28f, t.fieldBackground);
+        Label(address.transform, t, "Path", 10f, 0f, w - 20f, 28f,
+              @"\\" + ServerName + @"\" + ShareName);
+
+        var items = Box(body, "Items", 0f, 36f, w, h - 80f, t.fieldBackground);
+        Label(items.transform, t, "Head", 10f, 6f, w - 20f, 22f, "Name").color = t.disabledText;
+        Box(items.transform, "HeadRule", 6f, 30f, w - 12f, 1f, t.separator).raycastTarget = false;
+
+        Label(items.transform, t, "Row1", 10f, 38f, w - 20f, 22f, "Public");
+        Label(items.transform, t, "Row2", 10f, 64f, w - 20f, 22f, UsersFolder);
+
+        Label(items.transform, t, "Note", 10f, 100f, w - 20f, 70f,
+              "The share opened from " + ClientName + ", so the folder is published, the client " +
+              "can reach the server by name, and the permissions let this account in. Test 1 " +
+              "passed.").color = t.disabledText;
+
+        CancelButton(body, t, win, w, h - 34f, "Close");
+        return win;
+    }
+
+    /// <summary>
+    /// Folder Redirection, reached the way Group Policy is actually navigated.
+    ///
+    /// The tree branch matters here. Folder Redirection lives under USER Configuration, and a
+    /// technician who looks for it under Computer Configuration - where they were ten minutes ago
+    /// setting the password policy - will not find it. That is the mistake worth catching, so the
+    /// node is guarded.
+    /// </summary>
+    private static WinWindow BuildRedirectionProperties(Transform parent, COC3WinTheme t,
+                                                        GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "DocumentsRedirectionProperties",
+                                         "Documents Properties",
+                                         640f, 440f, out RectTransform root);
+        var win = Register(root, "DocumentsRedirectionProperties", "Documents Properties");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Tabs(body, t, new[] { "Target", "Settings" }, 0);
+
+        Label(body, t, "Blurb", 0f, 46f, w, 40f,
+              "You can specify the location of the Documents folder.");
+
+        Label(body, t, "SettingLabel", 0f, 92f, 90f, 26f, "Setting:");
+
+        var notConfigured = RadioRow(body, t, "Radio_NotConfigured", 16f, 122f, w - 20f,
+                                     "Not configured", "redir_setting");
+
+        var basic = RadioRow(body, t, "Radio_Basic", 16f, 152f, w - 20f,
+                             "Basic - Redirect everyone's folder to the same location",
+                             "redir_setting");
+
+        RadioRow(body, t, "Radio_Advanced", 16f, 182f, w - 20f,
+                 "Advanced - Specify locations for various user groups", "redir_setting");
+
+        notConfigured.isOn = true;
+
+        Label(body, t, "TargetLabel", 0f, 220f, w, 26f,
+              "Target folder location:  Create a folder for each user under the root path")
+            .color = t.disabledText;
+
+        var rootPath = COC3WinWidgets.Field(body, t, "RootPath", 16f, 252f, 90f, w - 120f,
+                                            "Root Path:", "", "", false);
+
+        Label(body, t, "Note", 16f, 296f, w - 20f, 66f,
+              "A UNC path, not a local one. C:\\ on the client is not C:\\ on the server, so a " +
+              "local path here redirects every user to a folder on their own machine - which is " +
+              "the opposite of what redirection is for.").color = t.disabledText;
+
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+                                       t.buttonSize.x, t.buttonSize.y, "OK", true);
+
+        var gate = Gate(root, "Gate_Redirection", "set_redirection_target", ok, error);
+        gate.requiredStepId = "Step_25_RedirectFoldersTarget";
+        gate.closeOnSuccess = win;
+        gate.mustBeOn = new[] { basic };
+        gate.fields = new[] { Req(rootPath, @"\\" + ServerName + @"\" + RedirectShare, "root path") };
+        gate.missingOptionMessage =
+            "Choose a setting other than 'Not configured'.\n\n" +
+            "Basic redirects everyone to the same root path, and Windows makes a folder per user " +
+            "underneath it. Advanced is for sending different groups to different servers, which " +
+            "this job order does not ask for.";
+
+        CancelButton(body, t, win, w, h - 34f);
+        return win;
+    }
+
+    private static WinWindow BuildRemoteDesktop(Transform parent, COC3WinTheme t, GameObject error,
+                                                WinWindow session)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "RemoteDesktopConnection",
+                                         "Remote Desktop Connection",
+                                         560f, 320f, out RectTransform root);
+        var win = Register(root, "RemoteDesktopConnection", "Remote Desktop Connection");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Label(body, t, "Title", 0f, 0f, w, 28f, "Remote Desktop Connection").fontStyle =
+            FontStyles.Bold;
+
+        var computer = COC3WinWidgets.Field(body, t, "Computer", 0f, 44f, 100f, w - 110f,
+                                            "Computer:", "", "", false);
+
+        COC3WinWidgets.Field(body, t, "UserName", 0f, 84f, 100f, w - 110f,
+                             "User name:", "CSSNCII" + @"\" + SampleUser, "", true);
+
+        Label(body, t, "Note", 0f, 128f, w, 70f,
+              "The server is reached by the static address set at step 3. This works only if " +
+              "Remote Desktop was enabled and this account was listed in Remote Desktop Users - " +
+              "an administrator would get in either way, which is why the test uses " + SampleUser +
+              ".").color = t.disabledText;
+
+        var connect = COC3WinWidgets.Button(body, t, "Connect", PrimaryX(w, t), h - 34f,
+                                            t.buttonSize.x, t.buttonSize.y, "Connect", true);
+
+        var gate = Gate(root, "Gate_Rdp", "rdp_connect", connect, error);
+        gate.requiredStepId = "Step_29_ConnectFromClient";
+        gate.closeOnSuccess = win;
+        Opens(gate, session, "RdpSession", null);
+        gate.fields = new[] { Req(computer, ServerIP, "computer name or address") };
+        gate.wrongValueMessage =
+            "Remote Desktop cannot find {field}.\n\n" +
+            "Check the address against the static configuration on the server.";
+
+        CancelButton(body, t, win, w, h - 34f);
+        return win;
+    }
+
+    private static WinWindow BuildRdpSession(Transform parent, COC3WinTheme t)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "RdpSession",
+                                         ServerName + " - Remote Desktop Connection",
+                                         640f, 360f, out RectTransform root);
+        var win = Register(root, "RdpSession", ServerName + " - Remote Desktop Connection");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        var screen = Box(body, "RemoteScreen", 0f, 0f, w, h - 50f, Hex(0x1E3A5F));
+
+        Label(screen.transform, t, "Line1", 20f, 24f, w - 40f, 28f,
+              "Connected to " + ServerName + " (" + ServerIP + ")").color = Color.white;
+
+        Label(screen.transform, t, "Line2", 20f, 60f, w - 40f, 60f,
+              "Signed in as CSSNCII" + @"\" + SampleUser + ".\n" +
+              "Test 4 passed - the client can administer the server remotely.").color =
+            new Color(0.8f, 0.86f, 0.92f, 1f);
+
+        CancelButton(body, t, win, w, h - 34f, "Disconnect");
+        return win;
+    }
+
+    // ==================================================================
     // Small drawing helpers
     // ==================================================================
 
@@ -1990,6 +2329,21 @@ public class COC3DesktopBuilder : EditorWindow
         gate.mustBeOn = new WinToggle[0];
         gate.mustBeOff = new WinToggle[0];
         return gate;
+    }
+
+    /// <summary>
+    /// Says what a gate opens, by reference AND by id.
+    ///
+    /// The id is the safety net. A cross-window object reference set at build time is silent when
+    /// it comes back empty - the OK is accepted, the dialog closes, and the window that should have
+    /// appeared just does not. An id is text and cannot be dropped, so WinDesktop can still find
+    /// the window at the moment it is wanted.
+    /// </summary>
+    private static void Opens(WinTaskGate gate, WinWindow window, string windowId, WinWindow parent)
+    {
+        gate.openOnSuccess = window;
+        gate.openOnSuccessId = windowId;
+        gate.openOnSuccessParent = parent;
     }
 
     private static WinTaskGate.FieldRequirement Req(TMP_InputField field, string expected,

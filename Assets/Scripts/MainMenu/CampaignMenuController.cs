@@ -100,13 +100,14 @@ public class CampaignMenuController : MonoBehaviour
             return;
         }
 
-        bool hasSave = SaveManager.Instance.HasSaveFile();
-
-        // Continue only ever makes sense if there's something to continue.
-        // New Game no longer depends on hasSave at all -- it's always
-        // available, since clicking it wipes any existing save itself
-        // before popping up mode select.
-        continueButton.gameObject.SetActive(hasSave);
+        // ASKED, NOT DECIDED HERE. SaveManager owns the progress rule, and what Continue means
+        // changes with it: under Resume Saved Progress it asks "is there a saved run", under Always
+        // Start COC Fresh it asks "has any COC been earned". Same button, two meanings of the word.
+        //
+        // Keeping that judgement in the menu is how the two halves end up contradicting each other
+        // - a Continue button offering to resume a COC that starts fresh the moment it is picked -
+        // and the contradiction is invisible until a learner meets it.
+        continueButton.gameObject.SetActive(SaveManager.Instance.ShouldShowContinue);
         newGameButton.gameObject.SetActive(true);
     }
 
@@ -127,11 +128,12 @@ public class CampaignMenuController : MonoBehaviour
         // CurrentGameMode/gameMode), so Continue always reloaded COC1 with
         // no way to reach anything past it.
         //
-        // Popping up mode select instead fixes that: every unlocked mode is
-        // clickable there, and clicking the one matching
-        // GetSavedGameMode() still resumes it in place via
-        // MainMenuController.OnModeClicked -> SaveManager.SelectMode(),
-        // so in-progress task/part/cable state restores exactly as before.
+        // Popping up mode select instead fixes that: every unlocked mode is clickable there.
+        //
+        // Note what Continue no longer does: it does not resume a half-finished COC. Picking any
+        // mode starts it from the beginning - see SaveManager.alwaysStartStoryModeFresh. Continue
+        // and New Game now differ in exactly one way, which is whether the COCs already earned
+        // stay unlocked.
         ShowModeSelect();
     }
 
@@ -144,10 +146,10 @@ public class CampaignMenuController : MonoBehaviour
             return;
         }
 
-        // Unlike Continue, New Game always means "start over" -- wipe
-        // whatever save exists (completed modes included) so every mode
-        // button resets to its fresh-start state, then let the player pick
-        // COC1 themselves same as before.
+        // Unlike Continue, New Game means start the WHOLE COURSE over: DeleteSave clears
+        // completedModes as well as the working state, so COC2 to COC4 relock and COC1 is the only
+        // thing the picker will let them open. That is the one difference between the two buttons,
+        // now that picking a COC always starts it fresh either way.
         if (SaveManager.Instance.HasSaveFile())
             SaveManager.Instance.DeleteSave();
 

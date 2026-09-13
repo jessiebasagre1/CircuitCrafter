@@ -169,6 +169,16 @@ namespace CSSSimulation.Networking
         /// <summary>True while the panel is up.</summary>
         public bool IsOpen { get; private set; }
 
+        /// <summary>
+        /// The machine the player is sitting at right now, or null.
+        ///
+        /// There are two of these in the scene and neither is a singleton, so anything that needs
+        /// "the one that is open" - a shared Back button, an assessment watching where the learner
+        /// is - would otherwise have to search every frame. Open() and Close() already know, so
+        /// they say so here instead.
+        /// </summary>
+        public static DeviceConfigStation OpenStation { get; private set; }
+
         /// <summary>How many times Apply has been pressed with something wrong. Worth recording in
         /// an assessment - a trainee who gets it right first time is not the same as one who
         /// brute-forced it.</summary>
@@ -359,6 +369,7 @@ namespace CSSSimulation.Networking
             CloseOthers();
 
             IsOpen = true;
+            OpenStation = this;
 
             if (panel != null) panel.SetActive(true);
             Debug.Log("[DeviceConfigStation] " + stationName + " opened, showing '" +
@@ -391,6 +402,11 @@ namespace CSSSimulation.Networking
         {
             if (!IsOpen) return;
             IsOpen = false;
+
+            // Only clear it if this is still the machine on record. CloseOthers() shuts the previous
+            // station AFTER the new one has claimed the slot, so clearing unconditionally here would
+            // blank out the machine the player just sat down at.
+            if (OpenStation == this) OpenStation = null;
 
             if (panel != null) panel.SetActive(false);
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(true);

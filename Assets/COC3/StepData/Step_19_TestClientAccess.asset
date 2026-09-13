@@ -20,7 +20,7 @@ MonoBehaviour:
     the Run box or File Explorer address bar, type the full UNC path to the shared
     folder.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

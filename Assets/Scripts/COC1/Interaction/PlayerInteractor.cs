@@ -64,6 +64,16 @@ public class PlayerInteractor : MonoBehaviour
     [Tooltip("Simple prompt text, e.g. 'Press E to pick up' / 'Press Q to plug in'. Leave unassigned to skip.")]
     [SerializeField] private TMPro.TMP_Text promptText;
 
+    [Tooltip("The panel holding the prompt. Switched off whenever there is nothing to say.\n\n" +
+             "Clearing the text alone leaves the panel behind it on screen - an empty box following " +
+             "the player around the room. Assign the panel and it disappears with the words.")]
+    [SerializeField] private GameObject promptUI;
+
+    [Tooltip("Show the text prompt on touch devices too.\n\n" +
+             "Off by default. On a phone the on-screen button is already labelled, and a line of " +
+             "text naming a key the device does not have is worse than no prompt at all.")]
+    [SerializeField] private bool promptOnTouchDevices = false;
+
     [Header("Mobile Buttons (optional)")]
     [Tooltip("On-screen button for pickup/interact. Wire its OnClick to RequestInteract(). Auto shown/hidden based on nearbyDrive.")]
     [SerializeField] private UnityEngine.UI.Button interactButton;
@@ -249,20 +259,84 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Decides what the prompt says, then whether it is on screen at all.
+    ///
+    /// The two are separate questions and this used to answer only the first: with nothing nearby
+    /// the text was blanked but its panel stayed up, so an empty box followed the player around the
+    /// room. Working out the words first and then showing or hiding the whole thing keeps them in
+    /// step - there is no state in which the panel is visible with nothing to read on it.
+    /// </summary>
     private void UpdatePrompt(bool holdingDrive)
     {
-        if (promptText == null) return;
+        // What this interactor knows about comes first. A drive in the player's hand is a more
+        // immediate thing to be told about than a station they happen to be standing beside.
+        string text = "";
 
         if (holdingDrive && nearbyPort != null)
-            promptText.text = $"Press {plugKey} to plug in";
+            text = $"Press {plugKey} to plug in";
         else if (!holdingDrive && nearbyDrive != null)
         {
             string action = nearbyDrive.IsInsertedInPort ? "unplug" : "pick up";
-            promptText.text = useKeyboardInteract ? $"Press {interactKey} to {action}" : $"Click to {action}";
+            text = useKeyboardInteract ? $"Press {interactKey} to {action}" : $"Click to {action}";
         }
-        else
-            promptText.text = "";
+
+        if (text.Length == 0 && !string.IsNullOrEmpty(requestedPrompt))
+            text = requestedPrompt;
+
+        requestedPrompt = null;
+
+        // A dialog already swallows every press, so a prompt naming a key that is not reaching the
+        // world is worse than silence.
+        bool dialogUp = DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen;
+
+        bool show = text.Length > 0 && !dialogUp && (promptOnTouchDevices || !TouchSession);
+
+        if (promptText != null) promptText.text = show ? text : "";
+        if (promptUI != null && promptUI.activeSelf != show) promptUI.SetActive(show);
     }
+
+    /// <summary>
+    /// Whether this is a touch session - asked of the touch controls rather than of the platform.
+    ///
+    /// Application.isMobilePlatform is FALSE in the Editor, with the build target set to Android,
+    /// and in the Device Simulator. A platform check therefore says "PC" in exactly the situation
+    /// you are testing the phone layout in, and the keyboard prompt sits on screen beside the touch
+    /// buttons it was meant to replace.
+    ///
+    /// MobileControlsVisibility already decides this once for the whole project and has a Show In
+    /// Editor tick for testing. Reading its answer means the prompt and the touch controls cannot
+    /// disagree: if the joystick is showing, the prompt stays off.
+    /// </summary>
+    private bool TouchSession
+    {
+        get
+        {
+            if (touchControls == null)
+                touchControls = Object.FindFirstObjectByType<MobileControlsVisibility>();
+
+            if (touchControls != null) return touchControls.Wanted;
+            return Application.isMobilePlatform;
+        }
+    }
+
+    private MobileControlsVisibility touchControls;
+
+    /// <summary>
+    /// Asks for a line of prompt text this frame, from something that is not a drive or a port.
+    ///
+    /// A station is not an InteractableObject - it is a camera switch with a trigger of its own -
+    /// so it has no way into the prompt logic below, and the player walks up to the assembly bench
+    /// with nothing on screen telling them E does anything. Rather than give stations a second
+    /// prompt panel that could end up on screen at the same time as this one, they ask this one.
+    ///
+    /// Per-frame and cleared after reading, like the suppression request in COC2: anything that
+    /// still wants the prompt asks again next frame, and anything that has finished simply stops
+    /// asking.
+    /// </summary>
+    public static void RequestPrompt(string text) { requestedPrompt = text; }
+
+    private static string requestedPrompt;
 
     private void OnDisable()
     {

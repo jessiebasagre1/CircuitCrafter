@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 namespace CSSSimulation.WindowsSim
@@ -25,30 +26,60 @@ namespace CSSSimulation.WindowsSim
         [Serializable]
         public class Binding
         {
-            [Tooltip("The stepId on the StepData asset, e.g. \"Step_02_ComputerName\".")]
+            [TooltipAttribute("The stepId on the StepData asset, e.g. \"Step_02_ComputerName\".")]
             public string stepId = "";
 
-            [Tooltip("The actionId reported by the WinTaskGate that completes it, " +
+            [TooltipAttribute("The actionId reported by the WinTaskGate that completes it, " +
                      "e.g. \"set_computer_name\".")]
             public string actionId = "";
         }
 
-        [Tooltip("Left empty, the scene's COC3Manager is found automatically.")]
+        [TooltipAttribute("Left empty, the scene's COC3Manager is found automatically.")]
+        /// <summary>
+        /// The stepId on screen right now, or empty when nothing is.
+        ///
+        /// Published as a static so a WinTaskGate can ask "is this my step?" without holding a
+        /// reference to anything. That is what lets ONE dialog serve two different steps - the
+        /// New Folder box is used at step 12 and again at step 23, wanting a different answer each
+        /// time, exactly as the real one would be.
+        /// </summary>
+        public static string CurrentStepId { get; private set; }
+
         public COC3Manager manager;
 
-        [Tooltip("One row per desktop-driven step. Steps not listed keep their old behaviour.")]
+        [TooltipAttribute("One row per desktop-driven step. Steps not listed keep their old behaviour.")]
         public Binding[] bindings;
 
-        [Tooltip("Log every action and whether it matched the current step. Leave on while you are " +
+        [TooltipAttribute("Log every action and whether it matched the current step. Leave on while you are " +
                  "building steps out; it is the fastest way to see a mistyped id.")]
         public bool verbose = true;
 
-        [Header("Doing the right thing at the wrong time")]
-        [Tooltip("Optional. Told when the learner completes a task the CURRENT step is not asking " +
+        [HeaderAttribute("Desktop visibility")]
+        [TooltipAttribute("The COC3Desktop object. Shown only while a step that HAS a binding is on screen, " +
+                 "and hidden the rest of the time.\n\n" +
+                 "This is what lets the desktop and the old full-screen step panels share a scene. " +
+                 "Both are full-screen, so whichever is in front wins: with the desktop in front " +
+                 "you cannot reach Next on an unconverted step, and with it behind you cannot " +
+                 "reach the desktop. Showing it only when it is the thing being used removes the " +
+                 "conflict rather than trying to order around it.\n\n" +
+                 "Leave empty to manage the desktop yourself.")]
+        public GameObject desktopRoot;
+
+        [TooltipAttribute("Optional. A label on the desktop itself, filled with the current step's " +
+                 "instruction.\n\n" +
+                 "The desktop is drawn IN FRONT of the step panels, so the instruction strip the " +
+                 "Step Panel Converter puts across the top of each panel is hidden behind it. That " +
+                 "leaves the learner looking at a dialog with no idea which value it wants - which " +
+                 "is not a difficulty worth having. The desktop builder creates this banner and " +
+                 "wires it up for you.")]
+        public TMP_Text desktopInstruction;
+
+        [HeaderAttribute("Doing the right thing at the wrong time")]
+        [TooltipAttribute("Optional. Told when the learner completes a task the CURRENT step is not asking " +
                  "for, so the work is not silently ignored. Left empty, only the Console says so.")]
         public FeedbackManager feedback;
 
-        [Tooltip("Shown when a bound action arrives for a step that is not the current one. " +
+        [TooltipAttribute("Shown when a bound action arrives for a step that is not the current one. " +
                  "{step} is replaced with the step now on screen.")]
         public string outOfOrderMessage =
             "That is a later step. Finish the one on screen first.";
@@ -68,9 +99,58 @@ namespace CSSSimulation.WindowsSim
         private void OnDisable()
         {
             WinActionBus.OnAction -= HandleAction;
+            CurrentStepId = "";
         }
 
         // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Polls which step is on screen and shows or hides the desktop to match.
+        ///
+        /// Polling rather than an event because COC3Manager exposes neither the current index nor
+        /// a step-changed callback, and COC3Tutorial already reads the active panel the same way -
+        /// so this adds no new assumption, just one more reader of the same fact.
+        /// </summary>
+        private void Update()
+        {
+            ScreenshotStep current = ActiveStep();
+
+            // Set BEFORE the desktopRoot guard. A scene that manages the desktop itself still needs
+            // the step id published, or every step-scoped gate in it goes dead.
+            CurrentStepId = current != null && current.stepData != null ? current.stepData.stepId : "";
+
+            if (desktopRoot == null) return;
+
+            bool wanted = current != null
+                          && current.stepData != null
+                          && !string.IsNullOrEmpty(ExpectedActionFor(current.stepData.stepId));
+
+            if (desktopRoot.activeSelf != wanted)
+                desktopRoot.SetActive(wanted);
+
+            ShowInstruction(current);
+        }
+
+        /// <summary>
+        /// Copies the step's own instruction onto the desktop banner.
+        ///
+        /// Read from the step's instructionLabel rather than from StepData, so whatever you have
+        /// edited on the panel is what the learner reads - one source of truth, and no second copy
+        /// to fall out of date.
+        /// </summary>
+        private void ShowInstruction(ScreenshotStep current)
+        {
+            if (desktopInstruction == null) return;
+
+            string text = current != null && current.instructionLabel != null
+                ? current.instructionLabel.text
+                : string.Empty;
+
+            // Compared before assigning: writing to a TMP_Text marks it dirty and rebuilds the
+            // mesh, and this runs every frame.
+            if (desktopInstruction.text != text)
+                desktopInstruction.text = text;
+        }
 
         private void HandleAction(string actionId, bool success)
         {
@@ -99,21 +179,33 @@ namespace CSSSimulation.WindowsSim
                 if (verbose)
                     Debug.Log($"[COC3StepGate] '{current.stepData.stepId}' has no binding - left alone.");
 
-                // The commonest case by far: the learner is on an Informational step - the job
-                // order, or an explanation - and has gone ahead and done a later task on the
-                // desktop. The work is real and correct, and refusing it in silence looks like
-                // the simulation is broken rather than the order being wrong.
-                NudgeOutOfOrder(current.stepData.stepId);
+                // The learner is on an Informational step - the job order, or an explanation - and
+                // has gone ahead and done a later task on the desktop. The work is real and
+                // correct, and refusing it in silence looks like the simulation is broken rather
+                // than the order being wrong.
+                //
+                // Same test as below: an unbound action is a guard on the way somewhere, not a
+                // step performed early.
+                if (IsBoundToAnyStep(actionId))
+                    NudgeOutOfOrder(current.stepData.stepId);
+
                 return;
             }
 
             if (expected != actionId)
             {
                 if (verbose)
-                    Debug.Log($"[COC3StepGate] '{actionId}' does not complete " +
-                              $"'{current.stepData.stepId}' (it wants '{expected}').");
+                    Debug.Log($"[COC3StepGate] '{actionId}' is not what completes " +
+                              $"'{current.stepData.stepId}' (that is '{expected}').");
 
-                NudgeOutOfOrder(current.stepData.stepId);
+                // Only complain if this action completes some OTHER step. An action bound to
+                // nothing is an internal guard - open_ipv4, create_group, open_password_policy -
+                // and those are steps ALONG the way to the current one, not steps out of order.
+                // Telling the learner "that is a later step" the moment they do the right thing is
+                // worse than saying nothing at all.
+                if (IsBoundToAnyStep(actionId))
+                    NudgeOutOfOrder(current.stepData.stepId);
+
                 return;
             }
 
@@ -143,6 +235,26 @@ namespace CSSSimulation.WindowsSim
             if (string.IsNullOrEmpty(outOfOrderMessage)) return;
 
             feedback.ShowFailure(outOfOrderMessage.Replace("{step}", currentStepId));
+        }
+
+        /// <summary>
+        /// True when some step in the list is completed by this action.
+        ///
+        /// False means it is an INTERNAL GUARD: a window that checks the learner picked the right
+        /// node, or container, or option before it lets them through, reported so the desktop can
+        /// remember it happened. Those fire constantly during a normal correct run and must never
+        /// produce a warning.
+        /// </summary>
+        private bool IsBoundToAnyStep(string actionId)
+        {
+            if (bindings == null || string.IsNullOrEmpty(actionId)) return false;
+
+            foreach (var b in bindings)
+            {
+                if (b == null) continue;
+                if (b.actionId == actionId) return true;
+            }
+            return false;
         }
 
         private string ExpectedActionFor(string stepId)

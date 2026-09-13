@@ -162,10 +162,23 @@ namespace CircuitCrafter.Settings
         /// It scales the Canvas rather than font sizes, deliberately. Growing text
         /// inside a fixed box makes it overflow or clip; growing the whole canvas
         /// keeps every layout exactly as it was authored, just bigger.</summary>
+        /// <summary>
+        /// PINNED TO 1. The Interface Size control was removed from the settings panel.
+        ///
+        /// The property is kept rather than deleted because SettingsApplier and anything else that
+        /// reads it keeps compiling, and because the feature can be brought back by restoring the
+        /// two lines below - the maths, the exclusion marker and the per-canvas bookkeeping all
+        /// still work.
+        ///
+        /// The GETTER IGNORES THE SAVED VALUE, and that is the part that matters. A learner who had
+        /// already set 1.6 would otherwise stay at 1.6 forever with no control left to change it -
+        /// the setting removed from the screen but not from their game. Returning the constant means
+        /// everyone lands back at the authored layout the moment they update.
+        /// </summary>
         public static float UiScale
         {
-            get { EnsureLoaded(); return uiScale; }
-            set { EnsureLoaded(); Set(ref uiScale, Mathf.Clamp(value, MinUiScale, MaxUiScale), KeyUiScale); }
+            get { return DefaultUiScale; }
+            set { /* no-op: the control is gone, so nothing may change it */ }
         }
 
         /// <summary>Skips the station entry animations - the system unit tipping

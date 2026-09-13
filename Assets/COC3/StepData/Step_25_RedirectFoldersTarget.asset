@@ -20,7 +20,7 @@ MonoBehaviour:
     ''Basic - Redirect everyone''s folder to the same location'' and type the Root
     Path.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

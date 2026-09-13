@@ -106,6 +106,15 @@ namespace CSSSimulation.WindowsSim
                  "so leave the button's own OnClick empty.")]
         public Button submitButton;
 
+        [TooltipAttribute("Leave empty for a gate that always applies.\n\n" +
+                 "Set to a stepId and this gate only answers while that step is on screen, so two " +
+                 "gates can share one OK button and each check its own answer. That is how the New " +
+                 "Folder dialog asks for 'Users' at step 12 and 'Redirected' at step 23 without " +
+                 "being two different windows - which is what Windows does, and what a technician " +
+                 "expects.\n\n" +
+                 "Ignored entirely if there is no COC3StepGate in the scene.")]
+        public string requiredStepId = "";
+
         [HeaderAttribute("Conditions - ALL must hold")]
         public FieldRequirement[] fields;
 
@@ -173,6 +182,10 @@ namespace CSSSimulation.WindowsSim
         /// <summary>Also public so a keyboard Enter or a test harness can drive it.</summary>
         public void Submit()
         {
+            // Not my step - the other gate on this button will answer. Silent on purpose: showing
+            // an error here would mean every shared dialog complained once per gate.
+            if (!AppliesToCurrentStep()) return;
+
             string problem = FirstProblem();
 
             if (problem == null)
@@ -235,6 +248,18 @@ namespace CSSSimulation.WindowsSim
                                  this);
 
             return found;
+        }
+
+        private bool AppliesToCurrentStep()
+        {
+            if (string.IsNullOrEmpty(requiredStepId)) return true;
+
+            // No step gate in the scene means nothing is publishing a step. Scoping would switch
+            // this gate off permanently, which is worse than ignoring the filter.
+            string current = COC3StepGate.CurrentStepId;
+            if (string.IsNullOrEmpty(current)) return true;
+
+            return current == requiredStepId;
         }
 
         /// <summary>Null when everything checks out; otherwise the message to show.</summary>

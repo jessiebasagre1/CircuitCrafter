@@ -19,7 +19,7 @@ MonoBehaviour:
     Open
     Remote Desktop Connection (mstsc) on CLIENT01 and type the address of the server.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 
