@@ -193,6 +193,68 @@ namespace CSSSimulation.Networking
         CursorLockMode savedLock;
         bool savedCursorVisible;
 
+        /// <summary>
+        /// Shouts when this machine is switched off while the player still needs to come back to it.
+        ///
+        /// WHY THIS IS WORTH AN ERROR
+        ///
+        /// Configuring the machine is only half the job. The player has to return to the SAME PC
+        /// afterwards, open its command prompt from the desktop, and ping the other machine - and
+        /// the only way into that desktop is pressing E at this station. Switch this GameObject off
+        /// the moment Apply passes and there is nothing left at that desk to press E at: the check
+        /// station standing beside it has Open On Interact off, so it deliberately has no trigger of
+        /// its own, and the machine that did have one is gone.
+        ///
+        /// From the player's chair that is simply "the PC stopped working after I configured it",
+        /// with nothing on screen connecting it to a UnityEvent that fired a minute earlier. Nothing
+        /// throws, nothing is null, and every component involved is behaving exactly as configured.
+        ///
+        /// The usual cause is an On Passed entry doing SetActive(false) on this object in order to
+        /// reveal a check station beside it. Revealing the check station is right; hiding this is
+        /// not - the two are meant to be on at the same time, this one owning the E press and the
+        /// check station owning the console window inside the desktop.
+        /// </summary>
+        void OnDisable()
+        {
+            // Leaving Play mode, unloading the scene, or quitting all disable everything, and none
+            // of them are worth a word.
+            if (quitting || !Application.isPlaying || !gameObject.scene.isLoaded) return;
+
+            ConnectivityCheckStation waiting = null;
+            ConnectivityCheckStation[] all = Object.FindObjectsByType<ConnectivityCheckStation>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            foreach (ConnectivityCheckStation c in all)
+                if (c != null && c.requiresConfig == this) { waiting = c; break; }
+
+            // Its ping has already gone through, so the player has no reason to come back here and
+            // switching the machine off is a legitimate way to close the scene down.
+            if (waiting != null && waiting.IsConnected) return;
+
+            bool objectOff = !gameObject.activeInHierarchy;
+
+            Debug.LogError("[DeviceConfigStation] " + stationName + " was switched off" +
+                           (objectOff ? " (its GameObject was deactivated)"
+                                      : " (this component was disabled)") +
+                           " on frame " + Time.frameCount + ", and the player still has to come " +
+                           "back to it" +
+                           (waiting != null
+                                ? " to run '" + waiting.stationName + "'s ping."
+                                : " - nothing has verified this link yet.") + "\n\n" +
+                           "Pressing E at this desk is the only way into this machine's desktop, " +
+                           "and the command prompt lives inside that desktop. With this off there " +
+                           "is nothing at the desk to press E at: the check station beside it has " +
+                           "Open On Interact off, so it switches its own trigger off by design and " +
+                           "was never meant to be walked up to.\n\n" +
+                           "Look at this station's On Passed list, and at anything else that fires " +
+                           "when 'configure_network' progresses. Revealing the check station is " +
+                           "correct - hiding THIS machine is not. Both are meant to be on together.",
+                           this);
+        }
+
+        static bool quitting;
+        void OnApplicationQuit() { quitting = true; }
+
         void Start()
         {
             if (autoRegisterTask && !string.IsNullOrEmpty(taskId) && TaskManager.Instance != null)

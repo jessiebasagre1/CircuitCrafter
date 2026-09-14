@@ -156,15 +156,8 @@ namespace CSSSimulation.Networking
         /// </summary>
         void Update()
         {
-            CSSSimulation.Interaction.PlayerInteractor.SuppressPrompt =
-                CurrentStation != Station.None;
-        }
-
-        void OnDisable()
-        {
-            // Never leave the prompt suppressed behind us - this component being switched off must
-            // not be the reason a player in the room is told nothing.
-            CSSSimulation.Interaction.PlayerInteractor.SuppressPrompt = false;
+            if (CurrentStation != Station.None)
+                CSSSimulation.Interaction.PlayerInteractor.SuppressPromptThisFrame();
         }
 
         void LateUpdate()

@@ -124,6 +124,12 @@ namespace CSSSimulation.Networking
 
         void Update()
         {
+            // The choice panel is not a station view, so nothing else holds the prompt back while
+            // it is up - and "Press E to start crimping" over a panel asking which cable to build
+            // is an instruction the player has already followed.
+            if (IsOpen)
+                CSSSimulation.Interaction.PlayerInteractor.SuppressPromptThisFrame();
+
             // Desktop-only bail-out  lets the player back out to the player camera
             // without picking a cable type. Mobile players use a wired-up Cancel button
             // instead (see the class summary).

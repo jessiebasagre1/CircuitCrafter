@@ -2556,7 +2556,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2751965040231596478}
+  m_Father: {fileID: 920358441090517324}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -3927,6 +3927,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.DeviceConfigStation
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   stationName: Client
   fields:
   - label: IP address
@@ -4004,18 +4005,6 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 150272008}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
         m_CallState: 2
   OnFailed:
     m_PersistentCalls:
@@ -5454,6 +5443,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.ConnectivityCheckStation
   promptText: Press E to check the network connection
   inputChannel: 0
+  logRangeChanges: 1
   stationName: Client
   ipAddress: 192.168.1.20
   targetAddress: 192.168.1.1
@@ -6581,6 +6571,107 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 243084345}
   m_Mesh: {fileID: 8080755978382070862, guid: 6d8ecfc391735df4496699a4db1088cf, type: 3}
+--- !u!1001 &243415671
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1305320797232078571, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_Name
+      value: AiTutorCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 3498476320407376790, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: cocNumber
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
 --- !u!1 &249231783
 GameObject:
   m_ObjectHideFlags: 0
@@ -6942,6 +7033,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.ConnectivityCheckStation
   promptText: Press E to check the network connection
   inputChannel: 0
+  logRangeChanges: 1
   stationName: Server
   ipAddress: 192.168.1.10
   targetAddress: 192.168.1.1
@@ -7060,6 +7152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.NetworkTestStation
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   playerCamera: {fileID: 6323951759234873025}
   testerCamera: {fileID: 483745482}
   stationCableVisual: {fileID: 1373512597}
@@ -10534,6 +10627,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CrimpingStationInteractable
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   cableTypeSelection: {fileID: 1120362010}
 --- !u!65 &427895601
 BoxCollider:
@@ -16627,6 +16721,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CableCarrier
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   cableName: Server cable
   cableTypeLabel: straight-through
   requiredTaskIds:
@@ -25187,6 +25282,11 @@ MonoBehaviour:
   promptOnTouchDevices: 0
   interactButton: {fileID: 90117314}
   pickupButton: {fileID: 41680679}
+  verifyRangeEachFrame: 1
+  reachSlack: 0.35
+  releaseMargin: 1
+  rescanInterval: 0.5
+  logRangeRecovery: 1
   logIgnoredPresses: 1
   logTargetChanges: 0
 --- !u!1 &788057803
@@ -28470,7 +28570,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &870103672
 RectTransform:
   m_ObjectHideFlags: 0
@@ -30282,6 +30382,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CrimpedCablePickup
   promptText: Press G to Grab the Cable.
   inputChannel: 0
+  logRangeChanges: 1
   cableVisual: {fileID: 1907500771}
   hideWhenAvailable: []
   requireCrimpingFinished: 1
@@ -38379,7 +38480,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -41923,7 +42024,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1361737350
 RectTransform:
   m_ObjectHideFlags: 0
@@ -43735,6 +43836,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CrimpingToolPickup
   promptText: Press G to pick up crimping tool
   inputChannel: 0
+  logRangeChanges: 1
 --- !u!4 &1415858479 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8856290602955072083, guid: 7a2c2a5d5ebbe804898f39e697d780cb, type: 3}
@@ -52507,6 +52609,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.DeviceConfigStation
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   stationName: Server
   fields:
   - label: IP address
@@ -52584,18 +52687,6 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 1722350627}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
         m_CallState: 2
   OnFailed:
     m_PersistentCalls:
@@ -55209,6 +55300,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.PunchDownStation
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   bypassGateForTesting: 0
   requiredTaskIds:
   - test_cable
@@ -60096,6 +60188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.CableCarrier
   promptText: Press E to interact
   inputChannel: 0
+  logRangeChanges: 1
   cableName: Client cable
   cableTypeLabel: straight-through
   requiredTaskIds:
@@ -60507,7 +60600,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.79094
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalRotation.w
@@ -60515,19 +60608,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -10.20173
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -60544,6 +60637,10 @@ PrefabInstance:
     - target: {fileID: 3949150344182367513, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6784912303819072287, guid: baba63388b907f743b12d312d1a8c1cc, type: 3}
+      propertyPath: m_MatchWidthOrHeight
+      value: 0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -68073,6 +68170,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2751965040231596478}
+  - {fileID: 90117313}
   - {fileID: 169616867}
   m_Father: {fileID: 984278162}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -71416,7 +71514,6 @@ RectTransform:
   m_Children:
   - {fileID: 1878804616194920048}
   - {fileID: 4472289247265121288}
-  - {fileID: 90117313}
   - {fileID: 1361737350}
   - {fileID: 870103672}
   - {fileID: 41680678}
@@ -78358,7 +78455,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -27.003967, y: 18.999023}
+  m_AnchoredPosition: {x: -27.003906, y: 18.999023}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6456562168332564330
@@ -80594,7 +80691,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -878, y: 449}
+  m_AnchoredPosition: {x: -999, y: 385}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7595913271447855461
@@ -83882,3 +83979,4 @@ SceneRoots:
   - {fileID: 1230231448}
   - {fileID: 150272009}
   - {fileID: 211279319}
+  - {fileID: 243415671}

@@ -17,6 +17,29 @@ namespace CSSSimulation.Interaction
     /// Pick Up button on touch); sitting down at a machine is E (or Interact). A component says
     /// which of the two it is by overriding DefaultChannel, so the right key and the right
     /// on-screen button appear without anything to tick per object.
+    ///
+    /// IN RANGE IS MEASURED, NOT REMEMBERED
+    ///
+    /// The trigger events below are fast but they are not reliable enough to be the only record of
+    /// where the player is, and this project has now lost three separate evenings to that. A
+    /// trigger event is a one-off notification: if nothing is listening at the instant it is sent,
+    /// it is gone, and there is no second chance because the player never physically moved.
+    ///
+    /// All three of these produce exactly the same dead end - a station the player is standing
+    /// right in front of that answers nothing:
+    ///
+    ///   - the station switches its own component off while its desktop is up, so the enter event
+    ///     that would restore it arrives at a component that is not listening;
+    ///   - something hides or deactivates the PLAYER for the duration of a view, which sends an
+    ///     exit event on the way in and, depending on how the object comes back, no enter event on
+    ///     the way out;
+    ///   - a collider is toggled, re-parented or moved by a camera switch, which also counts as
+    ///     leaving.
+    ///
+    /// So Interactable no longer trusts the events as the final word. It records what they say,
+    /// and PlayerInteractor re-measures the real distance every frame and corrects this flag when
+    /// the two disagree. The events remain the fast path; the measurement is the backstop that
+    /// makes a stuck flag impossible instead of merely unlikely.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public abstract class Interactable : MonoBehaviour
@@ -51,7 +74,43 @@ namespace CSSSimulation.Interaction
                  "rather than carried, say - not for normal setup.")]
         public ChannelSetting inputChannel = ChannelSetting.Auto;
 
+        [Header("Diagnostics")]
+        [Tooltip("Say in the Console every time this object gains or loses the player, and print " +
+                 "the state of everything involved at that instant.\n\n" +
+                 "Leave this ON while a station is misbehaving. 'Why can I not interact with this " +
+                 "any more' always comes down to one of a handful of things having quietly changed " +
+                 "- the player object was switched off, a collider was disabled, the trigger moved " +
+                 "with a camera - and the line printed here names which one it was, at the frame it " +
+                 "happened. Untick it once the scene is behaving; it is one line per doorway.")]
+        public bool logRangeChanges = true;
+
         public bool IsPlayerInRange { get; private set; }
+
+        /// <summary>
+        /// This object's trigger, cached.
+        ///
+        /// Fetched through a property rather than in Awake on purpose: subclasses in this project
+        /// declare their own Awake, and a private Awake on a subclass HIDES one on the base class -
+        /// Unity then calls only the subclass's, and the base class's would silently never run. A
+        /// property cannot be hidden by accident.
+        ///
+        /// The backing field is named cachedTrigger rather than the obvious 'trigger' because
+        /// CrimpedCablePickup already has a field by that name. Unity flattens the whole
+        /// inheritance chain into one serialized record, so a base class and a subclass cannot both
+        /// have a field called 'trigger' - it refuses the type outright rather than guessing which
+        /// one a saved value belongs to. Marked NonSerialized as well, since this is a cache
+        /// rebuilt on demand and has no business being written into the scene file.
+        /// </summary>
+        public Collider Trigger
+        {
+            get
+            {
+                if (cachedTrigger == null) cachedTrigger = GetComponent<Collider>();
+                return cachedTrigger;
+            }
+        }
+
+        [System.NonSerialized] Collider cachedTrigger;
 
         /// <summary>
         /// What this component is, before any per-object override. Interactables are stations by
@@ -79,17 +138,67 @@ namespace CSSSimulation.Interaction
         void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;
-            IsPlayerInRange = true;
-            if (PlayerInteractor.Instance != null)
-                PlayerInteractor.Instance.SetNearbyInteractable(this);
+            SetPlayerInRange(true, "its trigger reported the player entering");
         }
 
         void OnTriggerExit(Collider other)
         {
             if (!other.CompareTag("Player")) return;
-            IsPlayerInRange = false;
-            if (PlayerInteractor.Instance != null)
-                PlayerInteractor.Instance.ClearNearbyInteractable(this);
+            SetPlayerInRange(false, "its trigger reported the player leaving");
+        }
+
+        /// <summary>
+        /// Records whether the player is at this object, and keeps PlayerInteractor's list in step.
+        ///
+        /// Public because the trigger events are no longer the only thing allowed to answer this
+        /// question - PlayerInteractor re-measures the distance each frame and calls in here when
+        /// the measurement disagrees with what the events left behind. Reason is what gets printed,
+        /// so every change to this flag can be traced to whatever caused it.
+        /// </summary>
+        public void SetPlayerInRange(bool inRange, string reason)
+        {
+            if (IsPlayerInRange == inRange) return;
+            IsPlayerInRange = inRange;
+
+            if (logRangeChanges) Report(inRange, reason);
+
+            if (PlayerInteractor.Instance == null) return;
+
+            if (inRange) PlayerInteractor.Instance.SetNearbyInteractable(this);
+            else PlayerInteractor.Instance.ClearNearbyInteractable(this);
+        }
+
+        /// <summary>
+        /// Prints the state of everything that decides whether this object can be interacted with.
+        ///
+        /// The point of listing all of it, rather than just saying "lost the player", is that the
+        /// cause is always one of these lines and it is always visible in them. A player object
+        /// switched off by a station's Hide While Open list, a collider disabled by a camera
+        /// switch, a component switched off by a Disable While Open list - each shows up as one
+        /// False in a row of Trues, at the frame it happened, which is a five second diagnosis
+        /// instead of an afternoon.
+        /// </summary>
+        void Report(bool gained, string reason)
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            Collider playerCollider = playerObject != null
+                ? playerObject.GetComponentInChildren<Collider>(true) : null;
+
+            Debug.Log("[Interactable] '" + name + "' " + (gained ? "GAINED" : "LOST") +
+                      " the player on frame " + Time.frameCount + " - " + reason + "." +
+                      "\n    this object active   : " + gameObject.activeInHierarchy +
+                      "\n    this component on    : " + enabled +
+                      "\n    its trigger on       : " + (Trigger != null ? Trigger.enabled.ToString()
+                                                                         : "NO COLLIDER") +
+                      "\n    is a trigger         : " + (Trigger != null ? Trigger.isTrigger.ToString()
+                                                                         : "-") +
+                      "\n    player object found  : " + (playerObject != null ? "'" + playerObject.name + "'"
+                                                                             : "NONE tagged Player") +
+                      "\n    player active        : " + (playerObject != null
+                                                         ? playerObject.activeInHierarchy.ToString() : "-") +
+                      "\n    player collider on   : " + (playerCollider != null
+                                                         ? playerCollider.enabled.ToString() : "-"),
+                      this);
         }
 
         /// <summary>Called when the player presses this object's control while it is the active
