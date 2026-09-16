@@ -110,6 +110,36 @@ namespace CircuitCrafter.Assessment
         public int Score { get; private set; }
         public int MistakeCount { get; private set; }
 
+        /// <summary>The module this recorder is running, e.g. "COC3". Read-only - the field is
+        /// serialized and belongs to the Inspector; this just lets a HUD ask which module it is
+        /// sitting in without being told twice.</summary>
+        public string ModuleId => moduleId;
+
+        /// <summary>Fires as each stage closes, with its stage id.
+        ///
+        /// WHY IT EXISTS. OnRunFinished reports the whole run at the end, which is right for
+        /// saving a result and useless for anything watching progress as it happens - a
+        /// checklist on screen needs to know at the moment a stage closes, not six minutes
+        /// later. COC 3 and COC 4 close most of their stages through CompleteStage() rather
+        /// than through TaskManager, so TaskManager's own event never fires for them and this
+        /// is the only way to hear about it.</summary>
+        public event Action<string> OnStageCompleted;
+
+        /// <summary>True if that stage has closed in the current run. Unknown ids answer false,
+        /// which is deliberate: a HUD row naming a stage this recorder has never heard of should
+        /// sit there unticked rather than throw.</summary>
+        public bool IsStageComplete(string stageId)
+        {
+            if (string.IsNullOrEmpty(stageId)) return false;
+
+            StageOutcome outcome = FindOutcome(stageId.Trim());
+            return outcome != null && outcome.completed;
+        }
+
+        /// <summary>The stage ids and names this recorder is set up to grade, in order. For the
+        /// task-list builder, so a checklist does not have to have them typed in again.</summary>
+        public List<StageSpec> StageSpecs => stages;
+
         /// <summary>Fires once, with the completed record, after it has been saved
         /// and folded into the ledger. A report screen should subscribe to this
         /// rather than polling IsFinished.</summary>
@@ -262,6 +292,11 @@ namespace CircuitCrafter.Assessment
             Score += spec.points;
 
             Debug.Log($"[AssessmentRecorder] Stage '{stageId}' complete (+{spec.points}) at {AssessmentResult.FormatTime(ElapsedSeconds)}.");
+
+            // Raised BEFORE the finish check. Finish() can end the run and switch the scene's UI
+            // over to the report in the same call, and a listener told about the last stage only
+            // after that has happened gets to tick a checklist nobody can see any more.
+            OnStageCompleted?.Invoke(stageId);
 
             if (finishWhenAllStagesComplete && AllStagesComplete()) Finish();
         }

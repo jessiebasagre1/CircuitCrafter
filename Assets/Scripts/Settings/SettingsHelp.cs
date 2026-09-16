@@ -95,7 +95,19 @@ namespace CircuitCrafter.Settings
 
             ["volume"] = new Entry(
                 "Master volume",
-                "The overall loudness of the game. It controls every sound at once."),
+                "The overall loudness of the game. It controls every sound at once, and the two sliders " +
+                "below adjust music and effects within it."),
+
+            ["music"] = new Entry(
+                "Music volume",
+                "Background music only. Turn it right down to work in silence without losing the sounds " +
+                "that tell you a part has seated or a step is finished."),
+
+            ["sfx"] = new Entry(
+                "Sound effects volume",
+                "The sounds the equipment makes - parts coming loose and clicking into place, the hotbar, " +
+                "and the warning when a step is refused. These are feedback, not decoration, so keep them " +
+                "audible: they confirm an action actually took."),
         };
 
         /// <summary>The tip for a setting, or a clearly-marked placeholder rather

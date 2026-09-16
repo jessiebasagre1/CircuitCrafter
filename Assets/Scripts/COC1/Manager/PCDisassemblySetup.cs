@@ -13,7 +13,20 @@ using UnityEngine;
 /// </summary>
 public class PCDisassemblySetup : MonoBehaviour
 {
+    /// <summary>The one in this scene, so a CableConnector can report in without holding a
+    /// reference. Same pattern TaskManager and DialogManager use here.</summary>
+    public static PCDisassemblySetup Instance { get; private set; }
+
     [SerializeField] private int totalParts = 6;
+
+    [Header("Cables")]
+    [Tooltip("ON: re-plugging a cable counts toward assemble_pc, so the module is not finished - " +
+             "and the quiz does not fire - with cables still hanging loose.\n\n" +
+             "A PC with every part seated and the PSU leads unplugged is not an assembled PC, and a " +
+             "learner who is asked the assembly quiz at that point has been told their work is done " +
+             "when it is not.\n\n" +
+             "OFF restores the old behaviour, where only parts counted.")]
+    [SerializeField] private bool cablesCountTowardAssembly = true;
     public const string TaskId = "disassemble_pc";
     public const string AssembleTaskId = "assemble_pc";
 
@@ -78,6 +91,33 @@ public class PCDisassemblySetup : MonoBehaviour
 
     private bool hasRelocatedSystemUnit;
 
+    // Cables the learner has UNPLUGGED at least once. Each one adds a step to assemble_pc - you
+    // took it out, you put it back.
+    private readonly System.Collections.Generic.HashSet<CableConnector> cablesToRestore =
+        new System.Collections.Generic.HashSet<CableConnector>();
+
+    // Cables that have since been re-plugged and already reported their step, so a learner who
+    // unplugs and re-plugs the same lead five times does not finish the assembly five times over.
+    private readonly System.Collections.Generic.HashSet<CableConnector> cablesRestored =
+        new System.Collections.Generic.HashSet<CableConnector>();
+
+    private void Awake()
+    {
+        // Awake, not Start: a cable cannot be unplugged before the first frame, but CableConnector's
+        // own Start plugs the start-plugged ones in, and that call reaches Instance. Assigning here
+        // means it is never null when it does.
+        if (Instance != null && Instance != this)
+            Debug.LogWarning("[PCDisassemblySetup] A second one on '" + name + "'. The first keeps " +
+                             "Instance, so cables will report to that one.", this);
+        else
+            Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
     private void Start()
     {
         if (SaveManager.Instance != null)
@@ -99,6 +139,66 @@ public class PCDisassemblySetup : MonoBehaviour
     {
         if (TaskManager.Instance != null)
             TaskManager.Instance.OnTaskCompleted -= HandleTaskCompleted;
+    }
+
+    // ==================================================================
+    // Cables as assembly steps
+    // ==================================================================
+
+    /// <summary>
+    /// The learner pulled a cable out. That raises what assemble_pc asks for by one.
+    ///
+    /// COUNTED ON UNPLUG RATHER THAN UP FRONT, and that is what makes this safe.
+    ///
+    /// Registering "parts + every cable in the scene" at Start looks simpler and has a failure that
+    /// cannot be recovered from: a cable the learner never unplugs never reports, so the task sits
+    /// one step short forever with nothing on screen to say which step. Growing the requirement as
+    /// they actually disassemble means it always matches what they have taken apart - and a cable
+    /// they never touched is still correctly plugged in, so there is nothing to ask of them.
+    /// </summary>
+    public static void NotifyCableUnplugged(CableConnector cable)
+    {
+        if (Instance != null) Instance.HandleCableUnplugged(cable);
+    }
+
+    /// <summary>The learner put a cable back. Reports one step of assemble_pc, once per cable.</summary>
+    public static void NotifyCablePlugged(CableConnector cable)
+    {
+        if (Instance != null) Instance.HandleCablePlugged(cable);
+    }
+
+    private void HandleCableUnplugged(CableConnector cable)
+    {
+        if (!cablesCountTowardAssembly || cable == null || TaskManager.Instance == null) return;
+
+        if (!cablesToRestore.Add(cable)) return;      // already counted
+
+        // Re-registering an existing task RAISES its required count and re-derives whether it is
+        // complete - so an assemble_pc that had finished under the old count correctly reopens.
+        // That matters here: a learner can seat the last part, see the task complete, and only then
+        // pull a PSU lead. The requirement going up puts the module honestly back to unfinished.
+        TaskManager.Instance.RegisterTask(AssembleTaskId, totalParts + cablesToRestore.Count);
+
+        Debug.Log($"[PCDisassemblySetup] '{cable.name}' unplugged - assemble_pc now needs " +
+                  $"{totalParts + cablesToRestore.Count} step(s) ({totalParts} part(s) plus " +
+                  $"{cablesToRestore.Count} cable(s)).", this);
+    }
+
+    private void HandleCablePlugged(CableConnector cable)
+    {
+        if (!cablesCountTowardAssembly || cable == null || TaskManager.Instance == null) return;
+
+        // Not in cablesToRestore means this is the start-plugged state being set up, not the learner
+        // reconnecting something - so there is nothing to credit. No flag, no timing guard: a cable
+        // that was never taken out cannot be put back.
+        if (!cablesToRestore.Contains(cable)) return;
+
+        if (!cablesRestored.Add(cable)) return;       // already credited
+
+        TaskManager.Instance.ReportProgress(AssembleTaskId);
+
+        Debug.Log($"[PCDisassemblySetup] '{cable.name}' reconnected - {cablesRestored.Count} of " +
+                  $"{cablesToRestore.Count} cable(s) back in.", this);
     }
 
     private void HandleTaskCompleted(string completedTaskId)

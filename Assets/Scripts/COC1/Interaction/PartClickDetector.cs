@@ -115,18 +115,56 @@ public class PartClickDetector : MonoBehaviour
         CableConnector cableHit = null;
         PCPartItem partHit = null;
 
+        // Distances too, because type priority alone cannot answer "which of these two
+        // overlapping things did the learner mean". Hits arrive sorted near-to-far.
+        float cpuLockDistance = float.MaxValue;
+        float partDistance = float.MaxValue;
+
         foreach (var hit in hits)
         {
             if (ramLockHit == null && hit.collider.TryGetComponent(out RAMLock rl)) ramLockHit = rl;
-            if (cpuLockHit == null && hit.collider.TryGetComponent(out CPULock cl)) cpuLockHit = cl;
+            if (cpuLockHit == null && hit.collider.TryGetComponent(out CPULock cl))
+            {
+                cpuLockHit = cl; cpuLockDistance = hit.distance;
+            }
             if (cableHit == null && hit.collider.TryGetComponent(out CableConnector cc)) cableHit = cc;
-            if (partHit == null && hit.collider.TryGetComponent(out PCPartItem pi)) partHit = pi;
+            if (partHit == null && hit.collider.TryGetComponent(out PCPartItem pi))
+            {
+                partHit = pi; partDistance = hit.distance;
+            }
         }
 
         if (ramLockHit != null) { ramLockHit.Toggle(); return true; }
-        if (cpuLockHit != null) { cpuLockHit.Toggle(); return true; }
+
+        // WHICHEVER IS PHYSICALLY IN FRONT WINS, between a CPU lock and a part.
+        //
+        // CPU locks used to outrank parts unconditionally. That is wrong the moment anything
+        // sits ON TOP of a lever: the heatsink covers both CPU retention locks, so its collider
+        // and theirs land under the same click, the lever won, and the cooler could not be
+        // picked up at all. Worse, the lever then OPENED - which swings its collider out from
+        // under the cooler - so the heatsink became draggable only after opening both CPU
+        // locks. Exactly backwards from the real procedure, where the cooler comes off first
+        // and the locks cannot be reached until it does.
+        //
+        // Comparing depth fixes that without any Inspector wiring: the cooler is nearer the
+        // camera than the lever it covers, so the cooler wins. IsCovered is still honoured as
+        // an explicit override for a lever that pokes out past the cooler's silhouette.
+        bool partIsInFront = partHit != null && partDistance < cpuLockDistance;
+
+        if (cpuLockHit != null && !cpuLockHit.IsCovered && !partIsInFront)
+        {
+            cpuLockHit.Toggle();
+            return true;
+        }
+
         if (cableHit != null) { cableHit.BeginDrag(); activeCable = cableHit; return true; }
         if (partHit != null) { partHit.TryBeginDrag(); return true; }
+
+        // Covered or occluded lever, and nothing on top of it was actually hit - an exposed
+        // corner of the lever, say. Toggle it now so the refusal still explains itself, rather
+        // than the click dying silently.
+        if (cpuLockHit != null) { cpuLockHit.Toggle(); return true; }
+
         return false;
     }
 

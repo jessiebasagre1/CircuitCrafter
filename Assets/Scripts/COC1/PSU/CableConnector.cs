@@ -29,6 +29,14 @@ public class CableConnector : MonoBehaviour
     public LayerMask socketLayer;
 
     [HideInInspector] public bool isPlugged;
+
+    [Tooltip("ON: unplugging this cable adds a step to assemble_pc, and plugging it back completes " +
+             "that step - so the module is not finished, and the quiz does not fire, while this " +
+             "lead is hanging loose.\n\n" +
+             "Turn it OFF for a cable that is decoration, or one the procedure never asks the " +
+             "learner to reconnect. PCDisassemblySetup has its own master switch that turns the " +
+             "whole behaviour off at once.")]
+    public bool countsTowardAssembly = true;
     [HideInInspector] public PortSocket pluggedSocket;
 
     [Header("Camera")]
@@ -53,6 +61,23 @@ public class CableConnector : MonoBehaviour
              "it's allowed to auto-plug again. Prevents an unplug immediately snapping back in " +
              "when released without moving far (e.g. a quick click instead of a full drag).")]
     public float minDetachDistance = 0.1f;
+
+    [Header("Drag Leash")]
+    [Tooltip("Longest distance, in world units, this plug may get from the cable's FIXED end " +
+             "(the rope's Start Anchor). A real 30cm fan lead cannot reach the bottom of the " +
+             "case, and neither should this one.\n\n" +
+             "This is also a safety net: if the Drag Camera is wrong, the drag plane maps mouse " +
+             "movement to enormous world movement and the plug shoots off somewhere it can no " +
+             "longer be clicked - unrecoverable without reloading the scene. The leash makes " +
+             "that failure impossible rather than merely unlikely.\n\n" +
+             "0 = off, which is the old behaviour. Set it to roughly the real cable's length.")]
+    [Min(0f)]
+    public float maxReachFromAnchor = 0f;
+
+    [Header("Diagnostics")]
+    [Tooltip("Logs the camera, pointer position and resolved world point on every drag. Turn on " +
+             "when a connector is jumping somewhere unexpected, then off again.")]
+    public bool logDragDiagnostics = false;
 
     private bool isDragging;
     private Vector3 dragOffset;
@@ -103,6 +128,8 @@ public class CableConnector : MonoBehaviour
         }
         isDragging = true;
         dragOffset = transform.position - RayHitOnDragPlane();
+
+        if (logDragDiagnostics) ReportDragSetup();
     }
 
     public void EndDrag()
@@ -118,7 +145,7 @@ public class CableConnector : MonoBehaviour
     {
         if (!isDragging) return;
 
-        transform.position = RayHitOnDragPlane() + dragOffset;
+        transform.position = ClampToLeash(RayHitOnDragPlane() + dragOffset);
         UpdateHighlight();
     }
 
@@ -127,9 +154,110 @@ public class CableConnector : MonoBehaviour
     // want the player constrained to moving along the case's surface instead.
     private Vector3 RayHitOnDragPlane()
     {
+        if (dragCamera == null) return transform.position;
+
+        // PointerInput.Position, NOT Input.mousePosition. MouseLook turns off
+        // Input.simulateMouseWithTouches on mobile, which silently kills the raw mouse
+        // API for EVERYONE - not just MouseLook. Reading it here returned a stale or
+        // zeroed position, and a zeroed one puts the ray through the bottom-left corner
+        // of the screen, which is precisely how a plug ends up somewhere it was never
+        // dragged. DragController already reads pointer state this way; this did not.
         Plane dragPlane = new Plane(dragCamera.transform.forward, transform.position);
-        Ray ray = dragCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = dragCamera.ScreenPointToRay(PointerInput.Position);
         return dragPlane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : transform.position;
+    }
+
+    /// <summary>The cable's fixed end - what the leash measures from.</summary>
+    private Transform LeashAnchor => rope != null ? rope.startAnchor : null;
+
+    /// <summary>
+    /// Keeps the plug within reach of the cable's fixed end.
+    ///
+    /// Without this, one wrong Inspector reference is enough to lose a connector for good:
+    /// a drag plane built from the wrong camera turns a few pixels of mouse movement into
+    /// metres of world movement, the plug leaves the station camera's view, and since
+    /// OnMouseDown needs the collider under the pointer, there is then no way to pick it
+    /// up again. A leash turns that from "reload the scene" into "the cable stops where a
+    /// cable would stop".
+    /// </summary>
+    private Vector3 ClampToLeash(Vector3 target)
+    {
+        if (maxReachFromAnchor <= 0f) return target;
+
+        Transform anchor = LeashAnchor;
+        if (anchor == null) return target;
+
+        Vector3 offset = target - anchor.position;
+        float distance = offset.magnitude;
+        if (distance <= maxReachFromAnchor || distance < 0.0001f) return target;
+
+        return anchor.position + offset / distance * maxReachFromAnchor;
+    }
+
+    /// <summary>
+    /// Brings a lost connector back beside the cable's fixed end. Right-click the component
+    /// header in Play mode to rescue one that has already wandered off.
+    /// </summary>
+    [ContextMenu("Recover to cable anchor")]
+    public void RecoverToAnchor()
+    {
+        Transform anchor = LeashAnchor;
+        if (anchor == null)
+        {
+            Debug.LogWarning($"[CableConnector] '{name}' cannot recover - no Rope assigned, so " +
+                             "there is no anchor to return to. Assign the VerletRope in the Rope " +
+                             "field.", this);
+            return;
+        }
+
+        isDragging = false;
+        float back = maxReachFromAnchor > 0f ? maxReachFromAnchor * 0.5f : 0.1f;
+        transform.position = anchor.position + anchor.forward * back;
+        if (rope != null) rope.ForceRebuild();
+
+        Debug.Log($"[CableConnector] '{name}' recovered to '{anchor.name}'.", this);
+    }
+
+    /// <summary>
+    /// Prints everything that decides where a drag puts this connector.
+    ///
+    /// The usual culprit is Drag Camera: COC1 has a player camera, a station camera and a
+    /// quiz camera, and OnMouseDown fires from whichever camera is actually rendering while
+    /// the drag maths uses whatever is in this field. Get those two out of step and the plug
+    /// moves along the wrong plane, by the wrong amount, in the wrong direction.
+    /// </summary>
+    [ContextMenu("Report cable drag setup")]
+    public void ReportDragSetup()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"[CableConnector] === {name} ===");
+        sb.AppendLine($"  Drag Camera     : {(dragCamera != null ? dragCamera.name : "<NONE>")}" +
+                      (dragCamera != null && !dragCamera.isActiveAndEnabled ? "  <-- NOT ENABLED" : ""));
+        sb.AppendLine($"  Camera.main     : {(Camera.main != null ? Camera.main.name : "<none>")}");
+
+        Camera rendering = null;
+        foreach (var c in Camera.allCameras)
+            if (rendering == null || c.depth > rendering.depth) rendering = c;
+        sb.AppendLine($"  Rendering now   : {(rendering != null ? rendering.name : "<none>")}");
+
+        if (dragCamera != null && rendering != null && dragCamera != rendering)
+            sb.AppendLine("  *** MISMATCH: the camera you are LOOKING THROUGH is not the Drag Camera. ***");
+
+        sb.AppendLine($"  Pointer         : {PointerInput.Position}");
+        sb.AppendLine($"  Plugged         : {isPlugged}" +
+                      (pluggedSocket != null ? $" into '{pluggedSocket.name}'" : ""));
+        sb.AppendLine($"  Position        : {transform.position}");
+        sb.AppendLine($"  Plane hit       : {RayHitOnDragPlane()}");
+
+        Transform anchor = LeashAnchor;
+        if (anchor != null)
+            sb.AppendLine($"  Anchor          : '{anchor.name}' at {anchor.position}, " +
+                          $"distance {Vector3.Distance(transform.position, anchor.position):F3}");
+        else
+            sb.AppendLine("  Anchor          : <no Rope assigned, so the leash cannot work>");
+
+        sb.AppendLine($"  Leash           : {(maxReachFromAnchor > 0f ? maxReachFromAnchor.ToString("F3") : "off")}");
+        Debug.Log(sb.ToString(), this);
     }
 
     private PortSocket FindCompatibleSocketNearby()
@@ -203,8 +331,12 @@ public class CableConnector : MonoBehaviour
     }
 
     /// <summary>
-    /// Plugs this connector into the given socket. Cables do NOT report task progress -
-    /// only PCPartItem parts (CPU, RAM, PSU, SSD, etc.) count toward disassemble_pc/assemble_pc.
+    /// Plugs this connector into the given socket.
+    ///
+    /// Reports a step of assemble_pc, but ONLY for a cable the learner had previously unplugged -
+    /// PCDisassemblySetup decides that, not this method. The start-plugged connectors run through
+    /// here during setup too, and crediting those would finish the assembly before the learner had
+    /// touched anything.
     /// </summary>
     public void Plug(PortSocket socket)
     {
@@ -213,11 +345,15 @@ public class CableConnector : MonoBehaviour
         isPlugged = true;
         pluggedSocket = socket;
         socket.SetOccupied(this, true);
+
+        if (countsTowardAssembly) PCDisassemblySetup.NotifyCablePlugged(this);
     }
 
     /// <summary>
-    /// Unplugs this connector. Cables do NOT report task progress - only PCPartItem parts
-    /// count toward disassemble_pc/assemble_pc.
+    /// Unplugs this connector.
+    ///
+    /// Tells PCDisassemblySetup, which raises what assemble_pc asks for by one: a cable the learner
+    /// has taken out is a cable they have to put back before the PC is assembled.
     /// </summary>
     public void Unplug()
     {
@@ -225,6 +361,8 @@ public class CableConnector : MonoBehaviour
         transform.SetParent(null);
         isPlugged = false;
         pluggedSocket = null;
+
+        if (countsTowardAssembly) PCDisassemblySetup.NotifyCableUnplugged(this);
     }
 
     /*

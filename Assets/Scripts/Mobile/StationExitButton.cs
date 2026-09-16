@@ -1,6 +1,9 @@
 // StationExitButton.cs
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 namespace CSSSimulation.Networking
 {
@@ -95,6 +98,35 @@ namespace CSSSimulation.Networking
                  "target set to Android.")]
         public bool showInEditor = true;
 
+        [Header("Drawing on top")]
+        [Tooltip("While a station view is up, draw this button above every other canvas.\n\n" +
+                 "LEAVE THIS ON. Several stations fill the screen with a canvas of their own - the " +
+                 "testing view, the PC desktop - and uGUI draws canvases in sorting order, so a " +
+                 "button on the touch controls ends up UNDERNEATH. It is switched on, active, " +
+                 "correctly wired and completely invisible, with nothing in the Console to suggest " +
+                 "anything is wrong. On a keyboard nobody notices, because the exit key still works. " +
+                 "On a phone the learner is stuck.")]
+        public bool keepOnTopInStationView = true;
+
+        [Tooltip("How far above the highest canvas found to sit.")]
+        public int sortingOrderMargin = 10;
+
+        [Tooltip("Keep re-checking the draw order while a station view is open, instead of setting " +
+                 "it once on the way in.\n\n" +
+                 "LEAVE THIS ON. Canvases appear mid-view - a dialog, a result panel, a report - and " +
+                 "one that was switched off when the order was worked out can come up ABOVE the " +
+                 "button a moment later. Checking once is enough right up until the moment it is not.")]
+        public bool keepCheckingOrder = true;
+
+        [Header("Diagnostics")]
+        [Tooltip("When the button is on screen and a tap lands inside it but something else " +
+                 "receives that tap, say WHAT received it.\n\n" +
+                 "This is the answer to 'the button is right there and nothing happens'. A " +
+                 "full-screen panel with Raycast Target left on swallows every tap over the whole " +
+                 "screen while being completely invisible, and there is nothing in the Inspector, " +
+                 "the Hierarchy or the Console that points at it.")]
+        public bool reportStolenTaps = true;
+
         [Header("Restrict (optional)")]
         [Tooltip("Leave empty - the normal case - and this button leaves whichever station the " +
                  "player is in.\n\n" +
@@ -142,7 +174,11 @@ namespace CSSSimulation.Networking
             }
 
             Show(false);
+
+            if (!all.Contains(this)) all.Add(this);
         }
+
+        void OnDestroy() { all.Remove(this); }
 
         void Start() { ValidateSetup(); }
 
@@ -186,7 +222,11 @@ namespace CSSSimulation.Networking
                 DialogManager.Instance.IsDialogOpen)
                 visible = false;
 
+            KeepOnTop(here);
+
             if (visible != wasVisible) Show(visible);
+
+            if (visible) CheckForStolenTaps();
 
             if (visible && here != lastShownFor)
             {
@@ -364,6 +404,227 @@ namespace CSSSimulation.Networking
         }
 
         /// <summary>
+        /// Lifts the button above every other canvas while a station view is on screen, and puts it
+        /// back when the player leaves.
+        ///
+        /// WHY THIS IS NOT A LAYOUT PREFERENCE
+        ///
+        /// uGUI draws canvases in sorting order, and a station that fills the screen with its own
+        /// canvas will happily draw over the touch controls. Nothing about that is an error: the
+        /// button is active, its parents are active, its raycast target is on, and it is simply
+        /// behind a wall. There is no warning to find, and the symptom is identical to the button
+        /// not existing at all.
+        ///
+        /// A nested Canvas with Override Sorting is the uGUI way to say "this bit draws above
+        /// that", and it needs a GraphicRaycaster of its own to keep receiving taps once it does.
+        /// Both are added here rather than left as a setup step, because having one without the
+        /// other gives a button that is visible and dead - worse than one that is missing.
+        /// </summary>
+        void KeepOnTop(Station here)
+        {
+            bool wanted = keepOnTopInStationView && here != Station.None;
+
+            // Already lifted and still should be: re-check now and then, because a canvas that was
+            // switched off when the order was worked out can appear above it a moment later. That
+            // is not hypothetical - a dialog and a result panel both arrive mid-view.
+            if (wanted && lifted)
+            {
+                if (!keepCheckingOrder || Time.unscaledTime < nextOrderCheck) return;
+                nextOrderCheck = Time.unscaledTime + 0.25f;
+
+                Canvas mine = GetComponent<Canvas>();
+                if (mine == null) return;
+
+                int target = HighestSortingOrder() + Mathf.Max(1, sortingOrderMargin);
+                if (mine.sortingOrder >= target) return;
+
+                mine.sortingOrder = target;
+                if (logExit)
+                    Debug.Log("[StationExitButton] Something new drew above Back, so it has been " +
+                              "raised again to sorting order " + target + ".", this);
+                return;
+            }
+
+            if (wanted == lifted) return;
+
+            lifted = wanted;
+            nextOrderCheck = 0f;
+
+            Canvas own = GetComponent<Canvas>();
+
+            if (!wanted)
+            {
+                if (own != null) own.overrideSorting = false;
+                return;
+            }
+
+            if (own == null)
+            {
+                own = gameObject.AddComponent<Canvas>();
+                gameObject.AddComponent<GraphicRaycaster>();
+            }
+
+            own.overrideSorting = true;
+            own.sortingOrder = HighestSortingOrder() + Mathf.Max(1, sortingOrderMargin);
+
+            if (logExit)
+                Debug.Log("[StationExitButton] " + here + " fills the screen, so Back has been " +
+                          "lifted to sorting order " + own.sortingOrder + " to stay on top of it.",
+                          this);
+        }
+
+        /// <summary>
+        /// Says who actually received a tap that landed on this button.
+        ///
+        /// WHY THIS IS THE ONLY WAY TO FIND IT
+        ///
+        /// A tap that does nothing has no error, no warning and no trace. The button is visible,
+        /// active, interactable and correctly wired; the press simply goes to whatever uGUI decides
+        /// is in front, and a full-screen Image with Raycast Target left ticked is in front of
+        /// everything while being completely invisible. Nothing in the Inspector, the Hierarchy or
+        /// the Console points at it - the only thing that knows is the raycast itself, so this asks
+        /// it and prints the answer.
+        /// </summary>
+        void CheckForStolenTaps()
+        {
+            if (!reportStolenTaps || EventSystem.current == null) return;
+
+            Vector2 where;
+            if (!TapStartedThisFrame(out where)) return;
+
+            RectTransform rect = transform as RectTransform;
+            if (rect == null) return;
+
+            // Only care about taps aimed AT the button. A tap anywhere else landing elsewhere is
+            // just a tap.
+            if (!RectTransformUtility.RectangleContainsScreenPoint(rect, where, null)) return;
+
+            PointerEventData data = new PointerEventData(EventSystem.current);
+            data.position = where;
+
+            List<RaycastResult> hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(data, hits);
+
+            if (hits.Count > 0)
+            {
+                Transform top = hits[0].gameObject.transform;
+                if (top == transform || top.IsChildOf(transform)) return;   // the tap arrived
+            }
+
+            string blame = hits.Count == 0
+                ? "nothing at all received it - there may be no GraphicRaycaster on the canvas in " +
+                  "front, or an EventSystem is missing"
+                : "'" + Path(hits[0].gameObject.transform) + "' received it instead";
+
+            string others = "";
+            for (int i = 0; i < hits.Count && i < 5; i++)
+                others += "\n    " + (i + 1) + ". " + Path(hits[i].gameObject.transform) +
+                          "   (canvas order " + hits[i].sortingOrder + ")";
+
+            Debug.LogError("[StationExitButton] A tap landed ON the Back button while the player " +
+                           "was inside " + CurrentStation + ", but " + blame + "." +
+                           "\n\nWhat the raycast hit, front to back:" + others +
+                           "\n\nThe thing at the top of that list is covering Back. Nine times out " +
+                           "of ten it is a full-screen panel with Raycast Target still ticked on its " +
+                           "Image - untick it, or raise this button's Sorting Order Margin above " +
+                           "that canvas.", this);
+        }
+
+        static bool TapStartedThisFrame(out Vector2 position)
+        {
+            if (Input.touchCount > 0)
+            {
+                Touch t = Input.GetTouch(0);
+                position = t.position;
+                return t.phase == TouchPhase.Began;
+            }
+
+            position = Input.mousePosition;
+            return Input.GetMouseButtonDown(0);
+        }
+
+        static string Path(Transform t)
+        {
+            string path = t.name;
+            Transform p = t.parent;
+            while (p != null) { path = p.name + "/" + path; p = p.parent; }
+            return path;
+        }
+
+        int HighestSortingOrder()
+        {
+            int highest = 0;
+            Canvas[] canvases = Object.FindObjectsByType<Canvas>(
+                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+            foreach (Canvas c in canvases)
+            {
+                if (c == null || c.gameObject == gameObject) continue;
+                if (c.sortingOrder > highest) highest = c.sortingOrder;
+            }
+            return highest;
+        }
+
+        /// <summary>
+        /// Watches from outside, so the one failure this component cannot report on itself gets
+        /// reported anyway.
+        ///
+        /// If something switches the button's GameObject - or any parent of it - off, this
+        /// component stops running entirely. Its Update, its LateUpdate and its logging all stop
+        /// together, so the single most useful moment to say something is exactly the moment it has
+        /// lost the ability to. A station view that hides the touch controls takes the exit button
+        /// with it, and nothing anywhere says so.
+        ///
+        /// This runs on its own hidden object, which nothing in the scene knows about and so
+        /// nothing can switch off. It costs one check per frame and exists purely to make sure a
+        /// learner is never silently trapped in a station.
+        /// </summary>
+        class ExitButtonWatchdog : MonoBehaviour
+        {
+            bool warned;
+
+            void LateUpdate()
+            {
+                if (warned) return;
+
+                foreach (StationExitButton b in all)
+                {
+                    if (b == null || b.CurrentStation == Station.None) continue;
+                    if (b.gameObject.activeInHierarchy) continue;
+
+                    warned = true;
+
+                    string blocker = "its own GameObject";
+                    Transform t = b.transform;
+                    while (t != null)
+                    {
+                        if (!t.gameObject.activeSelf)
+                        {
+                            blocker = t == b.transform ? "its own GameObject"
+                                                       : "its parent '" + t.name + "'";
+                            break;
+                        }
+                        t = t.parent;
+                    }
+
+                    Debug.LogError("[StationExitButton] The player is inside " + b.CurrentStation +
+                                   " and the Back button '" + b.name + "' is SWITCHED OFF, because " +
+                                   blocker + " is off. On a touch device there is now no way out of " +
+                                   "this station.\n\n" +
+                                   "Something hid it on the way in - a station's Mobile Controls To " +
+                                   "Hide list is the usual one. Either take the Back button out of " +
+                                   "that list, or add it to the station's own mobile controls list " +
+                                   "so it is switched back ON for that view.", b);
+                    return;
+                }
+            }
+        }
+
+        static readonly List<StationExitButton> all = new List<StationExitButton>();
+        bool lifted;
+        float nextOrderCheck;
+
+        /// <summary>
         /// Switches on any exit button a scene left inactive.
         ///
         /// This component hides itself with a CanvasGroup, which means its GameObject has to be
@@ -372,18 +633,86 @@ namespace CSSSimulation.Networking
         /// does for the touch controls.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void RevealAll()
+        static void Hook()
+        {
+            // AfterSceneLoad fires ONCE, for whichever scene the game started in - the main menu.
+            // It does not fire again for a scene loaded afterwards, which is every scene the
+            // learner actually plays in. Doing the work only in that callback therefore fixed the
+            // exit button in the one scene that has no stations in it, and in none of the scenes
+            // that do.
+            //
+            // The subscription is what makes it per-scene. MobileControlsVisibility already learned
+            // this lesson and does the same thing, which is why the touch canvas comes back in
+            // every scene while this did not.
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            RevealAll();
+        }
+
+        static void OnSceneLoaded(Scene scene, LoadSceneMode mode) { RevealAll(); }
+
+        /// <summary>Switches on any exit button the current scenes left inactive.</summary>
+        public static void RevealAll()
         {
             StationExitButton[] found = Object.FindObjectsByType<StationExitButton>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             foreach (StationExitButton b in found)
             {
-                if (b == null || b.gameObject.activeSelf) continue;
-                b.gameObject.SetActive(true);
-                Debug.Log("[StationExitButton] '" + b.name + "' was switched off in this scene - " +
-                          "turned on, because it hides itself and cannot do that while inactive.", b);
+                if (b == null) continue;
+
+                // An ancestor being off cannot be fixed from here. Switching on a whole parent
+                // panel to reach one button would put the rest of that panel on screen too, which
+                // is a bigger change than this is entitled to make - so it says so instead.
+                GameObject blocker = FirstInactiveAncestor(b.transform);
+                if (blocker != null)
+                {
+                    Debug.LogError("[StationExitButton] '" + b.name + "' cannot run, because its " +
+                                   "parent '" + blocker.name + "' is switched off. Nothing here can " +
+                                   "fix that without putting the rest of that object on screen as " +
+                                   "well.\n\nMove the Back button out from under '" + blocker.name +
+                                   "' - onto the always-on touch controls canvas is the usual home - " +
+                                   "or switch that parent on.", b);
+                    continue;
+                }
+
+                bool wasOff = !b.gameObject.activeSelf;
+                bool wasDisabled = !b.enabled;
+
+                if (wasOff) b.gameObject.SetActive(true);
+
+                // The component too, not just the object. A ticked-off component is just as silent,
+                // and reads exactly the same way in the Inspector at a glance.
+                if (wasDisabled) b.enabled = true;
+
+                if (wasOff || wasDisabled)
+                    Debug.Log("[StationExitButton] '" + b.name + "' was " +
+                              (wasOff && wasDisabled ? "switched off and its component unticked"
+                               : wasOff ? "switched off" : "unticked") +
+                              " in this scene - turned back on, because it hides ITSELF with a " +
+                              "CanvasGroup and cannot do that while it is not running. It will now " +
+                              "be invisible until the player is inside a station, which is the same " +
+                              "thing you were trying to achieve by switching it off.", b);
             }
+
+            if (found.Length == 0 || Object.FindFirstObjectByType<ExitButtonWatchdog>() != null)
+                return;
+
+            GameObject watcher = new GameObject("StationExitButtonWatchdog");
+            watcher.hideFlags = HideFlags.HideAndDontSave;
+            watcher.AddComponent<ExitButtonWatchdog>();
+        }
+
+        /// <summary>The nearest switched-off parent above this transform, or null.</summary>
+        static GameObject FirstInactiveAncestor(Transform t)
+        {
+            Transform p = t.parent;
+            while (p != null)
+            {
+                if (!p.gameObject.activeSelf) return p.gameObject;
+                p = p.parent;
+            }
+            return null;
         }
 
         // ---------------------------------------------------------------- self-reporting

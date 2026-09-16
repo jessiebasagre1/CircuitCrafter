@@ -65,6 +65,9 @@ public class DragController : MonoBehaviour
         sourceSlot = null;
         StartDragVisual(item.icon);
         item.Pickup();
+
+        // After Pickup(), so a part with its own clip has already been resolved.
+        SfxPlayer.PartPickedUp(item);
     }
 
     public void BeginDragFromHotbar(HotbarSlot slot)
@@ -77,6 +80,8 @@ public class DragController : MonoBehaviour
         sourceSlot = slot;
         StartDragVisual(draggedItem.icon);
         slot.Clear();
+
+        SfxPlayer.HotbarTaken();
     }
 
     void StartDragVisual(Sprite icon)
@@ -102,7 +107,11 @@ public class DragController : MonoBehaviour
 
     void UpdateHoverHighlight()
     {
-        PartSocket socket = FindValidSocketUnderCursor();
+        // requireInstallable: TRUE for the highlight. A socket only lights up if it
+        // would actually take this part RIGHT NOW - so the heatsink's socket stays
+        // dark until the CPU underneath is seated and locked, instead of glowing over
+        // the top of the CPU socket and inviting a step that would be refused.
+        PartSocket socket = FindSocketUnderCursor(requireInstallable: true);
         if (socket == hoveredSocket) return; // no change since last frame
 
         if (hoveredSocket != null) hoveredSocket.SetHighlighted(false);
@@ -117,18 +126,59 @@ public class DragController : MonoBehaviour
         hoveredSocket = null;
     }
 
-    /// <summary>Raycasts for a socket under the cursor that would actually accept the dragged item right now.</summary>
-    PartSocket FindValidSocketUnderCursor()
+    // Reused buffer for the socket raycast below. Preallocated because that raycast runs
+    // every frame of every drag, and on a phone a per-frame array allocation is exactly
+    // the kind of thing that turns into a visible hitch when the GC eventually collects.
+    readonly RaycastHit[] socketHits = new RaycastHit[16];
+
+    /// <summary>
+    /// Finds the nearest socket under the cursor that would accept the dragged item.
+    ///
+    /// ALL HITS, NOT JUST THE FIRST. This used to be a plain Physics.Raycast, which
+    /// returns whatever collider happens to be closest and then throws the drop away if
+    /// that one is the wrong type. With sockets STACKED - the heatsink mounts directly
+    /// over the CPU - that meant dragging the CPU could hit the heatsink's socket in
+    /// front of it, fail the type check, and return null, leaving the CPU with nowhere
+    /// to go even though its own socket was right there behind it. Scanning every hit
+    /// and keeping the nearest ACCEPTING one makes stacked sockets work.
+    ///
+    /// requireInstallable also applies the part's own InstallBlockedReason. Pass true
+    /// for the hover highlight, false for the actual drop - see TryDropOnSocket for why
+    /// the drop deliberately uses the looser test.
+    /// </summary>
+    PartSocket FindSocketUnderCursor(bool requireInstallable)
     {
+        if (draggedItem == null) return null;
+
         Ray ray = worldCamera.ScreenPointToRay(PointerInput.Position);
-        if (!Physics.Raycast(ray, out RaycastHit hit, socketRaycastDistance, socketLayerMask))
-            return null;
+        // QueryTriggerInteraction.Collide spelled out, because PartSocket's own setup notes
+        // tell you to give it a TRIGGER collider - so whether sockets are found at all must
+        // not depend on the project-wide Queries Hit Triggers checkbox. PartClickDetector
+        // already passes this for the same reason.
+        int count = Physics.RaycastNonAlloc(ray, socketHits, socketRaycastDistance, socketLayerMask,
+                                            QueryTriggerInteraction.Collide);
 
-        var socket = hit.collider.GetComponentInParent<PartSocket>();
-        if (socket == null || !socket.IsEmpty || socket.acceptedType != draggedItem.partType)
-            return null;
+        PartSocket best = null;
+        float bestDistance = float.MaxValue;
 
-        return socket;
+        for (int i = 0; i < count; i++)
+        {
+            if (socketHits[i].distance >= bestDistance) continue;
+
+            var socket = socketHits[i].collider.GetComponentInParent<PartSocket>();
+            if (socket == null) continue;
+            if (!socket.IsEmpty) continue;
+            if (socket.acceptedType != draggedItem.partType) continue;
+
+            // InstallBlockedReason is called every frame from the highlight path, which is
+            // why overrides of it are required to be silent - no Debug.Log inside one.
+            if (requireInstallable && draggedItem.InstallBlockedReason(socket) != null) continue;
+
+            bestDistance = socketHits[i].distance;
+            best = socket;
+        }
+
+        return best;
     }
 
     void ResolveDrop()
@@ -155,6 +205,7 @@ public class DragController : MonoBehaviour
             if (slot != null && slot.IsEmpty)
             {
                 slot.SetItem(draggedItem); // item is already shrunk/disabled, this just shows its icon
+                SfxPlayer.HotbarStored();
                 return true;
             }
         }
@@ -163,15 +214,30 @@ public class DragController : MonoBehaviour
 
     bool TryDropOnSocket()
     {
-        var socket = FindValidSocketUnderCursor();
+        // requireInstallable: FALSE here, on purpose, and it is the whole reason this is a
+        // separate call from the highlight above. If the drop used the strict test too, a
+        // blocked socket would simply not be found - the part would drift back to the
+        // hotbar with no warning popup and, in assessment, no recorded mistake. Finding it
+        // loosely and letting TryReturnToSocket refuse it is what produces the explanation.
+        var socket = FindSocketUnderCursor(requireInstallable: false);
         if (socket == null) return false;
 
-        draggedItem.ReturnToSocket(socket); // reactivates + tweens scale back to normal
-        return true;
+        // TryReturnToSocket, not ReturnToSocket: the part gets the last word on whether
+        // this socket is ready for it right now (CPU retention lock still closed, etc).
+        // A refusal returns false, so ResolveDrop falls through to ReturnToOrigin() and
+        // the part goes back to the hotbar instead of vanishing.
+        // Only on success. A refused install has already played its own Blocked sound from
+        // inside TryReturnToSocket, and a seated-part chime on top of a refusal would tell the
+        // learner the opposite of what happened.
+        bool seated = draggedItem.TryReturnToSocket(socket); // reactivates + tweens scale back to normal
+        if (seated) SfxPlayer.PartSeated(draggedItem);
+        return seated;
     }
 
     void ReturnToOrigin()
     {
+        SfxPlayer.DropFailed();
+
         if (sourceSlot != null)
         {
             sourceSlot.SetItem(draggedItem);

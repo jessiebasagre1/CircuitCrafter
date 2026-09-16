@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using CircuitCrafter.Settings;
 
 /// <summary>
 /// Background music for the Main Menu, and nowhere else.
@@ -43,6 +44,19 @@ public class MenuMusic : MonoBehaviour
 
     private AudioSource source;
 
+    /// <summary>
+    /// This track's own level, scaled by the learner's MUSIC setting.
+    ///
+    /// Master Volume is NOT in here: that one goes through AudioListener.volume and multiplies
+    /// every AudioSource in the game already. Reading it here as well would apply it twice, and
+    /// the music would fall away roughly as the square of the slider - half looking like a
+    /// quarter, which reads as a broken slider rather than a quiet one.
+    /// </summary>
+    private float EffectiveVolume
+    {
+        get { return volume * GameSettings.MusicVolume01; }
+    }
+
     // ==================================================================
 
     private void Awake()
@@ -61,6 +75,25 @@ public class MenuMusic : MonoBehaviour
         // Above the default 128, so the track is never the voice Unity drops when several sounds
         // are competing. On a menu it is usually the only one, which makes this cheap insurance.
         source.priority = 64;
+    }
+
+    private void OnEnable()
+    {
+        // Live, so dragging the Music slider is heard as it moves rather than on the next
+        // scene load - which for the menu track would mean never.
+        GameSettings.OnChanged += ApplyMusicVolume;
+    }
+
+    private void OnDisable()
+    {
+        GameSettings.OnChanged -= ApplyMusicVolume;
+    }
+
+    /// <summary>Pushes the current setting into the source, unless a fade is mid-flight -
+    /// the fade is already writing volume every frame and will land on the new value.</summary>
+    private void ApplyMusicVolume()
+    {
+        if (source != null && !fading) source.volume = EffectiveVolume;
     }
 
     private void Start()
@@ -83,14 +116,17 @@ public class MenuMusic : MonoBehaviour
                              "heard. Add one to the Main Camera.", this);
         }
 
-        source.volume = fadeInSeconds > 0f ? 0f : volume;
+        source.volume = fadeInSeconds > 0f ? 0f : EffectiveVolume;
         source.Play();
 
         if (fadeInSeconds > 0f) StartCoroutine(FadeIn());
     }
 
+    private bool fading;
+
     private IEnumerator FadeIn()
     {
+        fading = true;
         float elapsed = 0f;
 
         while (elapsed < fadeInSeconds)
@@ -99,11 +135,13 @@ public class MenuMusic : MonoBehaviour
             // confirmation both do it - and a fade driven by scaled time would stop halfway and
             // leave the track quiet for as long as the panel is open.
             elapsed += Time.unscaledDeltaTime;
-            source.volume = Mathf.Lerp(0f, volume, elapsed / fadeInSeconds);
+            // EffectiveVolume re-read every frame, so moving the slider mid-fade works.
+            source.volume = Mathf.Lerp(0f, EffectiveVolume, elapsed / fadeInSeconds);
             yield return null;
         }
 
-        source.volume = volume;
+        source.volume = EffectiveVolume;
+        fading = false;
     }
 
     /// <summary>Sets this track's level while it is playing. For a music slider, if you ever add one
@@ -111,6 +149,6 @@ public class MenuMusic : MonoBehaviour
     public void SetVolume(float value)
     {
         volume = Mathf.Clamp01(value);
-        if (source != null) source.volume = volume;
+        if (source != null) source.volume = EffectiveVolume;
     }
 }

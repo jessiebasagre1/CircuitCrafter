@@ -200,8 +200,26 @@ namespace CSSSimulation.Networking
         /// something else has suspended input, which the camera does while it is flying between
         /// ports. A drag started mid-flight would be computed from a camera that is still moving,
         /// so the conductor would slide across the screen on its own.
+        ///
+        /// AND false whenever the stage camera is not rendering, which is the important one.
+        ///
+        /// A disabled Camera still answers ScreenPointToRay perfectly happily - it is only its
+        /// RENDERING that stops. So without this check the punch stage keeps scoring every click
+        /// in the game against its own camera while the player is somewhere else entirely: at the
+        /// crimping bench laying wires into the guide, each drop also lands on a conductor here,
+        /// and the Console fills with conductors being lifted out of pins nobody is looking at.
+        ///
+        /// The station assigns this camera on entry and switches its GameObject off on exit, so
+        /// "is that camera live" is the same question as "is the player standing at this stage".
         /// </summary>
-        public bool AcceptsInput { get { return acceptsInput && !InputSuspended; } }
+        public bool AcceptsInput
+        {
+            get
+            {
+                if (!acceptsInput || InputSuspended) return false;
+                return stageCamera != null && stageCamera.isActiveAndEnabled;
+            }
+        }
 
         /// <summary>Set by PunchStageCamera during a move. Nothing else should touch it.</summary>
         public bool InputSuspended { get; set; }
@@ -383,6 +401,22 @@ namespace CSSSimulation.Networking
 
         void Start()
         {
+            StartCoroutine(ValidateWhenSettled());
+        }
+
+        /// <summary>
+        /// Waits a couple of frames before checking the setup.
+        ///
+        /// A multi-port run has one set of eight conductors PER PORT, and PunchStageSequence hands
+        /// the board whichever set the current port uses. Until it has, this board's own Awake
+        /// search has found every conductor on every cable - and a check that runs then reports
+        /// sixteen conductors and two of every colour, which is not a fault at all. Two frames is
+        /// long enough for the sequence to have spoken.
+        /// </summary>
+        System.Collections.IEnumerator ValidateWhenSettled()
+        {
+            yield return null;
+            yield return null;
             ValidateSetup();
         }
 
@@ -496,6 +530,7 @@ namespace CSSSimulation.Networking
             if (pin != null) pin.ClearSeat();      // refuses by itself if the pin was struck
 
             conductor.LeavePin();
+            COC2Sfx.ConductorLifted();
             SetHint(null);
             RefreshUI();
 
@@ -516,6 +551,12 @@ namespace CSSSimulation.Networking
 
             pin.Seat_(conductor);
             conductor.SeatInto(pin);
+
+            // The undo for a press that was not a drag. It still gets the seat sound - from the
+            // learner's side a conductor just went into a channel, and silence here would read
+            // as the press having done nothing.
+            COC2Sfx.ConductorSeated();
+
             RefreshUI();
         }
 
@@ -714,6 +755,7 @@ namespace CSSSimulation.Networking
             if (target == null)
             {
                 if (logRefusedDrops) LogRefusal(conductor, onScreen, px);
+                COC2Sfx.ActionRefused();
                 SetHint("Bring the conductor down onto a pin.");
                 RefreshUI();
                 return false;
@@ -721,6 +763,7 @@ namespace CSSSimulation.Networking
 
             if (target.IsSeated)
             {
+                COC2Sfx.ActionRefused();
                 SetHint("Position " + target.pinNumber + " already has a conductor in it.");
                 RefreshUI();
                 return false;
@@ -729,6 +772,7 @@ namespace CSSSimulation.Networking
             PunchStagePin allowed = PinAcceptingWire();
             if (allowed == null)
             {
+                COC2Sfx.ActionRefused();
                 SetHint(requirePunchBeforeNextWire
                     ? "Punch the conductor already seated before starting the next one."
                     : "Every pin already has a conductor.");
@@ -738,6 +782,7 @@ namespace CSSSimulation.Networking
 
             if (target != allowed)
             {
+                COC2Sfx.ActionRefused();
                 SetHint("Work the block in order - position " + allowed.pinNumber + " is next.");
                 RefreshUI();
                 return false;
@@ -745,6 +790,7 @@ namespace CSSSimulation.Networking
 
             target.Seat_(conductor);
             conductor.SeatInto(target);
+            COC2Sfx.ConductorSeated();
             SetHint("Now bring the punch-down tool onto position " + target.pinNumber + ".");
             RefreshUI();
             return true;
@@ -824,6 +870,7 @@ namespace CSSSimulation.Networking
             PunchStagePin target = PinForToolAt(screenPoint);
             if (target == null)
             {
+                COC2Sfx.ActionRefused();
                 SetHint("Bring the tool down onto the pin you want to strike.");
                 RefreshUI();
                 return;
@@ -831,6 +878,7 @@ namespace CSSSimulation.Networking
 
             if (!target.IsSeated)
             {
+                COC2Sfx.ActionRefused();
                 SetHint("Position " + target.pinNumber + " is empty - seat a conductor in it first.");
                 RefreshUI();
                 return;
@@ -838,6 +886,7 @@ namespace CSSSimulation.Networking
 
             if (target.IsPunched)
             {
+                COC2Sfx.ActionRefused();
                 SetHint("Position " + target.pinNumber + " is already terminated.");
                 RefreshUI();
                 return;
@@ -851,6 +900,7 @@ namespace CSSSimulation.Networking
             // A punched conductor is seated in an IDC contact and trimmed. It does not come back out
             // by hand, right or wrong - the same finality as a crimp.
             pin.MarkPunched();
+            COC2Sfx.ConductorPunched();
             OnConductorPunched?.Invoke();
 
             if (PunchedCount() >= 8) { Finish(); return; }

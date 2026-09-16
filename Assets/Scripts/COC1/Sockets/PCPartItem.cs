@@ -26,6 +26,15 @@ public class PCPartItem : MonoBehaviour
     [Tooltip("Rotation correction in degrees, same idea as above.")]
     public Vector3 installRotationCorrectionEuler = Vector3.zero;
 
+    [Header("Sound (optional)")]
+    [Tooltip("Overrides SfxPlayer's shared 'part pickup' clip for THIS part only. A PSU coming " +
+             "loose should not sound like a stick of RAM. Leave empty to use the shared one.")]
+    public AudioClip pickupSound;
+
+    [Tooltip("Overrides SfxPlayer's shared 'part seated' clip for THIS part only. Leave empty to " +
+             "use the shared one.")]
+    public AudioClip installSound;
+
     [Header("Pickup-Ready Highlight")]
     [Tooltip("Optional visual (outline, glow, etc.) shown whenever this part is currently able to be picked up � e.g. once all its cables are unplugged, or its lock(s) are open. Leave unassigned for parts that don't need this. Automatically kept in sync every frame.")]
     public GameObject pickupReadyVisual;
@@ -42,6 +51,10 @@ public class PCPartItem : MonoBehaviour
     [SerializeField] private DialogSequence blockedWarningDialog;
     [Tooltip("Optional � shown the moment this specific part is reinstalled. Leave unassigned for parts that don't need one.")]
     [SerializeField] private DialogSequence installDialog;
+    [Tooltip("Optional - shown when the player tries to SEAT this part into a socket that is not " +
+             "ready for it yet (e.g. the CPU retention lock is still closed). Leave unassigned for " +
+             "parts that can always be installed.")]
+    [SerializeField] private DialogSequence installBlockedDialog;
 
     [Header("Disassembly Order (optional)")]
     [Tooltip("Enable to require lower-numbered ordered parts be removed first. Leave OFF for parts removable anytime.")]
@@ -62,6 +75,20 @@ public class PCPartItem : MonoBehaviour
     private void OnDisable()
     {
         orderedParts.Remove(this);
+    }
+
+    /// <summary>
+    /// The ordered part that has to come off before this one, or null.
+    ///
+    /// Pulled out of TryBeginDrag so the pickup-ready highlight can ask the same
+    /// question. It previously could not: 'ready' was computed from CanPickup()
+    /// alone, which ignores Disassembly Order entirely, so an ordered part sat
+    /// there GLOWING "take me off" while something on top of it still had to be
+    /// removed first. The learner is told to grab it and then refused when they do.
+    /// </summary>
+    private PCPartItem RemovalOrderBlocker()
+    {
+        return enforceRemovalOrder ? FindEarlierUnremovedPart() : null;
     }
 
     private PCPartItem FindEarlierUnremovedPart()
@@ -99,7 +126,7 @@ public class PCPartItem : MonoBehaviour
 
         // Only relevant while actually installed in a socket � HomeSocket is null
         // while mid-drag or sitting in the hotbar, where "ready to pick up" doesn't apply.
-        bool ready = HomeSocket != null && CanPickup();
+        bool ready = HomeSocket != null && CanPickup() && RemovalOrderBlocker() == null;
         if (ready == pickupReadyVisualActive) return;
 
         Debug.Log($"{name}: pickup-ready visual changing to {ready} (HomeSocket={(HomeSocket != null ? HomeSocket.name : "null")})", this);
@@ -122,9 +149,8 @@ public class PCPartItem : MonoBehaviour
             return;
         }
 
-        if (enforceRemovalOrder)
         {
-            PCPartItem blocker = FindEarlierUnremovedPart();
+            PCPartItem blocker = RemovalOrderBlocker();
             if (blocker != null)
             {
                 Debug.Log($"{name}: can't drag � must remove '{blocker.name}' (step {blocker.removalOrderStep}) first.", this);
@@ -135,6 +161,7 @@ public class PCPartItem : MonoBehaviour
                 COC1AssessmentManager.ReportMistake(
                     $"Removed '{name}' out of order - '{blocker.name}' must come off first.", this);
 
+                SfxPlayer.Blocked();
                 return;
             }
         }
@@ -152,6 +179,7 @@ public class PCPartItem : MonoBehaviour
             // and no duplicated rules. No-ops entirely outside assessment mode.
             COC1AssessmentManager.ReportMistake($"Tried to remove '{name}' - {blockReason}", this);
 
+            SfxPlayer.Blocked();
             return;
         }
 
@@ -250,6 +278,60 @@ public class PCPartItem : MonoBehaviour
     /// attached to this part so they disappear along with it.
     /// </summary>
     protected virtual void OnPickedUp() { }
+
+    /// <summary>
+    /// Override to add extra conditions before this part may be SEATED into a
+    /// socket - the install-side twin of PickupBlockedReason above. Return null
+    /// if installing is currently allowed, or a short human-readable reason if
+    /// it is blocked.
+    ///
+    /// This is what keeps the CSS procedure in order in the assembly direction.
+    /// Removal order is already enforced (Disassembly Order + PickupBlockedReason),
+    /// but until now ANY part could be dropped back into ANY empty socket of the
+    /// right type, no matter what state the socket was in - so a learner could
+    /// drop the CPU straight through a closed retention lock, which on a real
+    /// LGA board bends pins and is exactly the mistake this module exists to
+    /// prevent.
+    ///
+    /// IMPORTANT: same rule as PickupBlockedReason - no Debug.Log inside an
+    /// override. TryReturnToSocket below does the logging, once, on the actual
+    /// drop.
+    /// </summary>
+    public virtual string InstallBlockedReason(PartSocket socket) => null;
+
+    /// <summary>
+    /// The single door every install goes through. Checks InstallBlockedReason,
+    /// and either seats the part or refuses it with a message.
+    ///
+    /// Returns false when the install was refused, which tells DragController to
+    /// send the part back where it came from (its hotbar slot) rather than
+    /// leaving it shrunk and invisible in the world.
+    /// </summary>
+    public bool TryReturnToSocket(PartSocket socket)
+    {
+        if (socket == null) return false;
+
+        string blockReason = InstallBlockedReason(socket);
+        if (blockReason != null)
+        {
+            Debug.Log($"{name}: can't install into '{socket.name}' - {blockReason}", this);
+
+            if (installBlockedDialog != null && DialogManager.Instance != null)
+                DialogManager.Instance.ShowDialog(installBlockedDialog);
+
+            // ASSESSMENT: forcing a part into a socket that is not prepared for it is a
+            // procedural error, and the same kind the removal-side checks already grade.
+            // No-ops entirely outside assessment mode.
+            COC1AssessmentManager.ReportMistake(
+                $"Tried to install '{name}' into '{socket.name}' - {blockReason}", this);
+
+            SfxPlayer.Blocked();
+            return false;
+        }
+
+        ReturnToSocket(socket);
+        return true;
+    }
 
     /// <summary>Snap into a socket and grow back to assembled size.</summary>
     public void ReturnToSocket(PartSocket socket)

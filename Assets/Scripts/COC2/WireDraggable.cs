@@ -91,6 +91,11 @@ namespace CSSSimulation.Networking
                 HomeSlot = null;
             }
 
+            // After every guard above, never before one. A sound that plays on a refused
+            // pickup teaches the opposite of what it should - the learner hears the wire
+            // come loose and then watches it sit there.
+            COC2Sfx.WirePickedUp();
+
             WireDragController.Instance.BeginDrag(this);
         }
 
@@ -109,6 +114,10 @@ namespace CSSSimulation.Networking
             // instead of just popping to full size.
             Restart(ScaleTo(slot.attachScale));
 
+            // On the seat, not at the end of the grow animation. The learner's hand released
+            // the wire now; 150ms later is late enough to read as lag rather than as feedback.
+            COC2Sfx.WireSeated();
+
             // Let the station know a wire just landed  it checks whether both ends are
             // now fully arranged and, if so, auto-validates the order right away.
             CrimpingStationController.Instance?.OnWirePlaced();
@@ -124,6 +133,12 @@ namespace CSSSimulation.Networking
         /// <summary>Called by WireDragController when the wire is released somewhere invalid.</summary>
         public void ReturnHome()
         {
+            // Fires once even when ConnectorEnd sends all eight home after a failed auto-check:
+            // SfxPlayer's retrigger guard swallows a repeat of the same clip inside 40ms, which
+            // is exactly the case it exists for. Eight wires going home is one event to the
+            // learner, not eight.
+            COC2Sfx.WireReturned();
+
             if (scaleRoutine != null)
             {
                 StopCoroutine(scaleRoutine);

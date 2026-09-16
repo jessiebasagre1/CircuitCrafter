@@ -94,6 +94,22 @@ namespace CSSSimulation.Networking
         [Tooltip("Shown only in the tester view - e.g. a Plug In button and a Back button.")]
         public GameObject[] mobileTesterControls;
 
+        [Header("Anything else at the bench")]
+        [Tooltip("Switched ON while the player is inside the tester, and OFF again when they " +
+                 "leave. Anything at all goes in here - a hint panel, a label on the tester, a " +
+                 "second camera angle, a particle effect, a Back button.\n\n" +
+                 "Separate from Mobile Tester Controls because that list is for touch controls and " +
+                 "reads as being about phones. This one has nothing to do with the device, so a " +
+                 "thing that should appear at the bench on EVERY platform belongs here.")]
+        public GameObject[] objectsToEnable = new GameObject[0];
+
+        [Tooltip("Switched OFF while the player is inside the tester, and back ON when they leave. " +
+                 "For things that belong to the room rather than the bench - a floating task " +
+                 "arrow, a world-space sign, an ambience emitter.\n\n" +
+                 "An object holding the Back button is refused here and says so, because switching " +
+                 "it off is what traps a phone player inside the station.")]
+        public GameObject[] objectsToDisable = new GameObject[0];
+
         [Header("Dialog (optional)")]
         [Tooltip("Shown if the player walks up without a crimped cable.")]
         public DialogSequence noCableDialog;
@@ -105,6 +121,16 @@ namespace CSSSimulation.Networking
         [Header("Events")]
         [Tooltip("Fires once the result animation finishes: true if the cable passed.")]
         public UnityEvent<bool> OnTestResult;
+
+        [Tooltip("Fires when the player sits down at the tester.\n\n" +
+                 "For anything a plain on/off list cannot express - starting a coroutine, setting a " +
+                 "text field, telling another component to reset itself. The two lists above cover " +
+                 "showing and hiding; this covers everything else.")]
+        public UnityEvent OnEnteredStation;
+
+        [Tooltip("Fires when the player leaves the tester, however they leave - the exit key, the " +
+                 "Back button, or the procedure resetting itself between cables.")]
+        public UnityEvent OnLeftStation;
 
         public bool InTesterView { get; private set; }
         public bool IsTesting { get; private set; }
@@ -367,15 +393,87 @@ namespace CSSSimulation.Networking
 
             foreach (var obj in mobileControlsToHide)
             {
-                if (obj != null) obj.SetActive(!active);
+                if (obj != null) SetActiveUnlessItIsTheWayOut(obj, !active);
             }
             foreach (var obj in mobileTesterControls)
             {
                 if (obj != null) obj.SetActive(active);
             }
 
+            // The two device-independent lists. Same idea, no assumption about phones.
+            foreach (var obj in objectsToEnable)
+            {
+                if (obj != null) obj.SetActive(active);
+            }
+            foreach (var obj in objectsToDisable)
+            {
+                if (obj != null) SetActiveUnlessItIsTheWayOut(obj, !active);
+            }
+
             Cursor.lockState = active ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = active;
+
+            // Fired last, so anything listening sees the station already in its new state - a
+            // listener that reads InTesterView, or moves something that was just switched on, would
+            // otherwise be looking at the world as it was a moment ago.
+            if (!Application.isPlaying || firstApply) { firstApply = false; return; }
+
+            if (active) { if (OnEnteredStation != null) OnEnteredStation.Invoke(); }
+            else { if (OnLeftStation != null) OnLeftStation.Invoke(); }
         }
+
+        // Awake calls SetTesterViewActive(false) to put the bench in its closed state. That is
+        // housekeeping, not the player leaving, so it must not fire OnLeftStation - otherwise every
+        // scene load runs the leaving logic before anybody has arrived.
+        bool firstApply = true;
+
+        /// <summary>
+        /// Switches an object off, unless doing so would take the Back button down with it.
+        ///
+        /// WHY THIS GUARD EXISTS
+        ///
+        /// StationExitButton hides ITSELF, with a CanvasGroup, precisely so that it keeps running
+        /// while invisible - it has to, because it is also what listens for the exit key, and a
+        /// deactivated component listens for nothing. Switch its object off, or any parent of it,
+        /// and it stops running: Back never reappears, the exit key stops working, and the player is
+        /// sealed inside the station with no error anywhere to explain it.
+        ///
+        /// The touch controls canvas is the usual casualty, because the Back button sensibly lives
+        /// on it and the canvas sensibly goes in Mobile Controls To Hide. Both decisions are
+        /// reasonable; together they lock the player in. So the hide is refused for that one object
+        /// and says why, rather than being silently obeyed.
+        /// </summary>
+        void SetActiveUnlessItIsTheWayOut(GameObject obj, bool wanted)
+        {
+            if (wanted) { obj.SetActive(true); return; }
+
+            StationExitButton exit = obj.GetComponentInChildren<StationExitButton>(true);
+            if (exit == null) { obj.SetActive(false); return; }
+
+            if (reportedExitClash != obj)
+            {
+                reportedExitClash = obj;
+                Debug.LogWarning("[NetworkTestStation] Not switching '" + obj.name + "' off on the " +
+                                 "way into the tester, because the Back button '" + exit.name +
+                                 "' is inside it.\n\n" +
+                                 "Back hides itself with a CanvasGroup so that it keeps running " +
+                                 "while invisible - that is also what makes the exit key work. " +
+                                 "Switching its object or any parent off stops it running, and the " +
+                                 "player is then stuck inside the tester with nothing on screen to " +
+                                 "get them out.\n\n" +
+                                 "If you need the rest of that object hidden, move the Back button " +
+                                 "out from under it and put it on its own always-on canvas.", this);
+            }
+
+            // Everything else under it can still go. The button stays, and hides itself.
+            for (int i = 0; i < obj.transform.childCount; i++)
+            {
+                Transform child = obj.transform.GetChild(i);
+                if (child.GetComponentInChildren<StationExitButton>(true) == null)
+                    child.gameObject.SetActive(false);
+            }
+        }
+
+        GameObject reportedExitClash;
     }
 }

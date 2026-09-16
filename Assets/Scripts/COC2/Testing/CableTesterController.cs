@@ -152,6 +152,7 @@ namespace CSSSimulation.Networking
         {
             IsTesting = true;
             OnTestStarted?.Invoke();
+            COC2Sfx.TestStarted();
 
             CableTestReport report = CableTestAnalyzer.Analyze(endOne, endTwo, station.targetCableType, detectSplitPairs);
             LastReport = report;
@@ -195,6 +196,13 @@ namespace CSSSimulation.Networking
 
                     if (resultUI != null) resultUI.HighlightStep(pin);
 
+                    // One tick per pin, and a DIFFERENT one when nothing answered. The LED chase
+                    // is the teaching moment of this stage and it is over in a couple of seconds -
+                    // a learner watching the master unit can easily miss which of the eight steps
+                    // went red. Hearing it does not require looking at the right place at the
+                    // right time.
+                    COC2Sfx.TestPinStep(!faulty);
+
                     yield return new WaitForSeconds(stepDuration);
 
                     AllLedsOff();
@@ -207,6 +215,12 @@ namespace CSSSimulation.Networking
             ShowFinalState(report);
 
             if (resultUI != null) resultUI.ShowReport(report);
+
+            // With the verdict on screen, not after Result Hold. The panel and the sound are one
+            // event; holding the sound back until the hold expires would make the learner read
+            // the result and then hear it confirmed a moment later, which reads as a stutter.
+            if (report.Passed) COC2Sfx.TestPassed();
+            else COC2Sfx.TestFailed();
 
             yield return new WaitForSeconds(resultHold);
 

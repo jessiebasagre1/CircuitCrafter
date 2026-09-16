@@ -203,6 +203,17 @@ public class COC3DesktopBuilder : EditorWindow
             var session = BuildRdpSession(windows, t);
             BuildRemoteDesktop(windows, t, error, session);
 
+            // ---- verification: steps 22, 26, 31 and 34 ----
+            var testPage = BuildTestPageSent(windows, t);
+            var printerProps = BuildPrinterProperties(windows, t, error, testPage);
+            BuildDevicesAndPrinters(windows, t, error, printerProps);
+
+            BuildDocumentsProperties(windows, t, error);
+            BuildFirewallConsole(windows, t, error);
+
+            var filterDialog = BuildFilterDialog(windows, t, error);
+            BuildEventViewer(windows, t, error, filterDialog);
+
             // The guarded Properties button on Ethernet Properties opens TCP/IPv4.
             var ethGate = ethProps.GetComponentInChildren<WinTaskGate>(true);
             if (ethGate != null) Opens(ethGate, tcpip, "TcpIpv4", ethProps);
@@ -234,11 +245,15 @@ public class COC3DesktopBuilder : EditorWindow
                      "    create_user_folder, create_user_account, add_group_member,\n" +
                      "    set_password_policy, share_folder, set_folder_permissions,\n" +
                      "    test_unc_path, create_redirection_folder,\n" +
-                     "    set_redirection_target, rdp_connect\n\n" +
+                     "    set_redirection_target, rdp_connect,\n" +
+                     "    print_test_page, verify_redirection,\n" +
+                     "    allow_rdp_rule, filter_audit_failure\n\n" +
                      "  Internal guards (leave unbound):\n" +
                      "    open_ipv4, open_new_zone, open_folder_properties,\n" +
                      "    open_new_user, open_new_group, create_group,\n" +
-                     "    open_password_policy, open_redirection_properties\n\n" +
+                     "    open_password_policy, open_printer_properties,\n" +
+                     "    open_event_filter\n\n" +
+                     "  open_redirection_properties is now BOUND to step 24.\n\n" +
                      "  " + wired + "\n\n" +
                      "Next: add COC3StepGate to your Managers object and bind the graded action ids " +
                      "to your step ids. See the guide.";
@@ -339,27 +354,38 @@ public class COC3DesktopBuilder : EditorWindow
         clock.fontSize = 13f;
 
         // --- start menu ---
-        var menu = Rect(root, "StartMenu", 0f, DH - 44f - 540f, 340f, 540f);
+        // TWO COLUMNS. Thirteen entries in one column is a menu 680 pixels tall on a 900 pixel
+        // desktop, which stops reading as a Start menu and starts reading as a wall.
+        var menu = Rect(root, "StartMenu", 0f, DH - 44f - 420f, 660f, 420f);
         var menuBg = menu.gameObject.AddComponent<Image>();
         menuBg.color = Hex(0x2B2B2B);
 
-        Label(menu, t, "Header", 16f, 12f, 280f, 24f, "Windows Administrative Tools",
+        Label(menu, t, "Header", 16f, 12f, 300f, 24f, "Windows Administrative Tools",
               TextAlignmentOptions.Left).color = Hex(0x9A9A9A);
 
-        StartEntry(menu, t, "Entry_System", 8f, 48f, "System", "SystemProperties");
-        StartEntry(menu, t, "Entry_Network", 8f, 92f, "Network Connections", "NetworkConnections");
-        StartEntry(menu, t, "Entry_ServerManager", 8f, 136f, "Server Manager", "ServerManager");
-        StartEntry(menu, t, "Entry_DHCP", 8f, 180f, "DHCP", "DhcpConsole");
-        StartEntry(menu, t, "Entry_DNS", 8f, 224f, "DNS Manager", "DnsManager");
-        StartEntry(menu, t, "Entry_Explorer", 8f, 268f, "File Explorer", "FileExplorer");
-        StartEntry(menu, t, "Entry_ADUC", 8f, 312f,
-                   "Active Directory Users and Computers", "AdUsersComputers");
-        StartEntry(menu, t, "Entry_GPO", 8f, 356f, "Group Policy Management", "GpoEditor");
+        const float ColumnW = 310f;
+        const float Col2 = 336f;
 
-        // The two the tests are run from. Both belong on CLIENT01 - see the note in the guide.
-        StartEntry(menu, t, "Entry_Run", 8f, 400f, "Run", "RunDialog");
-        StartEntry(menu, t, "Entry_RDP", 8f, 444f,
-                   "Remote Desktop Connection", "RemoteDesktopConnection");
+        StartEntry(menu, t, "Entry_System", 8f, 48f, "System", "SystemProperties", ColumnW);
+        StartEntry(menu, t, "Entry_Network", 8f, 92f, "Network Connections", "NetworkConnections", ColumnW);
+        StartEntry(menu, t, "Entry_ServerManager", 8f, 136f, "Server Manager", "ServerManager", ColumnW);
+        StartEntry(menu, t, "Entry_DHCP", 8f, 180f, "DHCP", "DhcpConsole", ColumnW);
+        StartEntry(menu, t, "Entry_DNS", 8f, 224f, "DNS Manager", "DnsManager", ColumnW);
+        StartEntry(menu, t, "Entry_Explorer", 8f, 268f, "File Explorer", "FileExplorer", ColumnW);
+        StartEntry(menu, t, "Entry_ADUC", 8f, 312f,
+                   "Active Directory Users and Computers", "AdUsersComputers", ColumnW);
+        StartEntry(menu, t, "Entry_GPO", 8f, 356f, "Group Policy Management", "GpoEditor", ColumnW);
+
+        // Second column. Everything the TESTS are run from - and all of it belongs on CLIENT01.
+        StartEntry(menu, t, "Entry_Run", Col2, 48f, "Run", "RunDialog", ColumnW);
+        StartEntry(menu, t, "Entry_RDP", Col2, 92f,
+                   "Remote Desktop Connection", "RemoteDesktopConnection", ColumnW);
+        StartEntry(menu, t, "Entry_Printers", Col2, 136f,
+                   "Devices and Printers", "DevicesAndPrinters", ColumnW);
+        StartEntry(menu, t, "Entry_Documents", Col2, 180f, "Documents", "DocumentsProperties", ColumnW);
+        StartEntry(menu, t, "Entry_Firewall", Col2, 224f,
+                   "Windows Defender Firewall", "FirewallConsole", ColumnW);
+        StartEntry(menu, t, "Entry_EventViewer", Col2, 268f, "Event Viewer", "EventViewer", ColumnW);
 
         desktop.startMenu = menu.gameObject;
         menu.gameObject.SetActive(false);
@@ -387,9 +413,10 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     private static void StartEntry(Transform parent, COC3WinTheme t, string name,
-                                   float x, float y, string label, string windowId)
+                                   float x, float y, string label, string windowId,
+                                   float width = 0f)
     {
-        float w = ((RectTransform)parent).rect.width - 2f * x;
+        float w = width > 0f ? width : ((RectTransform)parent).rect.width - 2f * x;
 
         var btn = FlatButton((RectTransform)parent, name, x, y, w, 36f, "");
 
@@ -2269,6 +2296,379 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     // ==================================================================
+    // Verification - steps 22, 26, 31 and 34
+    // ==================================================================
+
+    private static WinWindow BuildDevicesAndPrinters(Transform parent, COC3WinTheme t,
+                                                     GameObject error, WinWindow printerProps)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "DevicesAndPrinters", "Devices and Printers",
+                                         700f, 400f, out RectTransform root);
+        var win = Register(root, "DevicesAndPrinters", "Devices and Printers");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Label(body, t, "Head", 0f, 0f, w, 24f, "Printers (2)");
+
+        var list = Box(body, "Printers", 0f, 30f, w, h - 110f, t.fieldBackground);
+
+        RadioRow(list.rectTransform, t, "Printer_PDF", 6f, 8f, w - 12f,
+                 "Microsoft Print to PDF", "printer_item");
+
+        var shared = RadioRow(list.rectTransform, t, "Printer_Shared", 6f, 38f, w - 12f,
+                              "HP LaserJet 1020 on " + ServerName, "printer_item");
+
+        Label(list.transform, t, "Note", 10f, 76f, w - 20f, 70f,
+              "The printer published by the server appears here once the client is a domain " +
+              "member. A local PDF printer proves nothing about the network.").color = t.disabledText;
+
+        var props = COC3WinWidgets.Button(body, t, "PrinterProps", 0f, h - 34f, 170f,
+                                          t.buttonSize.y, "Printer properties");
+
+        var gate = Gate(root, "Gate_PrinterProps", "open_printer_properties", props, error);
+        gate.mustBeOn = new[] { shared };
+        Opens(gate, printerProps, "PrinterProperties", win);
+        gate.missingOptionMessage =
+            "Select the printer you want to work with.\n\n" +
+            "The test is of the SHARED printer on " + ServerName + " - the local PDF printer " +
+            "would print happily and tell you nothing about the server.";
+
+        CancelButton(body, t, win, w, h - 34f, "Close");
+        return win;
+    }
+
+    /// <summary>
+    /// The printer's property sheet.
+    ///
+    /// Only the General tab is live, because only step 22 is on the desktop. When steps 20 and 21
+    /// join it, the painted tabs here become RealTabs and Sharing and Security get their own gates
+    /// - the layout is already the right shape for it.
+    /// </summary>
+    private static WinWindow BuildPrinterProperties(Transform parent, COC3WinTheme t,
+                                                    GameObject error, WinWindow testPage)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "PrinterProperties",
+                                         "HP LaserJet 1020 on " + ServerName + " Properties",
+                                         580f, 420f, out RectTransform root);
+        var win = Register(root, "PrinterProperties", "Printer Properties");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Tabs(body, t, new[] { "General", "Sharing", "Ports", "Security" }, 0);
+
+        Label(body, t, "Name", 0f, 46f, w, 26f, "HP LaserJet 1020 on " + ServerName)
+            .fontStyle = FontStyles.Bold;
+
+        Label(body, t, "Location", 0f, 80f, w, 24f, "Location:   Server room");
+        Label(body, t, "Comment", 0f, 106f, w, 24f, "Comment:  Shared from " + ServerName);
+        Label(body, t, "Model", 0f, 132f, w, 24f, "Model:      HP LaserJet 1020 Series");
+
+        Box(body, "Rule", 0f, 166f, w, 1f, t.separator).raycastTarget = false;
+
+        Label(body, t, "Note", 0f, 180f, w, 90f,
+              "A test page is the only proof that the whole chain works: the printer is shared, " +
+              "the client found it by name, the driver installed, and the account is allowed to " +
+              "print. Any one of those broken and nothing comes out.").color = t.disabledText;
+
+        var print = COC3WinWidgets.Button(body, t, "PrintTestPage", 0f, h - 34f, 170f,
+                                          t.buttonSize.y, "Print Test Page");
+
+        var gate = Gate(root, "Gate_TestPage", "print_test_page", print, error);
+        gate.requiredStepId = "Step_22_TestPrintFromClient";
+        Opens(gate, testPage, "TestPageSent", win);
+
+        CancelButton(body, t, win, w, h - 34f, "Close");
+        return win;
+    }
+
+    private static WinWindow BuildTestPageSent(Transform parent, COC3WinTheme t)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "TestPageSent", "HP LaserJet 1020",
+                                         480f, 250f, out RectTransform root);
+        var win = Register(root, "TestPageSent", "HP LaserJet 1020");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Label(body, t, "Line1", 0f, 8f, w, 26f,
+              "A test page has been sent to your printer.").fontStyle = FontStyles.Bold;
+
+        Label(body, t, "Line2", 0f, 44f, w, 90f,
+              "The page confirms the printer is shared, reachable from " + ClientName +
+              ", and that this account has the Print permission. Test 2 passed.")
+            .color = t.disabledText;
+
+        CancelButton(body, t, win, w, h - 34f, "OK");
+        return win;
+    }
+
+    /// <summary>
+    /// The client's Documents folder, where redirection is confirmed.
+    ///
+    /// THE TAB IS THE ASSESSMENT. There is nothing to type here - the step is "check it points at
+    /// the server", and the skill being tested is knowing that a folder's real home is on the
+    /// Location tab of its property sheet. So the gate requires that tab to be selected, and the
+    /// sheet opens on General like every other one.
+    /// </summary>
+    private static WinWindow BuildDocumentsProperties(Transform parent, COC3WinTheme t,
+                                                      GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "DocumentsProperties", "Documents Properties",
+                                         580f, 450f, out RectTransform root);
+        var win = Register(root, "DocumentsProperties", "Documents Properties");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        RectTransform[] panels;
+        WinToggle[] tabs;
+        RealTabs(body, t, root, new[] { "General", "Sharing", "Security", "Location" },
+                 out panels, out tabs);
+
+        Label(panels[0], t, "G1", 0f, 8f, w, 22f, "Type:       File folder");
+        Label(panels[0], t, "G2", 0f, 34f, w, 22f, "Opens with: File Explorer");
+        Label(panels[0], t, "G3", 0f, 60f, w, 22f, "Size:       0 bytes");
+
+        Label(panels[1], t, "S1", 0f, 8f, w, 44f,
+              "This folder is not shared.").color = t.disabledText;
+
+        Label(panels[2], t, "Sec1", 0f, 8f, w, 44f,
+              "Permissions are inherited from the redirected location on the server.")
+            .color = t.disabledText;
+
+        Label(panels[3], t, "L1", 0f, 8f, w, 44f,
+              "Files in the Documents folder are stored in the target location below.");
+
+        COC3WinWidgets.Field(panels[3], t, "Target", 0f, 60f, 0f, w,
+                             "", @"\\" + ServerName + @"\" + RedirectShare + @"\" + SampleUser,
+                             "", true);
+
+        Label(panels[3], t, "L2", 0f, 104f, w, 110f,
+              "The path is on " + ServerName + ", not on this machine - which is the whole point. " +
+              "The account's documents survive a reimaged client, and they are on the disk that " +
+              "gets backed up.\n\nA path still starting C:\\Users means the policy has not " +
+              "applied. Sign out and in again before assuming it failed.").color = t.disabledText;
+
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+                                       t.buttonSize.x, t.buttonSize.y, "OK", true);
+
+        var gate = Gate(root, "Gate_Redirected", "verify_redirection", ok, error);
+        gate.requiredStepId = "Step_26_TestRedirectionClient";
+        gate.closeOnSuccess = win;
+        gate.mustBeOn = new[] { tabs[3] };
+        gate.missingOptionMessage =
+            "Find where this folder actually lives before signing it off.\n\n" +
+            "General tells you what it is. The LOCATION tab tells you where it is - and that is " +
+            "the only thing this test is checking.";
+
+        CancelButton(body, t, win, w, h - 34f);
+        return win;
+    }
+
+    /// <summary>
+    /// Windows Defender Firewall with Advanced Security.
+    ///
+    /// The rule starts DISABLED, so the step is a repair rather than a look. The wrong answer -
+    /// switching the firewall off - is named in the note rather than offered as a button: a
+    /// learner who does it in the field will not be offered it as a button either, and a dead
+    /// control that exists to be punished teaches the tool wrong.
+    /// </summary>
+    private static WinWindow BuildFirewallConsole(Transform parent, COC3WinTheme t, GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "FirewallConsole",
+                                         "Windows Defender Firewall with Advanced Security",
+                                         840f, 460f, out RectTransform root);
+        var win = Register(root, "FirewallConsole", "Windows Defender Firewall");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+        float paneHeight = h - 54f;
+
+        var tree = Box(body, "Tree", 0f, 0f, 280f, paneHeight, t.fieldBackground);
+        Label(tree.transform, t, "Root", 8f, 6f, 264f, 40f,
+              "Windows Defender Firewall with Advanced Security").fontSize = 13f;
+
+        var inbound = RadioRow(tree.rectTransform, t, "Node_Inbound", 20f, 54f, 250f,
+                               "Inbound Rules", "fw_node");
+        RadioRow(tree.rectTransform, t, "Node_Outbound", 20f, 84f, 250f,
+                 "Outbound Rules", "fw_node");
+        RadioRow(tree.rectTransform, t, "Node_Connection", 20f, 114f, 250f,
+                 "Connection Security Rules", "fw_node");
+
+        var list = Box(body, "Rules", 290f, 0f, w - 290f, paneHeight, t.fieldBackground);
+        float listW = w - 310f;
+        float statusX = listW - 120f;
+
+        Label(list.transform, t, "H1", 10f, 6f, statusX - 10f, 22f, "Name").color = t.disabledText;
+        Label(list.transform, t, "H2", statusX, 6f, 120f, 22f, "Enabled").color = t.disabledText;
+        Box(list.transform, "HeadRule", 6f, 30f, listW, 1f, t.separator).raycastTarget = false;
+
+        RadioRow(list.rectTransform, t, "Rule_SMB", 6f, 38f, listW, "File and Printer Sharing (SMB-In)",
+                 "fw_rule");
+        Label(list.transform, t, "SMB_Status", statusX, 40f, 120f, 22f, "Yes");
+
+        var rdpRule = RadioRow(list.rectTransform, t, "Rule_RDP", 6f, 68f, listW,
+                               "Remote Desktop - User Mode (TCP-In)", "fw_rule");
+
+        var rdpNo = Label(list.transform, t, "RDP_Status_No", statusX, 70f, 120f, 22f, "No");
+        var rdpYes = Label(list.transform, t, "RDP_Status_Yes", statusX, 70f, 120f, 22f, "Yes");
+
+        RadioRow(list.rectTransform, t, "Rule_Shadow", 6f, 98f, listW,
+                 "Remote Desktop - Shadow (TCP-In)", "fw_rule");
+        Label(list.transform, t, "Shadow_Status", statusX, 100f, 120f, 22f, "No");
+
+        Label(list.transform, t, "Note", 10f, 140f, listW, 90f,
+              "Remote Desktop answers on port 3389, and the rule that lets it through is off. " +
+              "Switching the firewall off would also make the connection work, and would be the " +
+              "wrong answer - the rule is the fix, not the firewall.").color = t.disabledText;
+
+        Reveal(root, "allow_rdp_rule", new[] { rdpYes.gameObject }, new[] { rdpNo.gameObject });
+
+        var enable = COC3WinWidgets.Button(body, t, "EnableRule", 0f, h - 34f, 150f,
+                                           t.buttonSize.y, "Enable Rule");
+
+        var gate = Gate(root, "Gate_Firewall", "allow_rdp_rule", enable, error);
+        gate.requiredStepId = "Step_31_FirewallCheck";
+        gate.mustBeOn = new[] { inbound, rdpRule };
+        gate.missingOptionMessage =
+            "Select Inbound Rules, then the rule you want to enable.\n\n" +
+            "Remote Desktop is a connection coming IN to this machine. An outbound rule governs " +
+            "what this machine may reach, which is a different question.";
+
+        CancelButton(body, t, win, w, h - 34f, "Close");
+        return win;
+    }
+
+    private static WinWindow BuildEventViewer(Transform parent, COC3WinTheme t, GameObject error,
+                                              WinWindow filterDialog)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "EventViewer", "Event Viewer",
+                                         860f, 470f, out RectTransform root);
+        var win = Register(root, "EventViewer", "Event Viewer");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+        float paneHeight = h - 54f;
+
+        var tree = Box(body, "Tree", 0f, 0f, 290f, paneHeight, t.fieldBackground);
+        Label(tree.transform, t, "Root", 8f, 6f, 274f, 22f, "Event Viewer (Local)");
+        Label(tree.transform, t, "Custom", 22f, 32f, 260f, 22f, "Custom Views").color = t.disabledText;
+        Label(tree.transform, t, "Logs", 22f, 58f, 260f, 22f, "Windows Logs");
+
+        RadioRow(tree.rectTransform, t, "Node_Application", 36f, 84f, 244f, "Application", "evt_node");
+
+        var security = RadioRow(tree.rectTransform, t, "Node_Security", 36f, 114f, 244f,
+                                "Security", "evt_node");
+
+        RadioRow(tree.rectTransform, t, "Node_System", 36f, 144f, 244f, "System", "evt_node");
+
+        Label(tree.transform, t, "Services", 22f, 180f, 260f, 22f,
+              "Applications and Services Logs").color = t.disabledText;
+
+        var list = Box(body, "Events", 300f, 0f, w - 300f, paneHeight, t.fieldBackground);
+        float listW = w - 320f;
+
+        Label(list.transform, t, "H1", 10f, 6f, 150f, 22f, "Keywords").color = t.disabledText;
+        Label(list.transform, t, "H2", 170f, 6f, 200f, 22f, "Date and Time").color = t.disabledText;
+        Label(list.transform, t, "H3", 380f, 6f, listW - 390f, 22f, "Source").color = t.disabledText;
+        Box(list.transform, "HeadRule", 6f, 30f, listW, 1f, t.separator).raycastTarget = false;
+
+        var unfiltered = Label(list.transform, t, "Unfiltered", 10f, 44f, listW - 20f, 110f,
+                               "4,812 events.\n\nAudit Success and Audit Failure together, oldest " +
+                               "first. Reading this by eye is not review - it is scrolling.");
+        unfiltered.color = t.disabledText;
+
+        var filtered = Rect(list.transform, "Filtered", 10f, 40f, listW - 20f, 180f);
+
+        Row(filtered, t, 0f, "Audit Failure", "09/16/2026 09:12:04", "Microsoft Windows security");
+        Row(filtered, t, 28f, "Audit Failure", "09/16/2026 09:12:19", "Microsoft Windows security");
+        Row(filtered, t, 56f, "Audit Failure", "09/16/2026 10:03:41", "Microsoft Windows security");
+
+        Label(filtered, t, "Summary", 0f, 92f, listW - 20f, 80f,
+              "Three failed access attempts from an account outside " + UserGroup + ". That is " +
+              "evidence the permissions are doing their job - and the only way to see it is to " +
+              "filter for it.").color = t.disabledText;
+
+        Reveal(root, "filter_audit_failure",
+               new[] { filtered.gameObject }, new[] { unfiltered.gameObject });
+
+        var filter = COC3WinWidgets.Button(body, t, "FilterLog", 0f, h - 34f, 190f,
+                                           t.buttonSize.y, "Filter Current Log...");
+
+        var gate = Gate(root, "Gate_EventFilter", "open_event_filter", filter, error);
+        gate.mustBeOn = new[] { security };
+        Opens(gate, filterDialog, "FilterCurrentLog", win);
+        gate.missingOptionMessage =
+            "Choose the log you want to filter first.\n\n" +
+            "Sign-in and access attempts are recorded in the SECURITY log. Application and System " +
+            "record what software and Windows itself did, which is a different question.";
+
+        CancelButton(body, t, win, w, h - 34f, "Close");
+        return win;
+    }
+
+    private static void Row(RectTransform parent, COC3WinTheme t, float y,
+                            string keyword, string when, string source)
+    {
+        float w = parent.rect.width;
+
+        Label(parent, t, "K" + y, 0f, y, 150f, 24f, keyword);
+        Label(parent, t, "D" + y, 160f, y, 200f, 24f, when).color = t.disabledText;
+        Label(parent, t, "S" + y, 370f, y, w - 380f, 24f, source).color = t.disabledText;
+    }
+
+    private static WinWindow BuildFilterDialog(Transform parent, COC3WinTheme t, GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "FilterCurrentLog", "Filter Current Log",
+                                         560f, 430f, out RectTransform root);
+        var win = Register(root, "FilterCurrentLog", "Filter Current Log");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Tabs(body, t, new[] { "Filter", "XML" }, 0);
+
+        Label(body, t, "Logged", 0f, 50f, w, 24f, "Logged:  Any time");
+        Label(body, t, "LevelLabel", 0f, 82f, w, 24f, "Keywords:");
+
+        CheckRow(body, t, "Key_Success", 16f, 112f, w - 20f, "Audit Success");
+
+        var failure = CheckRow(body, t, "Key_Failure", 16f, 144f, w - 20f, "Audit Failure");
+
+        CheckRow(body, t, "Key_Classic", 16f, 176f, w - 20f, "Classic");
+
+        Label(body, t, "Note", 0f, 216f, w, 110f,
+              "Audit SUCCESS is every normal sign-in and every file opened by someone entitled to " +
+              "open it - thousands of entries a day, and none of them a finding.\n\n" +
+              "Audit FAILURE is the short list worth reading: someone tried something they were " +
+              "not permitted to do.").color = t.disabledText;
+
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+                                       t.buttonSize.x, t.buttonSize.y, "OK", true);
+
+        var gate = Gate(root, "Gate_Filter", "filter_audit_failure", ok, error);
+        gate.requiredStepId = "Step_34_UnauthorizedAccessCheck";
+        gate.closeOnSuccess = win;
+        gate.mustBeOn = new[] { failure };
+        gate.missingOptionMessage =
+            "Tick the keyword you actually want to see.\n\n" +
+            "The point of the review is the attempts that were REFUSED. Leaving the filter empty, " +
+            "or ticking Audit Success, gives you the same unreadable log you started with.";
+
+        CancelButton(body, t, win, w, h - 34f);
+        return win;
+    }
+
+    // ==================================================================
     // Small drawing helpers
     // ==================================================================
 
@@ -2395,6 +2795,21 @@ public class COC3DesktopBuilder : EditorWindow
     private static void RealTabs(RectTransform body, COC3WinTheme t, RectTransform windowRoot,
                                  string[] names, out RectTransform[] panels)
     {
+        RealTabs(body, t, windowRoot, names, out panels, out WinToggle[] ignored);
+    }
+
+    /// <summary>
+    /// The same, but handing back the tab headers themselves.
+    ///
+    /// A tab is a WinToggle, so a gate can require one to be SELECTED - which is how "find the
+    /// Location tab" becomes something that can be assessed rather than something you either
+    /// noticed or did not.
+    /// </summary>
+    private static void RealTabs(RectTransform body, COC3WinTheme t, RectTransform windowRoot,
+                                 string[] names, out RectTransform[] panels,
+                                 out WinToggle[] headers)
+    {
+        headers = new WinToggle[names.Length];
         float w = body.rect.width;
         float h = body.rect.height;
 
@@ -2425,6 +2840,8 @@ public class COC3DesktopBuilder : EditorWindow
             toggle.groupId = "sheet_tab";
             toggle.indicator = selected;
             toggle.isOn = i == 0;
+
+            headers[i] = toggle;
 
             panels[i] = Rect(body, "Panel_" + names[i].Replace(" ", ""), 0f, 44f, w, h - 88f);
 

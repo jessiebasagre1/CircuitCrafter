@@ -41,6 +41,8 @@ namespace CircuitCrafter.Settings
         private const string KeyStationZoom = "cc.stationZoom01";
         private const string KeyInvertStationDrag = "cc.invertStationDrag";
         private const string KeyMasterVolume = "cc.masterVolume01";
+        private const string KeyMusicVolume = "cc.musicVolume01";
+        private const string KeySfxVolume = "cc.sfxVolume01";
         private const string KeyUiScale = "cc.uiScale";
         private const string KeyReduceMotion = "cc.reduceMotion";
         private const string KeyPerformanceMode = "cc.performanceMode";
@@ -63,6 +65,14 @@ namespace CircuitCrafter.Settings
         public const float DefaultStationPan01 = 0.35f;
         public const float DefaultStationZoom01 = 0.35f;
         public const float DefaultMasterVolume01 = 0.8f;
+
+        /// <summary>Music sits UNDER the interface, not in front of it - anything a learner has
+        /// to turn down before they can think is too loud.</summary>
+        public const float DefaultMusicVolume01 = 0.7f;
+
+        /// <summary>Interaction sounds are feedback, so they start close to full: a click the
+        /// learner cannot hear is a click that did not confirm anything.</summary>
+        public const float DefaultSfxVolume01 = 0.9f;
         public const float DefaultUiScale = 1f;
 
         // Real-world ranges each 0-1 dial maps onto. Centred on the values the
@@ -85,6 +95,8 @@ namespace CircuitCrafter.Settings
         private static float stationZoom01;
         private static bool invertStationDrag;
         private static float masterVolume01;
+        private static float musicVolume01;
+        private static float sfxVolume01;
         private static float uiScale;
         private static bool reduceMotion;
         private static bool performanceMode;
@@ -146,10 +158,30 @@ namespace CircuitCrafter.Settings
             set { EnsureLoaded(); Set(ref invertStationDrag, value, KeyInvertStationDrag); }
         }
 
+        /// <summary>
+        /// The one that scales EVERYTHING, through AudioListener.volume. Music and SFX below are
+        /// multiplied on top of it, so this is the dial for "quieter overall" and those two are
+        /// for "less of that, more of this".
+        /// </summary>
         public static float MasterVolume01
         {
             get { EnsureLoaded(); return masterVolume01; }
             set { EnsureLoaded(); Set(ref masterVolume01, Mathf.Clamp01(value), KeyMasterVolume); }
+        }
+
+        /// <summary>Background music only. Read by MenuMusic; does not touch sound effects.</summary>
+        public static float MusicVolume01
+        {
+            get { EnsureLoaded(); return musicVolume01; }
+            set { EnsureLoaded(); Set(ref musicVolume01, Mathf.Clamp01(value), KeyMusicVolume); }
+        }
+
+        /// <summary>Interaction sounds only - parts, hotbar, completion jingles. Read by
+        /// SfxPlayer; does not touch music.</summary>
+        public static float SfxVolume01
+        {
+            get { EnsureLoaded(); return sfxVolume01; }
+            set { EnsureLoaded(); Set(ref sfxVolume01, Mathf.Clamp01(value), KeySfxVolume); }
         }
 
         /// <summary>Multiplier on the whole interface, 0.85 to 1.6.
@@ -240,6 +272,8 @@ namespace CircuitCrafter.Settings
             stationZoom01 = PlayerPrefs.GetFloat(KeyStationZoom, DefaultStationZoom01);
             invertStationDrag = PlayerPrefs.GetInt(KeyInvertStationDrag, 0) == 1;
             masterVolume01 = PlayerPrefs.GetFloat(KeyMasterVolume, DefaultMasterVolume01);
+            musicVolume01 = PlayerPrefs.GetFloat(KeyMusicVolume, DefaultMusicVolume01);
+            sfxVolume01 = PlayerPrefs.GetFloat(KeySfxVolume, DefaultSfxVolume01);
             uiScale = PlayerPrefs.GetFloat(KeyUiScale, DefaultUiScale);
             reduceMotion = PlayerPrefs.GetInt(KeyReduceMotion, 0) == 1;
             performanceMode = PlayerPrefs.GetInt(KeyPerformanceMode, Application.isMobilePlatform ? 1 : 0) == 1;
@@ -298,7 +332,8 @@ namespace CircuitCrafter.Settings
             foreach (string key in new[]
             {
                 KeyMouseLook, KeyTouchLook, KeyInvertLookY, KeyStationPan, KeyStationZoom,
-                KeyInvertStationDrag, KeyMasterVolume, KeyUiScale, KeyReduceMotion,
+                KeyInvertStationDrag, KeyMasterVolume, KeyMusicVolume, KeySfxVolume,
+                KeyUiScale, KeyReduceMotion,
                 KeyPerformanceMode, KeyFullscreen,
             })
             {

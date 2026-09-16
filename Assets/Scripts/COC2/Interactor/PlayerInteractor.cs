@@ -138,6 +138,13 @@ namespace CSSSimulation.Interaction
         public float rescanInterval = 0.5f;
 
         [Header("Diagnostics")]
+        [Tooltip("At startup, check that this scene contains a StationExitButton, and say loudly " +
+                 "when it does not.\n\n" +
+                 "Leave it ON. It is the check that catches a duplicated scene where the exit " +
+                 "button was not copied across - a fault that produces no error of any kind and " +
+                 "only shows up as a player stuck inside a station on a phone.")]
+        public bool warnWhenNoExitButton = true;
+
         [Tooltip("Say when a measurement had to correct what the triggers reported.\n\n" +
                  "Worth leaving on. Each line is a trigger event that went missing, and names the " +
                  "object it went missing for - which is the only evidence that a scene is doing " +
@@ -380,8 +387,24 @@ namespace CSSSimulation.Interaction
             if (promptUI != null) promptUI.SetActive(wantPrompt);
             if (promptLabel != null && wantPrompt) promptLabel.text = BuildPrompt(current);
 
-            if (interactButton != null) interactButton.gameObject.SetActive(has && !isPickup);
-            if (pickupButton != null) pickupButton.gameObject.SetActive(has && isPickup);
+            // The touch buttons follow the same rules as the prompt, and for a stronger reason.
+            //
+            // The prompt only says "Press E to use the tester". A button DOES it. So a prompt left
+            // on screen while the player is sitting inside a station is untidy; an Enter Station
+            // button left on screen there is a trap, because the player is in range of the station
+            // they are already inside, and the button is the most obvious thing on the screen.
+            // Pressing it re-enters a station that is already open, which is indistinguishable from
+            // a button that does nothing at all - and that is exactly how it gets reported.
+            //
+            // So a station being open hides these, and StationExitButton's Back takes over. Note
+            // that a scene with no StationExitButton in it never suppresses, and so never hides
+            // these - which is why the check in Start() below matters.
+            bool wantButtons = has && !suppressRequested && !dialogUp;
+
+            if (interactButton != null)
+                interactButton.gameObject.SetActive(wantButtons && !isPickup);
+            if (pickupButton != null)
+                pickupButton.gameObject.SetActive(wantButtons && isPickup);
 
             // Cleared after reading, so every frame starts with nobody asking. Anything that still
             // wants the prompt hidden asks again next frame; anything that has finished simply
@@ -559,6 +582,8 @@ namespace CSSSimulation.Interaction
 
             WarnAboutHardCodedPrompts(all);
 
+            WarnAboutNoWayOut();
+
             if (pickupButton != null) return;
 
             // Only worth saying when there is something to pick up. A scene of stations only has no
@@ -646,6 +671,63 @@ namespace CSSSimulation.Interaction
         }
 
         MobileControlsVisibility touchControls;
+
+        /// <summary>
+        /// Says so, at startup, when this scene gives a touch player no way to leave a station.
+        ///
+        /// WHY THIS IS WORTH A CHECK OF ITS OWN
+        ///
+        /// A station is the one place in the game where the player is deliberately trapped: normal
+        /// movement is off, the view is locked to the bench, and the only way out is the exit
+        /// control. On a keyboard that control is a key, which always exists. On a phone it is a
+        /// button, which exists only if somebody put it in THIS scene.
+        ///
+        /// Scenes get duplicated - practice mode into assessment mode - and a button that lives on
+        /// its own object is exactly the sort of thing that does not come across. Nothing errors
+        /// when it is missing. The station opens correctly, the tests run correctly, the player
+        /// finishes the task, and then cannot get up. What they see is "the exit button does not
+        /// work", because the Enter Station button is still sitting there being pressed.
+        ///
+        /// A component that does not exist cannot report its own absence, so the check has to live
+        /// somewhere that is always present. The player is always present.
+        /// </summary>
+        void WarnAboutNoWayOut()
+        {
+            if (!warnWhenNoExitButton) return;
+
+            CSSSimulation.Networking.StationExitButton exit =
+                Object.FindFirstObjectByType<CSSSimulation.Networking.StationExitButton>(
+                    FindObjectsInactive.Include);
+
+            if (exit != null)
+            {
+                if (!exit.gameObject.activeInHierarchy || !exit.enabled)
+                    Debug.LogWarning("[PlayerInteractor] This scene has a StationExitButton on '" +
+                                     exit.name + "', but it is switched off, so it will never show " +
+                                     "Back. Tick the object and the component.", exit);
+                return;
+            }
+
+            if (!TouchSession)
+            {
+                Debug.Log("[PlayerInteractor] No StationExitButton in this scene. Fine for a " +
+                          "keyboard - stations are left with their exit key - but a touch player " +
+                          "would have no way out. Worth adding before this scene is tested on a " +
+                          "phone.", this);
+                return;
+            }
+
+            Debug.LogError("[PlayerInteractor] THIS SCENE HAS NO StationExitButton, and touch " +
+                           "controls are on.\n\n" +
+                           "Once the player enters a station there is no way out of it: Back never " +
+                           "appears, and the only control still on screen is the Enter Station " +
+                           "button, which re-enters the station the player is already inside and so " +
+                           "looks like a button that does nothing.\n\n" +
+                           "This usually means the scene was copied from another one and the exit " +
+                           "button's object was not copied with it. Copy the object holding " +
+                           "StationExitButton out of the scene where Back does work, paste it into " +
+                           "this one, and re-point its Button field at the button in this scene.", this);
+        }
 
         /// <summary>
         /// Fills {key} in with the control that actually operates this object.

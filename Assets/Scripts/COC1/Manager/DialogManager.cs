@@ -23,6 +23,26 @@ public class DialogManager : MonoBehaviour
     [SerializeField] private float typewriterSpeed = 0.02f;
     [SerializeField] private bool pauseGameWhileOpen = false;
 
+    [Header("Typing sound")]
+    [Tooltip("The blip played as the line types itself out. Leave the clip empty for a silent " +
+             "typewriter - nothing breaks.\n\n" +
+             "Fill in ALTERNATES with two or three variants: a typing sound repeats more than any " +
+             "other sound in the game, and one sample on loop is the fastest way to make a dialog " +
+             "box annoying.\n\n" +
+             "It plays through SfxPlayer, so the learner's SFX Volume and Master Volume both " +
+             "apply. A scene with no SfxPlayer is simply silent.")]
+    [SerializeField] private SfxEntry typingSound = new SfxEntry();
+
+    [Tooltip("Play the blip every Nth character rather than on every one.\n\n" +
+             "At the default typewriter speed a blip per character is about 50 a second, which " +
+             "stops being typing and becomes a buzz. 2 or 3 sounds like someone talking.")]
+    [Min(1)]
+    [SerializeField] private int typingSoundEveryNChars = 2;
+
+    [Tooltip("Do not blip on spaces and line breaks. Leave ON - the gaps between words are " +
+             "what make the rhythm sound like speech rather than a machine.")]
+    [SerializeField] private bool typingSoundSkipWhitespace = true;
+
     [Header("Auto-size to text")]
     [Tooltip("The dialog panel's RectTransform. Assign to have the box grow and shrink to fit each line. Leave empty to keep a fixed size, exactly as before.")]
     [SerializeField] private RectTransform panelRect;
@@ -35,6 +55,9 @@ public class DialogManager : MonoBehaviour
 
     [Tooltip("Safety ceiling for a very long line.")]
     [SerializeField] private float maxPanelHeight = 600f;
+
+    /// <summary>Characters revealed since the last blip. Reset per line.</summary>
+    private int charsSinceTypingBlip;
 
     private readonly Queue<DialogLine> queuedLines = new Queue<DialogLine>();
     private Coroutine typingRoutine;
@@ -203,6 +226,7 @@ public class DialogManager : MonoBehaviour
     private IEnumerator TypeText(string text)
     {
         lastFullLine = text;
+        charsSinceTypingBlip = 0;
 
         dialogBodyText.text = text;
         dialogBodyText.maxVisibleCharacters = 0;
@@ -218,6 +242,9 @@ public class DialogManager : MonoBehaviour
         {
             dialogBodyText.maxVisibleCharacters = shown;
 
+            // shown == 0 reveals nothing, so there is no character to sound yet.
+            if (shown > 0) PlayTypingBlip(shown - 1);
+
             // Written as if/else rather than a conditional expression on purpose:
             // WaitForSecondsRealtime and WaitForSeconds share no common base, so the ternary
             // only compiles under C# 9's target-typing. This works on any version.
@@ -228,6 +255,37 @@ public class DialogManager : MonoBehaviour
         }
 
         typingRoutine = null;
+    }
+
+    /// <summary>
+    /// Sounds the character that was just revealed.
+    ///
+    /// NOT ONE BLIP PER CHARACTER. At the default 0.02s that would be fifty a second, which is
+    /// not typing, it is a tone. Every second or third character, with the spaces skipped, gives
+    /// the uneven rhythm that reads as someone speaking.
+    ///
+    /// Whitespace is skipped rather than counted, so the gap between words is a real gap - that
+    /// pause is most of what makes the effect work.
+    ///
+    /// The retrigger guard is bypassed on purpose: it exists to stop ONE action being heard
+    /// twice, and this is the opposite case - a sound deliberately repeating faster than the
+    /// guard's window.
+    /// </summary>
+    private void PlayTypingBlip(int characterIndex)
+    {
+        if (typingSound == null || !typingSound.HasSound) return;
+
+        var info = dialogBodyText.textInfo;
+        if (info == null || characterIndex >= info.characterInfo.Length) return;
+
+        char c = info.characterInfo[characterIndex].character;
+        if (typingSoundSkipWhitespace && char.IsWhiteSpace(c)) return;
+
+        charsSinceTypingBlip++;
+        if (charsSinceTypingBlip < typingSoundEveryNChars) return;
+
+        charsSinceTypingBlip = 0;
+        SfxPlayer.PlayCustom(typingSound, bypassRetriggerGuard: true);
     }
 
     /// <summary>

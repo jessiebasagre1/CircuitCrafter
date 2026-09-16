@@ -122,8 +122,19 @@ namespace CircuitCrafter.Settings
         [SerializeField] private Toggle fullscreenToggle;
 
         [Header("Audio")]
+        [Tooltip("Scales EVERYTHING, through AudioListener.volume.")]
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private TMP_Text masterVolumeValue;
+
+        [Tooltip("Background music only. Multiplied on top of Master, so Master 0.5 and Music 0.5 " +
+                 "gives music at a quarter.")]
+        [SerializeField] private Slider musicVolumeSlider;
+        [SerializeField] private TMP_Text musicVolumeValue;
+
+        [Tooltip("Interaction sounds only - parts, hotbar, completion jingles. Also multiplied on " +
+                 "top of Master.")]
+        [SerializeField] private Slider sfxVolumeSlider;
+        [SerializeField] private TMP_Text sfxVolumeValue;
 
         [Header("Testing")]
         [Tooltip("Shows every row in the Editor regardless of platform, so the mobile-only controls can be checked without a build. Has no effect in a real build.")]
@@ -159,6 +170,8 @@ namespace CircuitCrafter.Settings
             WireSlider(stationPanSlider, v => GameSettings.StationPan01 = v);
             WireSlider(stationZoomSlider, v => GameSettings.StationZoom01 = v);
             WireSlider(masterVolumeSlider, v => GameSettings.MasterVolume01 = v);
+            WireSlider(musicVolumeSlider, v => GameSettings.MusicVolume01 = v);
+            WireSlider(sfxVolumeSlider, v => GameSettings.SfxVolume01 = v);
 
             WireToggle(invertLookYToggle, v => GameSettings.InvertLookY = v);
             WireToggle(invertStationDragToggle, v => GameSettings.InvertStationDrag = v);
@@ -232,6 +245,18 @@ namespace CircuitCrafter.Settings
             if (panelRoot != null) panelRoot.SetActive(false);
         }
 
+        /// <summary>
+        /// True while the settings screen is showing.
+        ///
+        /// Exposed so something outside can react to the panel opening and closing - in a
+        /// gameplay scene the cursor has to be released and the player held still while it is
+        /// up, and neither of those is this class's business. See SettingsPanelPresence.
+        /// </summary>
+        public bool IsOpen
+        {
+            get { return panelRoot != null && panelRoot.activeSelf; }
+        }
+
         public void TogglePanel()
         {
             if (panelRoot == null) return;
@@ -243,6 +268,74 @@ namespace CircuitCrafter.Settings
         {
             GameSettings.ResetToDefaults();
             Refresh();
+        }
+
+        /// <summary>
+        /// Prints every link in the volume chain, so "the volume slider does nothing" stops being
+        /// a guess. Right-click the component header - works in Play mode, where it matters.
+        ///
+        /// The chain is: slider -> GameSettings.MasterVolume01 -> OnChanged -> AudioListener.volume
+        /// -> each AudioSource's own volume. Any one of those can be the broken link, and they
+        /// fail in ways that look identical from the outside.
+        /// </summary>
+        [ContextMenu("Report audio wiring")]
+        public void ReportAudioWiring()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[SettingsPanel] Audio wiring on '{name}'");
+
+            ReportSlider(sb, "Master", masterVolumeSlider, GameSettings.MasterVolume01);
+            ReportSlider(sb, "Music ", musicVolumeSlider, GameSettings.MusicVolume01);
+            ReportSlider(sb, "SFX   ", sfxVolumeSlider, GameSettings.SfxVolume01);
+
+            sb.AppendLine($"  AudioListener.volume: {AudioListener.volume:F2}   (should match Master)");
+
+            if (!Mathf.Approximately(AudioListener.volume, GameSettings.MasterVolume01))
+                sb.AppendLine("  *** Master and AudioListener DISAGREE - nothing is applying the value. ***");
+
+#if UNITY_2023_1_OR_NEWER
+            var listeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var sources = Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+#else
+            var listeners = Object.FindObjectsOfType<AudioListener>();
+            var sources = Object.FindObjectsOfType<AudioSource>();
+#endif
+            sb.AppendLine($"  AudioListeners     : {listeners.Length}" +
+                          (listeners.Length == 0 ? "   <-- NONE. Nothing can be heard at all." :
+                           listeners.Length > 1 ? "   <-- MORE THAN ONE. Unity only honours one; remove the extras." : ""));
+
+            sb.AppendLine($"  AudioSources       : {sources.Length}");
+            foreach (var s in sources)
+            {
+                sb.AppendLine($"    - '{s.name}' vol {s.volume:F2}" +
+                              $"{(s.isPlaying ? ", playing" : ", stopped")}" +
+                              $"{(s.mute ? ", MUTED" : "")}" +
+                              $"  -> heard at {(s.volume * AudioListener.volume):F2}");
+            }
+
+            Debug.Log(sb.ToString(), this);
+        }
+
+
+        /// <summary>One line per volume slider: is it wired, and does it agree with the stored value.</summary>
+        private static void ReportSlider(System.Text.StringBuilder sb, string label,
+                                         Slider slider, float stored)
+        {
+            if (slider == null)
+            {
+                sb.AppendLine($"  {label} slider     : NOT ASSIGNED - dragging it does nothing, " +
+                              "because the panel has no reference to it.");
+                sb.AppendLine($"  {label} setting    : {stored:F2}");
+                return;
+            }
+
+            sb.AppendLine($"  {label} slider     : '{slider.name}' at {slider.value:F2} " +
+                          $"(range {slider.minValue:F2}-{slider.maxValue:F2})");
+            sb.AppendLine($"  {label} setting    : {stored:F2}");
+
+            if (!Mathf.Approximately(slider.value, stored))
+                sb.AppendLine($"  *** {label.Trim()}: slider and setting DISAGREE - its On Value Changed " +
+                              "is not reaching GameSettings. ***");
         }
 
         // ==================================================================
@@ -443,6 +536,8 @@ namespace CircuitCrafter.Settings
             SetSlider(stationPanSlider, GameSettings.StationPan01, stationPanValue, Percent);
             SetSlider(stationZoomSlider, GameSettings.StationZoom01, stationZoomValue, Percent);
             SetSlider(masterVolumeSlider, GameSettings.MasterVolume01, masterVolumeValue, Percent);
+            SetSlider(musicVolumeSlider, GameSettings.MusicVolume01, musicVolumeValue, Percent);
+            SetSlider(sfxVolumeSlider, GameSettings.SfxVolume01, sfxVolumeValue, Percent);
 
             SetToggle(invertLookYToggle, GameSettings.InvertLookY);
             SetToggle(invertStationDragToggle, GameSettings.InvertStationDrag);

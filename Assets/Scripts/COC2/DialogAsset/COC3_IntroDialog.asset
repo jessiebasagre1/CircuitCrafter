@@ -14,4 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
   - speakerName: Guide
-    text: Hello World
+    text: '"Job order for today: a small office needs its server set up. One Windows
+      Server machine, one client workstation, and a shared printer. By the end, a
+      staff member should be able to log in on the client with a domain account and
+      reach the shared folder and printer."'
+  - speakerName: Guide
+    text: '"Work in order. Addressing first, then roles, then the domain, then the
+      users who will use it. Skipping ahead is how technicians end up rebuilding
+      a server twice."'
