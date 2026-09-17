@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_08_DNSServerConfig
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 DNS Manager</b>.\n\nSelect <b>Reverse Lookup Zones</b>
-      in the tree - promotion already created the forward zone, and noticing the
-      reverse one is missing is the step.\n\n<b>New Zone...</b>, choose <b>IPv4 Reverse
-      Lookup Zone</b>.\nNetwork ID:  <b>192.168.10</b>"
+  - speakerName: Required input
+    text: 'Tree node:  <b>Reverse Lookup Zones</b>
+
+      Zone type:  <b>IPv4 Reverse
+      Lookup Zone</b>
+
+
+      Network ID:  <b>192.168.10</b>'

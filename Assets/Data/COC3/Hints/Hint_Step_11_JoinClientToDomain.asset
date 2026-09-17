@@ -13,14 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_11_JoinClientToDomain
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'This one happens on the client. Use the <b>CLIENT01</b> icon on the desktop,
-      then <b>Change...</b>
+  - speakerName: Required input
+    text: '<b>Domain</b>
 
 
-      Select <b>Domain</b> and type:  <b>cssncii.local</b>
-
-
-      A
-      workgroup member cannot use domain accounts or receive Group Policy, so nothing
-      after this point would work.'
+      Domain name:  <b>cssncii.local</b>'

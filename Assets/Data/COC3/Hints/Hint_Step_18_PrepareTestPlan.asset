@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_18_PrepareTestPlan
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Reading only - press <b>NEXT</b>.
-
-
-      The plan is written before the
-      testing, so nothing is skipped and the result is not decided after the fact.
-      Five tests, all performed on CLIENT01.'
+  - speakerName: Required input
+    text: Nothing to enter. Read the panel and press <b>NEXT</b>.

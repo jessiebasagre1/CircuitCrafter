@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_34_UnauthorizedAccessCheck
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Event Viewer \u25B8 Windows Logs \u25B8 Security</b>, filtered for
-      <b>Audit Failure</b>.\n\nA failed access attempt from an account outside STUDENTS
-      is evidence the permissions are doing their job. No failures at all can mean
-      nobody has tried, not that the folder is safe."
+  - speakerName: Required input
+    text: 'Log:  <b>Security</b>
+
+
+      Filter keyword:  <b>Audit Failure</b>'

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_32_UserPermissionsCheck
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "On the shared folder: <b>Security \u25B8 Advanced \u25B8 Effective Access</b>.\n\nSelect
-      <b>student01</b> and press <b>View effective access</b>.\n\nThis shows what
-      the account can ACTUALLY do, after every group and inherited entry is resolved
-      - which is not always what you intended."
+  - speakerName: Required input
+    text: 'Tab:  <b>Effective Access</b>
+
+
+      Select a user:  <b>student01</b>'

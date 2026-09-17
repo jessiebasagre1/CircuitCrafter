@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_35_ServiceReport
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Reading only - press <b>NEXT</b>.
-
-
-      The report is what the client
-      is actually paying for: what was configured, what was tested, and what the
-      result was. Undocumented work cannot be handed over.'
+  - speakerName: Required input
+    text: Nothing to enter. Read the panel and press <b>NEXT</b>.

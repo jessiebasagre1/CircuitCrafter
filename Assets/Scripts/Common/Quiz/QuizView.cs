@@ -319,6 +319,22 @@ public class QuizView : MonoBehaviour
             });
         }
 
+        // ---- 4. TAKE LAST QUESTION'S TICKS AND CROSSES BACK OFF --------------------------
+        //
+        // QuizChoiceMarks swapped each checkmark Image's sprite when the last question was
+        // answered, and left it visible. Neither undoes itself: the sprite is a plain
+        // assignment, and the visibility was forced past the Toggle's own control so that the
+        // right answer could be shown on a toggle the player never ticked. So this question
+        // would open wearing the last one's marks.
+        //
+        // IT HAS TO BE HERE, AFTER THE CLEARING AND THE ARMING, NOT BEFORE. Restoring puts each
+        // mark back under its Toggle's control by matching its alpha to isOn - which only gives
+        // the right answer (all hidden) once every toggle is actually off.
+        //
+        // No-op in a scene with no QuizChoiceMarks component, so this is safe in every module
+        // whether or not the marks are set up there.
+        QuizChoiceMarks.Clear(choiceToggles);
+
         settingUpToggles = false;
         acceptingInput = true;
 
@@ -353,6 +369,17 @@ public class QuizView : MonoBehaviour
         // already ignores it via acceptingInput.
         foreach (var toggle in choiceToggles)
             if (toggle != null) toggle.interactable = false;
+
+        // Tick on the right answer, cross on a wrong pick.
+        //
+        // AFTER the locking loop above, deliberately. Marking works by forcing the checkmark
+        // graphic visible on a toggle that is off - which is the only way to show the correct
+        // answer the player did not choose. That only holds while nothing changes a toggle's
+        // value again, because a value change makes uGUI redraw the checkmark from isOn and
+        // wipe the mark. Locked toggles cannot change.
+        //
+        // No-op in a scene with no QuizChoiceMarks component.
+        QuizChoiceMarks.Mark(choiceToggles, choiceIndex, q.correctChoiceIndex);
 
         currentIndex++;
 

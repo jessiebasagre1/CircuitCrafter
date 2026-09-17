@@ -13,15 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_06_PromoteToDomainController
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Installing the role does not create the domain.
+  - speakerName: Required input
+    text: '<b>Add a new forest</b>
 
-
-      Back in Server
-      Manager, click the <b>notification flag</b> - the orange dot at the top right.
-
-
-      Choose
-      <b>Add a new forest</b>.
 
       Root domain name:  <b>cssncii.local</b>'

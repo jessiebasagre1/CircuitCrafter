@@ -6643,6 +6643,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AiTutorCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 1917031837419383146, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -12.899902
+      objectReference: {fileID: 0}
     - target: {fileID: 3498476320407376790, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
       propertyPath: cocNumber
       value: 2
@@ -6726,6 +6730,10 @@ PrefabInstance:
     - target: {fileID: 4796205290136250732, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8616435630458230765, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -12.899902
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13057,7 +13065,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 100
+  m_SortingOrder: 110
   m_TargetDisplay: 0
 --- !u!224 &504485836
 RectTransform:
@@ -20505,33 +20513,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 1204797730}
     m_Modifications:
     - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1412552992}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Open
-      objectReference: {fileID: 0}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: CircuitCrafter.Settings.SettingsPanel, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 121818459615306734, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     - target: {fileID: 1986113254123184596, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -20612,93 +20596,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3152662953470705769, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -1046
-      objectReference: {fileID: 0}
-    - target: {fileID: 3152662953470705769, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 379
-      objectReference: {fileID: 0}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1412552992}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Close
-      objectReference: {fileID: 0}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: CircuitCrafter.Settings.SettingsPanel, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 4261600805935252567, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
     - target: {fileID: 5024899614668245291, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
       propertyPath: m_Name
       value: MainMenu
-      objectReference: {fileID: 0}
-    - target: {fileID: 5165082833533309254, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5165082833533309254, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5165082833533309254, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5165082833533309254, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5654611029728182323, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5654611029728182323, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5654611029728182323, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5654611029728182323, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7436294634293029854, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7436294634293029854, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7436294634293029854, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7436294634293029854, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -67138,6 +67042,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4517655982018847914, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
+      propertyPath: m_text
+      value: Tap to continue
+      objectReference: {fileID: 0}
     - target: {fileID: 6818330433238451798, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_Name
       value: DialogPanel
@@ -77811,7 +77719,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d2a386c54eed349a3379bd2fbaba8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobileControlsVisibility
-  showInEditor: 1
+  showInEditor: 0
   logDecision: 1
 --- !u!4 &4524996822440371161
 Transform:

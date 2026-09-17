@@ -13,13 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_28_AllowedRDPUsers
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: '<b>Select Users...</b> on the Remote tab.
-
-
-      User account:  <b>student01</b>
-
-
-      Administrators
-      already have access without being listed, which is why testing as an administrator
-      proves nothing here.'
+  - speakerName: Required input
+    text: 'Object name:  <b>student01</b>'

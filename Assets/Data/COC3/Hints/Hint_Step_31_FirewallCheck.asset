@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_31_FirewallCheck
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Windows Defender Firewall \u25B8 Advanced Settings \u25B8 Inbound Rules</b>.\n\nConfirm
-      <b>Remote Desktop</b> is allowed on the profile in use.\n\nSwitching the firewall
-      off would also make it work, and would be the wrong answer - the rule is the
-      fix, not the firewall."
+  - speakerName: Required input
+    text: 'Tree node:  <b>Inbound Rules</b>
+
+      Rule:  <b>Remote Desktop - User
+      Mode (TCP-In)</b>
+
+
+      Press <b>Enable Rule</b>.'

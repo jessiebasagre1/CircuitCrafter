@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO1_UserAccess_Q01
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Why are permissions granted to a GROUP rather than to each user account?
+  choices:
+  - Windows does not allow permissions on individual accounts
+  - Group permissions are processed faster
+  - Groups use less disk space in the directory
+  - Access follows the group, so adding or removing a person is one change
+  correctChoiceIndex: 3
+  points: 10
+  explanation: When a student leaves you remove them from the group once, and every
+    permission the group holds goes with them. Per-user permissions have to be hunted
+    down one folder at a time.

@@ -149,7 +149,8 @@ public class COC3DesktopBuilder : EditorWindow
             // Windows first, so the shell's launch buttons have something to point at.
             var error = BuildErrorDialog(windows, t);
 
-            var sysProps = BuildSystemProperties(windows, t);
+            var rdpUsers = BuildRemoteDesktopUsers(windows, t, error);
+            var sysProps = BuildSystemProperties(windows, t, error, rdpUsers);
             var nameDlg = BuildComputerNameChanges(windows, t, sysProps, error);
             var netConns = BuildNetworkConnections(windows, t);
             var ethProps = BuildEthernetProperties(windows, t, netConns, error);
@@ -209,6 +210,7 @@ public class COC3DesktopBuilder : EditorWindow
             BuildDevicesAndPrinters(windows, t, error, printerProps);
 
             BuildDocumentsProperties(windows, t, error);
+            BuildAdvancedSecurity(windows, t, error);
             BuildFirewallConsole(windows, t, error);
 
             var filterDialog = BuildFilterDialog(windows, t, error);
@@ -247,12 +249,16 @@ public class COC3DesktopBuilder : EditorWindow
                      "    test_unc_path, create_redirection_folder,\n" +
                      "    set_redirection_target, rdp_connect,\n" +
                      "    print_test_page, verify_redirection,\n" +
-                     "    allow_rdp_rule, filter_audit_failure\n\n" +
+                     "    allow_rdp_rule, filter_audit_failure,\n" +
+                     "    enable_rdp, add_rdp_user, share_printer,\n" +
+                     "    set_printer_permissions, view_effective_access,\n" +
+                     "    disable_inheritance\n\n" +
                      "  Internal guards (leave unbound):\n" +
                      "    open_ipv4, open_new_zone, open_folder_properties,\n" +
                      "    open_new_user, open_new_group, create_group,\n" +
                      "    open_password_policy, open_printer_properties,\n" +
-                     "    open_event_filter\n\n" +
+                     "    open_event_filter, open_rdp_users,\n" +
+                     "    remove_everyone_printer\n\n" +
                      "  open_redirection_properties is now BOUND to step 24.\n\n" +
                      "  " + wired + "\n\n" +
                      "Next: add COC3StepGate to your Managers object and bind the graded action ids " +
@@ -433,41 +439,150 @@ public class COC3DesktopBuilder : EditorWindow
     // Windows
     // ==================================================================
 
-    private static WinWindow BuildSystemProperties(Transform parent, COC3WinTheme t)
+    /// <summary>
+    /// System Properties, with a REAL Remote tab.
+    ///
+    /// Step 27 turns Remote Desktop on and step 28 says who may use it, and both live behind that
+    /// tab - so the painted tabs this window used to have became a wall. Computer Name is still
+    /// page one, so step 2 is unchanged.
+    /// </summary>
+    private static WinWindow BuildSystemProperties(Transform parent, COC3WinTheme t,
+                                                   GameObject error, WinWindow rdpUsers)
     {
         var body = COC3WinWidgets.Window(parent, t, "SystemProperties", "System Properties",
-                                         470f, 380f, out RectTransform root);
+                                         560f, 460f, out RectTransform root);
         var win = Register(root, "SystemProperties", "System Properties");
         FixCloseGlyph(root);
 
         float w = body.rect.width;
+        float h = body.rect.height;
 
-        Tabs(body, t, new[] { "Computer Name", "Hardware", "Advanced", "Remote" }, 0);
+        RectTransform[] panels;
+        RealTabs(body, t, root, new[] { "Computer Name", "Hardware", "Advanced", "Remote" },
+                 out panels);
 
-        Label(body, t, "Blurb", 0f, 46f, w, 40f,
+        // ---- Computer Name ----
+        Label(panels[0], t, "Blurb", 0f, 8f, w, 40f,
               "Windows uses the following information to identify your computer on the network.");
 
-        COC3WinWidgets.Field(body, t, "Description", 0f, 100f, 150f, w - 160f,
+        COC3WinWidgets.Field(panels[0], t, "Description", 0f, 60f, 150f, w - 160f,
                              "Computer description:", "", "", true);
 
-        COC3WinWidgets.Field(body, t, "FullName", 0f, 140f, 150f, w - 160f,
+        COC3WinWidgets.Field(panels[0], t, "FullName", 0f, 100f, 150f, w - 160f,
                              "Full computer name:", "WIN-8KJ2M4QX", "", true);
 
-        COC3WinWidgets.Field(body, t, "Workgroup", 0f, 180f, 150f, w - 160f,
+        COC3WinWidgets.Field(panels[0], t, "Workgroup", 0f, 140f, 150f, w - 160f,
                              "Workgroup:", "WORKGROUP", "", true);
 
-        Label(body, t, "Hint", 0f, 226f, w, 40f,
+        Label(panels[0], t, "Hint", 0f, 186f, w, 40f,
               "To rename this computer or change its domain or workgroup, click Change.")
             .color = t.disabledText;
 
-        var change = COC3WinWidgets.Button(body, t, "ChangeButton",
-                                           w - 100f, 268f, 100f, t.buttonSize.y, "Change...");
+        var change = COC3WinWidgets.Button(panels[0], t, "ChangeButton",
+                                           w - 100f, 230f, 100f, t.buttonSize.y, "Change...");
         var ca = Undo.AddComponent<WinButtonAction>(change.gameObject);
         ca.action = WinButtonAction.Kind.OpenWindow;
         ca.windowId = "ComputerNameChanges";
         ca.window = win;
 
-        CancelButton(body, t, win, w, 310f);
+        // ---- Hardware / Advanced, decoration ----
+        Label(panels[1], t, "Hw", 0f, 8f, w, 44f,
+              "Device Manager lists all the hardware devices installed on this computer.")
+            .color = t.disabledText;
+
+        Label(panels[2], t, "Adv", 0f, 8f, w, 44f,
+              "Performance, user profiles and startup and recovery settings.").color = t.disabledText;
+
+        // ---- Remote ----
+        Label(panels[3], t, "RemoteHead", 0f, 8f, w, 24f, "Remote Desktop").fontStyle = FontStyles.Bold;
+
+        Label(panels[3], t, "RemoteBlurb", 0f, 36f, w, 40f,
+              "Choose an option, and then specify who can connect.");
+
+        var deny = RadioRow(panels[3], t, "Radio_NoRemote", 0f, 84f, w,
+                            "Don't allow remote connections to this computer", "rdp_mode");
+
+        var allow = RadioRow(panels[3], t, "Radio_AllowRemote", 0f, 114f, w,
+                             "Allow remote connections to this computer", "rdp_mode");
+
+        deny.isOn = true;
+
+        CheckRow(panels[3], t, "Check_NLA", 20f, 148f, w - 24f,
+                 "Allow connections only with Network Level Authentication");
+
+        Label(panels[3], t, "RemoteNote", 0f, 190f, w, 66f,
+              "Enabling it is not the same as permitting anyone. Administrators can always " +
+              "connect; everybody else has to be listed.").color = t.disabledText;
+
+        var selectUsers = COC3WinWidgets.Button(panels[3], t, "SelectUsers", 0f, 262f, 150f,
+                                                t.buttonSize.y, "Select Users...");
+
+        var apply = COC3WinWidgets.Button(panels[3], t, "Apply", w - t.buttonSize.x, 262f,
+                                          t.buttonSize.x, t.buttonSize.y, "Apply", true);
+
+        var enableGate = Gate(root, "Gate_EnableRdp", "enable_rdp", apply, error);
+        enableGate.requiredStepId = "Step_27_EnableRDP";
+        enableGate.mustBeOn = new[] { allow };
+        enableGate.missingOptionMessage =
+            "Choose 'Allow remote connections to this computer'.\n\n" +
+            "Nothing else on this page has any effect while remote connections are refused.";
+
+        var usersGate = Gate(root, "Gate_RdpUsers", "open_rdp_users", selectUsers, error);
+        usersGate.mustBeOn = new[] { allow };
+        Opens(usersGate, rdpUsers, "RemoteDesktopUsers", win);
+        usersGate.missingOptionMessage =
+            "Turn remote connections on first.\n\n" +
+            "Windows greys this button out until they are allowed - there is no point naming who " +
+            "may use a service that is switched off.";
+
+        CancelButton(body, t, win, w, h - 34f, "OK");
+        return win;
+    }
+
+    private static WinWindow BuildRemoteDesktopUsers(Transform parent, COC3WinTheme t,
+                                                     GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "RemoteDesktopUsers", "Remote Desktop Users",
+                                         540f, 420f, out RectTransform root);
+        var win = Register(root, "RemoteDesktopUsers", "Remote Desktop Users");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        Label(body, t, "Head", 0f, 0f, w, 44f,
+              "The users listed below can connect to this computer, in addition to any member of " +
+              "the Administrators group.");
+
+        var list = Box(body, "Members", 0f, 52f, w, 120f, t.fieldBackground);
+
+        var empty = Label(list.transform, t, "Empty", 10f, 10f, w - 20f, 22f,
+                          "No users have been listed.");
+        empty.color = t.disabledText;
+
+        var member = Label(list.transform, t, "Member", 10f, 10f, w - 20f, 22f,
+                           SampleUser + "        " + DomainFQDN + "/Users");
+
+        var objectName = COC3WinWidgets.Field(body, t, "ObjectName", 0f, 184f, 200f, w - 210f,
+                                              "Enter the object name:", "", "", false);
+
+        var add = COC3WinWidgets.Button(body, t, "Add", 0f, 224f, 100f, t.buttonSize.y, "Add");
+
+        Label(body, t, "Note", 0f, 262f, w, 80f,
+              "An administrator can already connect without being listed here - which is why a " +
+              "test signed in as an administrator proves nothing about this setting.")
+            .color = t.disabledText;
+
+        Reveal(root, "add_rdp_user", new[] { member.gameObject }, new[] { empty.gameObject });
+
+        var gate = Gate(root, "Gate_AddRdpUser", "add_rdp_user", add, error);
+        gate.requiredStepId = "Step_28_AllowedRDPUsers";
+        gate.fields = new[] { Req(objectName, SampleUser, "object name") };
+        gate.wrongValueMessage =
+            "An object named that cannot be found in " + DomainFQDN + ".\n\n" +
+            "Check the {field} against the account you created.";
+
+        CancelButton(body, t, win, w, h - 34f, "OK");
         return win;
     }
 
@@ -1916,6 +2031,13 @@ public class COC3DesktopBuilder : EditorWindow
               "The list shows who has an entry on this folder. Press Edit to change what any of " +
               "them is allowed to do.").color = t.disabledText;
 
+        var advancedSecurity = COC3WinWidgets.Button(panels[2], t, "Advanced", 0f, 256f, 120f,
+                                                     t.buttonSize.y, "Advanced");
+        var advAction = Undo.AddComponent<WinButtonAction>(advancedSecurity.gameObject);
+        advAction.action = WinButtonAction.Kind.OpenWindow;
+        advAction.windowId = "AdvancedSecurity";
+        advAction.window = win;
+
         var edit = COC3WinWidgets.Button(panels[2], t, "Edit", w - 110f, 256f, 110f,
                                          t.buttonSize.y, "Edit...");
         var ea = Undo.AddComponent<WinButtonAction>(edit.gameObject);
@@ -2340,49 +2462,149 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     /// <summary>
-    /// The printer's property sheet.
+    /// The printer's property sheet - General, Sharing and Security all live.
     ///
-    /// Only the General tab is live, because only step 22 is on the desktop. When steps 20 and 21
-    /// join it, the painted tabs here become RealTabs and Sharing and Security get their own gates
-    /// - the layout is already the right shape for it.
+    /// Steps 20, 21 and 22 are three different tabs of ONE dialog, which is exactly how a
+    /// technician meets them. Splitting them into three windows would have taught that the
+    /// simulation has three of something Windows has one of.
     /// </summary>
     private static WinWindow BuildPrinterProperties(Transform parent, COC3WinTheme t,
                                                     GameObject error, WinWindow testPage)
     {
         var body = COC3WinWidgets.Window(parent, t, "PrinterProperties",
-                                         "HP LaserJet 1020 on " + ServerName + " Properties",
-                                         580f, 420f, out RectTransform root);
+                                         "HP LaserJet 1020 Properties",
+                                         620f, 480f, out RectTransform root);
         var win = Register(root, "PrinterProperties", "Printer Properties");
         FixCloseGlyph(root);
 
         float w = body.rect.width;
         float h = body.rect.height;
 
-        Tabs(body, t, new[] { "General", "Sharing", "Ports", "Security" }, 0);
+        RectTransform[] panels;
+        RealTabs(body, t, root, new[] { "General", "Sharing", "Security" }, out panels);
 
-        Label(body, t, "Name", 0f, 46f, w, 26f, "HP LaserJet 1020 on " + ServerName)
+        // ---- General ----
+        Label(panels[0], t, "Name", 0f, 8f, w, 26f, "HP LaserJet 1020")
             .fontStyle = FontStyles.Bold;
 
-        Label(body, t, "Location", 0f, 80f, w, 24f, "Location:   Server room");
-        Label(body, t, "Comment", 0f, 106f, w, 24f, "Comment:  Shared from " + ServerName);
-        Label(body, t, "Model", 0f, 132f, w, 24f, "Model:      HP LaserJet 1020 Series");
+        Label(panels[0], t, "Location", 0f, 42f, w, 24f, "Location:   Server room");
+        Label(panels[0], t, "Model", 0f, 68f, w, 24f, "Model:      HP LaserJet 1020 Series");
 
-        Box(body, "Rule", 0f, 166f, w, 1f, t.separator).raycastTarget = false;
-
-        Label(body, t, "Note", 0f, 180f, w, 90f,
-              "A test page is the only proof that the whole chain works: the printer is shared, " +
-              "the client found it by name, the driver installed, and the account is allowed to " +
+        Label(panels[0], t, "Note", 0f, 104f, w, 90f,
+              "A test page is the only proof the whole chain works: the printer is shared, the " +
+              "client found it by name, the driver installed, and the account is allowed to " +
               "print. Any one of those broken and nothing comes out.").color = t.disabledText;
 
-        var print = COC3WinWidgets.Button(body, t, "PrintTestPage", 0f, h - 34f, 170f,
+        var print = COC3WinWidgets.Button(panels[0], t, "PrintTestPage", 0f, 210f, 170f,
                                           t.buttonSize.y, "Print Test Page");
 
-        var gate = Gate(root, "Gate_TestPage", "print_test_page", print, error);
-        gate.requiredStepId = "Step_22_TestPrintFromClient";
-        Opens(gate, testPage, "TestPageSent", win);
+        var pageGate = Gate(root, "Gate_TestPage", "print_test_page", print, error);
+        pageGate.requiredStepId = "Step_22_TestPrintFromClient";
+        Opens(pageGate, testPage, "TestPageSent", win);
+
+        // ---- Sharing ----
+        var sharePrinter = CheckRow(panels[1], t, "Check_Share", 0f, 8f, w, "Share this printer");
+
+        COC3WinWidgets.Field(panels[1], t, "ShareName", 20f, 48f, 110f, w - 140f,
+                             "Share name:", "HPLaserJet1020", "", true);
+
+        var listDirectory = CheckRow(panels[1], t, "Check_List", 20f, 90f, w - 24f,
+                                     "List in the directory");
+
+        Label(panels[1], t, "ShareNote", 0f, 130f, w, 110f,
+              "Sharing puts the printer on the network. LISTING IT IN THE DIRECTORY publishes it " +
+              "to the domain, so a client can find it by name instead of being told its address " +
+              "and driver.\n\nWithout that, every client is a manual setup.").color = t.disabledText;
+
+        var shareApply = COC3WinWidgets.Button(panels[1], t, "ShareApply",
+                                               w - t.buttonSize.x, 252f,
+                                               t.buttonSize.x, t.buttonSize.y, "Apply", true);
+
+        var shareGate = Gate(root, "Gate_SharePrinter", "share_printer", shareApply, error);
+        shareGate.requiredStepId = "Step_20_InstallSharedPrinter";
+        shareGate.mustBeOn = new[] { sharePrinter, listDirectory };
+        shareGate.missingOptionMessage =
+            "Share the printer AND list it in the directory.\n\n" +
+            "Sharing alone puts it on the network. Listing it is what lets a domain client find " +
+            "it by name - which is the whole reason for publishing it.";
+
+        // ---- Security ----
+        Label(panels[2], t, "SecHead", 0f, 8f, w, 22f, "Group or user names:");
+
+        var principals = Box(panels[2], "Principals", 0f, 34f, w, 116f, t.fieldBackground);
+
+        var everyone = RadioRow(principals.rectTransform, t, "Prin_Everyone", 6f, 4f, w - 12f,
+                                "Everyone", "printer_principal");
+
+        RadioRow(principals.rectTransform, t, "Prin_Admins", 6f, 34f, w - 12f,
+                 "Administrators", "printer_principal");
+
+        var students = RadioRow(principals.rectTransform, t, "Prin_Students", 6f, 64f, w - 12f,
+                                UserGroup + " (CSSNCII" + @"\" + UserGroup + ")",
+                                "printer_principal");
+
+        // Everyone is on the list until it is taken off, and taking it off is half of step 21.
+        Reveal(root, "remove_everyone_printer", null, new[] { everyone.gameObject });
+
+        var remove = COC3WinWidgets.Button(panels[2], t, "Remove", w - 100f, 158f, 100f,
+                                           t.buttonSize.y, "Remove");
+
+        var removeGate = Gate(root, "Gate_RemoveEveryone", "remove_everyone_printer", remove, error);
+        removeGate.mustBeOn = new[] { everyone };
+        removeGate.missingOptionMessage =
+            "Select the entry you want to remove.\n\n" +
+            "Everyone is the one that has to go. Leaving it there undoes whatever you grant the " +
+            "group underneath it.";
+
+        Label(panels[2], t, "PermHead", 0f, 196f, 260f, 22f, "Permissions");
+        Label(panels[2], t, "ColAllow", w - 170f, 196f, 60f, 22f, "Allow",
+              TextAlignmentOptions.Center).color = t.disabledText;
+
+        var printAllow = PermissionRow(panels[2], t, "Print", 0, w);
+        var manageAllow = PermissionRow(panels[2], t, "Manage this printer", 1, w);
+        PermissionRow(panels[2], t, "Manage documents", 2, w);
+
+        Label(panels[2], t, "SecNote", 0f, 322f, w, 66f,
+              "Print is all a user needs. Manage this printer lets them pause the queue, change " +
+              "these permissions and delete the printer.").color = t.disabledText;
+
+        var secApply = COC3WinWidgets.Button(panels[2], t, "SecApply", w - t.buttonSize.x, 392f,
+                                             t.buttonSize.x, t.buttonSize.y, "Apply", true);
+
+        var permGate = Gate(root, "Gate_PrinterPerms", "set_printer_permissions", secApply, error);
+        permGate.requiredStepId = "Step_21_PrinterPermissions";
+        permGate.requiredActions = new[] { "remove_everyone_printer" };
+        permGate.mustBeOn = new[] { students, printAllow };
+        permGate.mustBeOff = new[] { manageAllow };
+        permGate.missingActionMessage =
+            "Everyone is still on this list.\n\n" +
+            "Granting the group Print changes nothing while Everyone has it too. Select Everyone " +
+            "and Remove it first.";
+        permGate.missingOptionMessage =
+            "Select " + UserGroup + " and allow it Print.\n\n" +
+            "Not Manage this printer - that lets the group change these permissions and delete " +
+            "the printer, which no user group should be able to do.";
 
         CancelButton(body, t, win, w, h - 34f, "Close");
         return win;
+    }
+
+    /// <summary>One row of a permissions grid: the name, an Allow box, and a dead Deny box.</summary>
+    private static WinToggle PermissionRow(RectTransform panel, COC3WinTheme t, string label,
+                                           int index, float w)
+    {
+        float y = 224f + index * 32f;
+
+        Label(panel, t, "Perm_" + index, 10f, y, 280f, 26f, label);
+
+        var allow = CheckRow(panel, t, "Allow_" + index, w - 150f, y - 1f, 30f, "");
+
+        // Drawn and dead, as on the folder sheet: every task here is an Allow, and a live Deny
+        // lets a learner build something that looks configured and locks everyone out.
+        COC3WinWidgets.BorderedBox(panel, "Deny_" + index, w - 70f, y + 5f, 16f, 16f,
+                                   t.fieldBackground, t.fieldBorder);
+
+        return allow;
     }
 
     private static WinWindow BuildTestPageSent(Transform parent, COC3WinTheme t)
@@ -2666,6 +2888,127 @@ public class COC3DesktopBuilder : EditorWindow
 
         CancelButton(body, t, win, w, h - 34f);
         return win;
+    }
+
+    /// <summary>
+    /// Advanced Security Settings - steps 32 and 33, on two tabs of one dialog.
+    ///
+    /// Both are REVIEW steps, and review is where a folder that was configured correctly turns
+    /// out not to be. Effective Access answers "what can this account actually do", after every
+    /// group and every inherited entry has been resolved - which is not always what you intended.
+    /// The Permissions tab answers "where did that come from", and the usual answer is a parent
+    /// folder nobody looked at.
+    /// </summary>
+    private static WinWindow BuildAdvancedSecurity(Transform parent, COC3WinTheme t, GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "AdvancedSecurity",
+                                         "Advanced Security Settings for " + UsersFolder,
+                                         760f, 500f, out RectTransform root);
+        var win = Register(root, "AdvancedSecurity", "Advanced Security Settings");
+        FixCloseGlyph(root);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        RectTransform[] panels;
+        RealTabs(body, t, root, new[] { "Permissions", "Auditing", "Effective Access" }, out panels);
+
+        // ---- Permissions ----
+        Label(panels[0], t, "Head", 0f, 8f, w, 22f, "Permission entries:");
+
+        var entries = Box(panels[0], "Entries", 0f, 34f, w, 150f, t.fieldBackground);
+
+        Label(entries.transform, t, "H1", 10f, 6f, 180f, 22f, "Principal").color = t.disabledText;
+        Label(entries.transform, t, "H2", 200f, 6f, 160f, 22f, "Access").color = t.disabledText;
+        Label(entries.transform, t, "H3", 370f, 6f, w - 390f, 22f, "Inherited from")
+            .color = t.disabledText;
+        Box(entries.transform, "Rule", 6f, 30f, w - 12f, 1f, t.separator).raycastTarget = false;
+
+        var inherited = Rect(entries.transform, "InheritedRow", 10f, 40f, w - 20f, 24f);
+        Label(inherited, t, "P", 0f, 0f, 180f, 24f, "Everyone");
+        Label(inherited, t, "A", 190f, 0f, 160f, 24f, "Full control");
+        Label(inherited, t, "I", 360f, 0f, w - 380f, 24f, DataRoot).color = t.disabledText;
+
+        Entry(entries.transform, t, "Row_System", 68f, w, "SYSTEM", "Full control", "None");
+        Entry(entries.transform, t, "Row_Admins", 96f, w, "Administrators", "Full control", "None");
+        Entry(entries.transform, t, "Row_Students", 124f, w, UserGroup, "Modify", "None");
+
+        var enabled = Label(panels[0], t, "InheritOn", 0f, 194f, w, 22f,
+                            "Inheritance:  enabled - entries above marked with a parent folder " +
+                            "came from it");
+        enabled.color = t.disabledText;
+
+        var disabled = Label(panels[0], t, "InheritOff", 0f, 194f, w, 22f,
+                             "Inheritance:  disabled - this folder's permissions are now its own");
+        disabled.color = t.disabledText;
+
+        Label(panels[0], t, "Note", 0f, 226f, w, 90f,
+              "Everyone has Full control here and nobody granted it - it was inherited from " +
+              DataRoot + ". Removing it from this folder alone does nothing while inheritance is " +
+              "on; the entry comes straight back.").color = t.disabledText;
+
+        Reveal(root, "disable_inheritance",
+               new[] { disabled.gameObject }, new[] { enabled.gameObject, inherited.gameObject });
+
+        var disableBtn = COC3WinWidgets.Button(panels[0], t, "DisableInheritance", 0f, 324f, 190f,
+                                               t.buttonSize.y, "Disable inheritance");
+
+        var inheritGate = Gate(root, "Gate_Inheritance", "disable_inheritance", disableBtn, error);
+        inheritGate.requiredStepId = "Step_33_SharedFolderSecurityCheck";
+
+        // ---- Auditing ----
+        Label(panels[1], t, "Aud", 0f, 8f, w, 44f,
+              "Auditing entries record who tried to reach this folder. The results are read in " +
+              "Event Viewer's Security log.").color = t.disabledText;
+
+        // ---- Effective Access ----
+        Label(panels[2], t, "EaHead", 0f, 8f, w, 44f,
+              "Effective access shows what a user or group can ACTUALLY do, after every group " +
+              "membership and inherited entry has been worked out.");
+
+        var who = COC3WinWidgets.Field(panels[2], t, "User", 0f, 62f, 120f, w - 260f,
+                                       "Select a user:", "", "", false);
+
+        var view = COC3WinWidgets.Button(panels[2], t, "ViewAccess", w - 190f, 62f, 190f,
+                                         t.buttonSize.y, "View effective access");
+
+        var results = Rect(panels[2], "Results", 0f, 110f, w, 190f);
+
+        Label(results, t, "R1", 10f, 0f, w - 20f, 24f,
+              "Effective access for " + SampleUser + ":").fontStyle = FontStyles.Bold;
+
+        Label(results, t, "R2", 24f, 30f, w - 40f, 24f, "Traverse folder / execute file     Allowed");
+        Label(results, t, "R3", 24f, 56f, w - 40f, 24f, "List folder / read data           Allowed");
+        Label(results, t, "R4", 24f, 82f, w - 40f, 24f, "Create files / write data         Allowed");
+        Label(results, t, "R5", 24f, 108f, w - 40f, 24f, "Delete                            Allowed");
+        Label(results, t, "R6", 24f, 134f, w - 40f, 24f, "Change permissions                Denied");
+
+        Label(results, t, "R7", 10f, 164f, w - 20f, 22f,
+              "Modify, and nothing more - which is what the standard asked for.")
+            .color = t.disabledText;
+
+        Reveal(root, "view_effective_access", new[] { results.gameObject }, null);
+
+        var accessGate = Gate(root, "Gate_EffectiveAccess", "view_effective_access", view, error);
+        accessGate.requiredStepId = "Step_32_UserPermissionsCheck";
+        accessGate.fields = new[] { Req(who, SampleUser, "user name") };
+        accessGate.wrongValueMessage =
+            "That {field} cannot be found in " + DomainFQDN + ".\n\n" +
+            "Check it against the account you created. Checking the GROUP would tell you what the " +
+            "group may do, not what the person ended up with.";
+
+        CancelButton(body, t, win, w, h - 34f, "OK");
+        return win;
+    }
+
+    private static void Entry(Transform parent, COC3WinTheme t, string name, float y, float w,
+                              string principal, string access, string from)
+    {
+        var row = Rect(parent, name, 10f, y, w - 20f, 24f);
+
+        Label(row, t, "P", 0f, 0f, 180f, 24f, principal);
+        Label(row, t, "A", 190f, 0f, 160f, 24f, access);
+        Label(row, t, "I", 360f, 0f, w - 380f, 24f, from).color = t.disabledText;
     }
 
     // ==================================================================

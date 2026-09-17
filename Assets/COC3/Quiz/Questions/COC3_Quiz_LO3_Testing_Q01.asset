@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO3_Testing_Q01
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Why is every test in the plan performed on the CLIENT rather than
+    on the server?
+  choices:
+  - The server cannot run the test tools
+  - Client hardware is faster for testing
+  - A service checked only on the server has not been tested as a user would use
+    it
+  - Testing on a server can corrupt the configuration
+  correctChoiceIndex: 2
+  points: 10
+  explanation: The server can reach its own folder whatever the share and permissions
+    say. Only the client exercises the network, the name resolution, the share and
+    the permissions together.

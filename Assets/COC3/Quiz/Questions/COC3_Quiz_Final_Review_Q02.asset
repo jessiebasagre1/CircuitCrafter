@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_Final_Review_Q02
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: The folder's permission list shows Everyone with Full control, inherited
+    from the parent folder. Removing it from this folder alone does nothing. Why?
+  choices:
+  - Everyone cannot be removed from any folder
+  - The entry is protected by Windows
+  - It has to be removed from the share permissions instead
+  - While inheritance is on, the entry comes straight back from the parent
+  correctChoiceIndex: 3
+  points: 10
+  explanation: Inheritance has to be disabled first, which turns the inherited entries
+    into this folder's own. Only then can one be removed and stay removed.

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO1_UserAccess_Q08
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What does a GLOBAL group scope mean?
+  choices:
+  - It can hold accounts from this domain and be used anywhere in the forest
+  - It is visible to every computer on the internet
+  - It holds every account in the domain automatically
+  - It can only be used on the domain controller
+  correctChoiceIndex: 0
+  points: 10
+  explanation: Global is the normal scope for a group of people from one domain.
+    Domain local is for granting access within one domain; universal spans a whole
+    forest.

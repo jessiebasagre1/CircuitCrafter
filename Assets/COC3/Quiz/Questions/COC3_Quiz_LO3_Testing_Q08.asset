@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO3_Testing_Q08
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: A ping to the server succeeds but the share will not open. What does
+    that tell you?
+  choices:
+  - The server is switched off
+  - The cable is faulty
+  - The client has no IP address
+  - The network is fine, so the fault is in sharing, permissions or name resolution
+  correctChoiceIndex: 3
+  points: 10
+  explanation: Ping proves the two machines can reach each other. Everything above
+    that layer is still in question, which is exactly why the tests are ordered this
+    way.

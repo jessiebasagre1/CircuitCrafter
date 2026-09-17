@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Hint_Step_21_PrinterPermissions
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'The printer''s <b>Security</b> tab.
+  - speakerName: Required input
+    text: 'Security tab:
 
 
-      Grant <b>STUDENTS</b> the
-      <b>Print</b> permission, and remove <b>Everyone</b>.
+      Select <b>Everyone</b> and press <b>Remove</b>
 
+      Select
+      <b>STUDENTS</b>, tick <b>Print</b> under Allow
 
-      Same principle
-      as the shared folder: the right goes to the group, and Everyone left in place
-      undoes the restriction you just made.'
+      Leave <b>Manage this
+      printer</b> clear.'

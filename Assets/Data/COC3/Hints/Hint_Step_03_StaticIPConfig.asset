@@ -13,10 +13,13 @@ MonoBehaviour:
   m_Name: Hint_Step_03_StaticIPConfig
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 Network Connections \u25B8 Ethernet \u25B8 Properties</b>,
-      select <b>Internet Protocol Version 4 (TCP/IPv4)</b>, then <b>Properties</b>.\n\nChoose
-      <b>Use the following IP address</b>, then:\n\nIP address:  <b>192.168.10.10</b>\nSubnet
-      mask:  <b>255.255.255.0</b>\nDefault gateway:  <b>192.168.10.1</b>\nPrefered
-      DNS server:\n<b>127.0.0.1</b>\n\nA server must never lease its own address
-      from DHCP."
+  - speakerName: Required input
+    text: '<b>Use the following IP address</b>
+
+
+      IP address:  <b>192.168.10.10</b>
+
+      Subnet
+      mask:  <b>255.255.255.0</b>
+
+      Default gateway:  <b>192.168.10.1</b>'

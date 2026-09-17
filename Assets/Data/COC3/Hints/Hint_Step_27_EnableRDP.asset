@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_27_EnableRDP
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>System Properties \u25B8 Remote</b> tab.\n\nSelect <b>Allow remote
-      connections to this computer</b>.\n\nEnabling it is not the same as permitting
-      anyone - that is the next step."
+  - speakerName: Required input
+    text: 'Remote tab:
+
+
+      <b>Allow remote connections to this computer</b>'

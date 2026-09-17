@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO1_UserAccess_Q06
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: The password policy was set but the 'Define this policy setting'
+    box was left clear. What is the effect?
+  choices:
+  - The policy applies only to administrators
+  - The policy applies after the next restart
+  - The policy is not applied at all
+  - The policy applies with a default value of 8
+  correctChoiceIndex: 2
+  points: 10
+  explanation: An undefined setting is simply not applied. The value in the box is
+    ignored, and nothing warns you - which is what makes it a quiet failure.

@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_15_AccessPolicies
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 Group Policy Management</b>.\n\nComputer Configuration
-      > Policies > Windows Settings > Security Settings > Account Policies, then
-      select <b>Password Policy</b> in the tree.\n\nOpen <b>Minimum password length</b>.\nTick
-      <b>Define this policy setting</b>, then enter <b>8</b>.\n\nThe tick box is
-      what turns the policy on - the number alone does nothing."
+  - speakerName: Required input
+    text: 'Tree node:  <b>Password Policy</b>
+
+
+      Tick <b>Define this policy
+      setting</b>
+
+      Characters:  <b>8</b>'

@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_30_VerifyRemoteAccess
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Press the ping button and watch the replies.
-
-
-      Nothing to type.
-      This passes only if the addressing from step 3 was right, so a failure here
-      is a fault further back, not on this page.'
+  - speakerName: Required input
+    text: Nothing to enter. Run the ping and watch the replies.

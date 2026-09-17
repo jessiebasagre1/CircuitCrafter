@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_33_SharedFolderSecurityCheck
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Security \u25B8 Advanced</b> on SharedDocs.\n\nRead the permission
-      entries and <b>disable inheritance</b> if <b>Everyone</b> still appears.\n\nAn
-      inherited entry from the parent folder is the usual way a share ends up open
-      to people you never granted."
+  - speakerName: Required input
+    text: 'Tab:  <b>Permissions</b>
+
+
+      Nothing to type - press <b>Disable inheritance</b>.'

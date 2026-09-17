@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Hint_Step_22_TestPrintFromClient
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'On CLIENT01: connect to the shared printer, then open its properties and
-      press <b>Print Test Page</b> on the General tab.
+  - speakerName: Required input
+    text: 'Select:  <b>HP LaserJet 1020 on SERVER01</b>
 
 
-      A printer that has
-      only been checked on the server has not been tested.'
+      Nothing to type -
+      press <b>Print Test Page</b>.'

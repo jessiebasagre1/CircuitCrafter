@@ -13,13 +13,9 @@ MonoBehaviour:
   m_Name: Hint_Step_25_RedirectFoldersTarget
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'The root path the policy points at:
+  - speakerName: Required input
+    text: 'Setting:  <b>Basic - Redirect everyone''s folder to the same location</b>
 
 
-      <b>\\SERVER01\Redirected</b>
-
-
-      A
-      UNC path, not a local one - the client has to reach it over the network, and
-      C:\ on the client is not the same C:\ as on the server.'
+      Root
+      Path:  <b>\\SERVER01\Redirected</b>'

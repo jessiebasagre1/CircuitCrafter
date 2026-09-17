@@ -13,19 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_16_CreateSharedFolder
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: '<b>File Explorer</b>, select the <b>Users</b> folder, then <b>Properties</b>.
+  - speakerName: Required input
+    text: 'Tick <b>Share this folder</b>
 
 
-      It
-      opens on General. Go to the <b>Sharing</b> tab, then <b>Advanced Sharing...</b>
-
-
-      Tick
-      <b>Share this folder</b>.
-
-      Share name:  <b>SharedDocs</b>
-
-
-      The
-      share name does not have to match the folder name on disk.'
+      Share name:  <b>SharedDocs</b>'

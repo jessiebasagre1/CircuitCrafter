@@ -13,13 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_19_TestClientAccess
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'The full UNC path to the share:
-
-
-      <b>\\SERVER01\SharedDocs</b>
-
-
-      Two
-      backslashes at the front, one in the middle. The share name is the one you
-      typed at step 16, not the folder name on disk.'
+  - speakerName: Required input
+    text: 'Open:  <b>\\SERVER01\SharedDocs</b>'

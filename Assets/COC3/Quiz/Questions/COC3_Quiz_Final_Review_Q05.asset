@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_Final_Review_Q05
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Why does the job order end with a service report?
+  choices:
+  - It is needed to close the software licence
+  - It is the only record of what was configured, what was tested and what the result
+    was
+  - It is required before the server can be restarted
+  - It replaces the test plan
+  correctChoiceIndex: 1
+  points: 10
+  explanation: Undocumented work cannot be handed over, verified, or repeated by
+    whoever comes next. The report is what the client is actually paying for.

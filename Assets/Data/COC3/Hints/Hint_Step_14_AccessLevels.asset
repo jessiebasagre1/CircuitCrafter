@@ -13,19 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_14_AccessLevels
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Two halves, and only the second one completes the step.
+  - speakerName: Required input
+    text: 'Group name:  <b>STUDENTS</b>
+
+      Scope:  <b>Global</b>      Type: 
+      <b>Security</b>
 
 
-      Same console,
-      Users still selected: <b>New > Group</b>
-
-      Group name:  <b>STUDENTS</b>
-
-      Scope
-      <b>Global</b>, type <b>Security</b> - only a security group can be given permissions.
-
-
-      STUDENTS
-      Properties opens on General. Click the <b>Members</b> tab, type <b>student01</b>,
-      and press <b>Add</b>. That is the step.'
+      Members tab, object name:  <b>student01</b>'

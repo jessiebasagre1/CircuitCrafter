@@ -371,6 +371,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1864306706652834673}
+  - component: {fileID: 3796008745162539877}
   - component: {fileID: 8878247456710931805}
   - component: {fileID: 4517655982018847914}
   m_Layer: 12
@@ -399,6 +400,21 @@ RectTransform:
   m_AnchoredPosition: {x: 616, y: -319}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &3796008745162539877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609961117236743069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceab7b249d9aca640ac546f2b2ec27fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlatformPromptText
+  desktopText: Press Space to continue
+  touchText: Tap to continue
+  logChoice: 0
 --- !u!222 &8878247456710931805
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -461,8 +477,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1

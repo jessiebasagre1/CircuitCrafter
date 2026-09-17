@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_01_OHSAndJobOrder
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Nothing to configure yet - this is the job order.
-
-
-      Read what the
-      client has asked for, then press <b>NEXT</b>. Everything you type from here
-      comes from this page.'
+  - speakerName: Required input
+    text: Nothing to enter. Read the panel and press <b>NEXT</b>.

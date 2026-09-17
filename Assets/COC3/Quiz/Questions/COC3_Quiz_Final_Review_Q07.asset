@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_Final_Review_Q07
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Everyone was removed from the printer's permissions before STUDENTS
+    was granted Print. Why does the order matter?
+  choices:
+  - Windows requires removals before additions
+  - It does not matter - the result is the same either way
+  - Granting Print twice would cause an error
+  - While Everyone can print, restricting the group changes nothing
+  correctChoiceIndex: 3
+  points: 10
+  explanation: A permission granted underneath a broader one is not a restriction.
+    Everyone has to go before anything you grant the group means anything.

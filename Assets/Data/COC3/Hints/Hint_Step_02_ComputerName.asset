@@ -13,7 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_02_ComputerName
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 System</b>, then <b>Change...</b>\n\nComputer name:  <b>SERVER01</b>\n\nA
-      server is found by name long before anyone knows its address, so this is the
-      first thing the job order fixes."
+  - speakerName: Required input
+    text: 'Computer name:  <b>SERVER01</b>'

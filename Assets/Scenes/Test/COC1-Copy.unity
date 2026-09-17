@@ -948,17 +948,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 60326343}
   m_CullTransparentMesh: 1
---- !u!114 &65912658 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5893040336938392870, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
-  m_PrefabInstance: {fileID: 5017761093843288408}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &67164213
 GameObject:
   m_ObjectHideFlags: 0
@@ -1969,11 +1958,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &90259488 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7912877994190296544, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
-  m_PrefabInstance: {fileID: 5017761093843288408}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &92535279
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7455,9 +7439,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94889f669b870b040a309f11d39a0803, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PartDescriptionPanel
-  panelRoot: {fileID: 90259488}
-  iconImage: {fileID: 859537034}
-  descriptionText: {fileID: 65912658}
+  panelRoot: {fileID: 0}
+  iconImage: {fileID: 0}
+  descriptionText: {fileID: 0}
 --- !u!4 &340106335
 Transform:
   m_ObjectHideFlags: 0
@@ -7968,9 +7952,9 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 919132149005844685}
+  - {fileID: 1605697509}
   socketsToWatch:
-  - {fileID: 1265091809}
+  - {fileID: 1605697510}
   requireAllSockets: 0
 --- !u!114 &380675404
 MonoBehaviour:
@@ -7991,15 +7975,15 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 5718722264511139644}
-  - {fileID: 6708958216884105482}
-  - {fileID: 4611909366921963703}
-  - {fileID: 9051282024743538777}
+  - {fileID: 1605697518}
+  - {fileID: 1605697516}
+  - {fileID: 1605697514}
+  - {fileID: 1605697512}
   socketsToWatch:
-  - {fileID: 6606679030661605670}
-  - {fileID: 7265561656187617805}
-  - {fileID: 8661735693109058833}
-  - {fileID: 2809183886852942598}
+  - {fileID: 1605697519}
+  - {fileID: 1605697517}
+  - {fileID: 1605697515}
+  - {fileID: 1605697513}
   requireAllSockets: 0
 --- !u!114 &380675405
 MonoBehaviour:
@@ -8021,9 +8005,9 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 8267086127915223115}
+  - {fileID: 1605697520}
   socketsToWatch:
-  - {fileID: 5367294012423320280}
+  - {fileID: 1605697521}
   requireAllSockets: 1
 --- !u!114 &380675406
 MonoBehaviour:
@@ -8045,9 +8029,9 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 1247575727113479692}
+  - {fileID: 1605697508}
   socketsToWatch:
-  - {fileID: 8644903293058487087}
+  - {fileID: 1605697507}
   requireAllSockets: 1
 --- !u!114 &380675407
 MonoBehaviour:
@@ -8069,9 +8053,9 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 919132149005844685}
+  - {fileID: 1605697509}
   socketsToWatch:
-  - {fileID: 1265091809}
+  - {fileID: 1605697510}
   requireAllSockets: 1
 --- !u!114 &380675408
 MonoBehaviour:
@@ -8091,7 +8075,7 @@ MonoBehaviour:
   bootSymptom: Nothing happens at all. No lights, no fan noise, nothing on the screen.
   bootImpact: 0
   beepCode: 
-  cable: {fileID: 4154679090555821646}
+  cable: {fileID: 1605697511}
   disconnectedRestPoint: {fileID: 1914126348}
   attachToRestPoint: 1
 --- !u!114 &380675409
@@ -8114,15 +8098,15 @@ MonoBehaviour:
   bootImpact: 0
   beepCode: 
   partsToRemove:
-  - {fileID: 5718722264511139644}
-  - {fileID: 6708958216884105482}
-  - {fileID: 4611909366921963703}
-  - {fileID: 9051282024743538777}
+  - {fileID: 1605697518}
+  - {fileID: 1605697516}
+  - {fileID: 1605697514}
+  - {fileID: 1605697512}
   socketsToWatch:
-  - {fileID: 6606679030661605670}
-  - {fileID: 7265561656187617805}
-  - {fileID: 8661735693109058833}
-  - {fileID: 2809183886852942598}
+  - {fileID: 1605697519}
+  - {fileID: 1605697517}
+  - {fileID: 1605697515}
+  - {fileID: 1605697513}
   requireAllSockets: 0
 --- !u!4 &380675410
 Transform:
@@ -13399,7 +13383,7 @@ MonoBehaviour:
   stationCamera: {fileID: 1221662504}
   enableOnEnter:
   - {fileID: 8372383186608871452}
-  - {fileID: 90259488}
+  - {fileID: 0}
   disableOnEnter:
   - {fileID: 1738565443}
   movedObject: {fileID: 1605697506}
@@ -15761,17 +15745,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 852605865}
   m_CullTransparentMesh: 1
---- !u!114 &859537034 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3335682203427593841, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
-  m_PrefabInstance: {fileID: 5017761093843288408}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!1 &862147257
 GameObject:
   m_ObjectHideFlags: 0
@@ -32366,6 +32339,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1299020603642637371, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+      propertyPath: dragCamera
+      value: 
+      objectReference: {fileID: 1221662504}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -32400,6 +32377,171 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 673634986584118648, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
   m_PrefabInstance: {fileID: 1605697505}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1605697507 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2151770708289246069, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 253329bea512cc94faf01605e6bc0958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PartSocket
+--- !u!114 &1605697508 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6989782177567847973, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dd83ea7d53230f41a3123cad6661590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SSDPartItem
+--- !u!114 &1605697509 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2708219512517646354, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cfb16a08f3f5834f81f9e9030d06ca9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PCPartItem
+--- !u!114 &1605697510 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6811100260395894127, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 253329bea512cc94faf01605e6bc0958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PartSocket
+--- !u!114 &1605697511 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1466595889451662447, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 504474d79500537448a27ebcf08688dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CableConnector
+--- !u!114 &1605697512 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6996476804298767619, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebae3bbb57b1cc44b90fa1e5884577b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMPartItem
+--- !u!114 &1605697513 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6537178629735176193, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c12342587c127449c3a232075747e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMSocket
+--- !u!114 &1605697514 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2215211365190835200, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebae3bbb57b1cc44b90fa1e5884577b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMPartItem
+--- !u!114 &1605697515 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6039730424945208868, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c12342587c127449c3a232075747e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMSocket
+--- !u!114 &1605697516 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5945538203564534562, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebae3bbb57b1cc44b90fa1e5884577b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMPartItem
+--- !u!114 &1605697517 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7085265590500436869, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c12342587c127449c3a232075747e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMSocket
+--- !u!114 &1605697518 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6961161433677012160, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebae3bbb57b1cc44b90fa1e5884577b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMPartItem
+--- !u!114 &1605697519 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6548403078265359982, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12c12342587c127449c3a232075747e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RAMSocket
+--- !u!114 &1605697520 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 822138195126621930, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1377804b7e6373c459059890b5c9916c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CPUPartItem
+--- !u!114 &1605697521 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6526449988046478494, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 1605697505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 253329bea512cc94faf01605e6bc0958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PartSocket
 --- !u!1 &1605801737
 GameObject:
   m_ObjectHideFlags: 0
@@ -38669,7 +38811,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -9}
+  m_AnchoredPosition: {x: 1099, y: -213}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &1897467504
@@ -53847,6 +53989,34 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 7a73de2adbc22784595c28ab58642510, type: 3}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 832.84
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.09000451
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.90004516
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.90004516
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 929
+      objectReference: {fileID: 0}
+    - target: {fileID: 2769428539371674793, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -94
+      objectReference: {fileID: 0}
     - target: {fileID: 2838463630974858051, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -54191,6 +54361,22 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -659011900380256663, guid: 97cd4479169212847b19ba04a84f1bc3, type: 3}
+    - target: {fileID: 8799294327424308253, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.09000451
+      objectReference: {fileID: 0}
+    - target: {fileID: 8799294327424308253, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.90004516
+      objectReference: {fileID: 0}
+    - target: {fileID: 8799294327424308253, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.90004516
+      objectReference: {fileID: 0}
+    - target: {fileID: 8799294327424308253, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -902
+      objectReference: {fileID: 0}
     - target: {fileID: 9017328582301530859, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -54200,7 +54386,8 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: d68cde9b842764a4cb671c4902d24dc1, type: 3}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 7912877994190296544, guid: d09283f64eba1e941a1e970df2491f37, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d09283f64eba1e941a1e970df2491f37, type: 3}

@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Hint_Step_26_TestRedirectionClient
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "Sign in to CLIENT01 as <b>student01</b> - a domain account, which only
-      works because you joined the client at step 11.\n\nOpen <b>Documents \u25B8
-      Properties \u25B8 Location</b> and check it now points at the server."
+  - speakerName: Required input
+    text: 'Tab:  <b>Location</b>
+
+
+      Nothing to type - select that tab and press
+      <b>OK</b>.'

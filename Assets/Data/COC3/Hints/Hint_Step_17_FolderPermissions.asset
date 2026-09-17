@@ -13,15 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_17_FolderPermissions
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Same property sheet, the <b>Security</b> tab - Sharing puts the folder
-      on the network, Security decides who may do what with it.
+  - speakerName: Required input
+    text: 'Select:  <b>STUDENTS</b>
 
 
-      <b>Edit...</b>,
-      select <b>STUDENTS</b> in the list, then tick <b>Modify</b> under Allow.
-
+      Tick <b>Modify</b> under Allow.
 
       Leave
-      <b>Full control</b> clear. It also lets the group change these permissions
-      and take ownership, which no user group should have.'
+      <b>Full control</b> clear.'

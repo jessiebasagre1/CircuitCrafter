@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO2_NetworkServices_Q07
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Installing the AD DS role did not create the domain. What did?
+  choices:
+  - Restarting the server after installation
+  - Promoting the server to a domain controller
+  - Creating the first user account
+  - Setting the computer name
+  correctChoiceIndex: 1
+  points: 10
+  explanation: Installing a role puts the software on the machine. Promotion is the
+    separate step that creates the forest, the domain and the directory itself.

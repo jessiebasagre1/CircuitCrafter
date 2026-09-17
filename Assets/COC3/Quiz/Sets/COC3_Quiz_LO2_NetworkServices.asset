@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: COC3_Quiz_LO2_NetworkServices
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: COC3_LO2
+  questionPool:
+  - {fileID: 11400000, guid: 19d06f8ef264a4d49bc7bedfda2d8ea4, type: 2}
+  - {fileID: 11400000, guid: 4730899079476d34ba65302d0dee1a59, type: 2}
+  - {fileID: 11400000, guid: 39deb34c8fb01314d8c20af10c27e9a0, type: 2}
+  - {fileID: 11400000, guid: 8f64bcc50abe98b4694a24f1d1d40c9d, type: 2}
+  - {fileID: 11400000, guid: 1628778678b546e48b990d138d9c7075, type: 2}
+  - {fileID: 11400000, guid: b35541f5966de774586a17cc3da01e1f, type: 2}
+  - {fileID: 11400000, guid: 2cf2f9fd66d4f1e46b8c76724a30e2ab, type: 2}
+  - {fileID: 11400000, guid: 6c5d50f263feb2746802f54541f1ec1e, type: 2}
+  questionsToAsk: 3
+  randomizeSelection: 1

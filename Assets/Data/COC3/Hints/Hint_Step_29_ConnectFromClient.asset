@@ -13,13 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_29_ConnectFromClient
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'On CLIENT01, open <b>Remote Desktop Connection</b> (mstsc).
-
-
-      Computer: 
-      <b>192.168.10.10</b>
-
-
-      The server''s static address - the one you set
-      at step 3.'
+  - speakerName: Required input
+    text: 'Computer:  <b>192.168.10.10</b>'

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO2_NetworkServices_Q05
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What does a reverse lookup zone actually do?
+  choices:
+  - Resolves an IP address back to a host name
+  - Reverses the order of DNS server priority
+  - Restores DNS records after a failure
+  - Resolves a host name to an IP address
+  correctChoiceIndex: 0
+  points: 10
+  explanation: Forward resolves name to address. Reverse does the opposite, which
+    is what a log entry or a diagnostic tool needs when all it has is the address.

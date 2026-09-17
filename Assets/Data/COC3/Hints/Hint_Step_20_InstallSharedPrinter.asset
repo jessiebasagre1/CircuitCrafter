@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Hint_Step_20_InstallSharedPrinter
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Devices and Printers \u25B8 Printer Properties \u25B8 Sharing</b>.\n\nTick
-      <b>Share this printer</b>.\n\nPublishing it to the domain is what lets a client
-      install it by name rather than by hunting for a driver."
+  - speakerName: Required input
+    text: 'Sharing tab:
+
+
+      Tick <b>Share this printer</b>
+
+      Tick <b>List
+      in the directory</b>'

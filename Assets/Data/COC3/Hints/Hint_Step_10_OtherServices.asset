@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_10_OtherServices
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Reading only - press <b>NEXT</b>.
-
-
-      <b>Print and Document Services</b>
-      does the same job for printers - it is what lets a printer be published to
-      the domain by name.'
+  - speakerName: Required input
+    text: Nothing to enter. Read the panel and press <b>NEXT</b>.

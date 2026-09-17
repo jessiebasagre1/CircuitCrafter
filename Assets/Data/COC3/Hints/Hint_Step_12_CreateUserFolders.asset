@@ -13,16 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_12_CreateUserFolders
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: '<b>File Explorer</b> is on the desktop, already showing C:\ServerData.
-
-
-      <b>New
-      folder</b>, then
-
-      Folder name:  <b>Users</b>
-
-
-      Type the folder''s
-      own name, not the whole path - the box above already says where it goes. The
-      result is <b>C:\ServerData\Users</b>.'
+  - speakerName: Required input
+    text: 'Folder name:  <b>Users</b>'

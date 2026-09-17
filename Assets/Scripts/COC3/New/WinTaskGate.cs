@@ -124,6 +124,17 @@ namespace CSSSimulation.WindowsSim
         [TooltipAttribute("Toggles that must be OFF.")]
         public WinToggle[] mustBeOff;
 
+        [TooltipAttribute("Action ids that must ALREADY have been accepted, anywhere on the desktop.\n\n" +
+                 "For a step whose answer is partly something done earlier in the same window - " +
+                 "granting the group Print only counts once Everyone has been removed - and there " +
+                 "is no toggle on screen that records it. Read from WinActionBus's memory.")]
+        public string[] requiredActions;
+
+        [TooltipAttribute("Shown when one of Required Actions has not happened yet.")]
+        [TextAreaAttribute(2, 4)]
+        public string missingActionMessage =
+            "Something this depends on has not been done yet. Check the step instruction.";
+
         [HeaderAttribute("On success")]
         [TooltipAttribute("Closed when accepted - normally the window this gate is on, the way OK dismisses " +
                  "a property sheet.")]
@@ -265,6 +276,11 @@ namespace CSSSimulation.WindowsSim
         /// <summary>Null when everything checks out; otherwise the message to show.</summary>
         private string FirstProblem()
         {
+            if (requiredActions != null)
+                foreach (var id in requiredActions)
+                    if (!string.IsNullOrEmpty(id) && !WinActionBus.HasSucceeded(id))
+                        return missingActionMessage;
+
             foreach (var t in mustBeOn)
                 if (t != null && !t.isOn) return missingOptionMessage;
 

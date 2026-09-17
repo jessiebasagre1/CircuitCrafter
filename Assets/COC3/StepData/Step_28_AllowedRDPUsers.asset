@@ -20,7 +20,7 @@ MonoBehaviour:
     Click ''Select Users'' > Add, and type the account allowed to connect
     remotely.'
   screenshotImage: {fileID: 0}
-  stepType: 4
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

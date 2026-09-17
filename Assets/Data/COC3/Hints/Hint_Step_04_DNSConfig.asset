@@ -13,10 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_04_DNSConfig
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'Reading only - press <b>NEXT</b>.
-
-
-      The preferred DNS server is
-      <b>127.0.0.1</b>, the loopback address. This machine is about to host DNS itself,
-      so it resolves names by asking itself.'
+  - speakerName: Required input
+    text: 'Preferred DNS server:  <b>127.0.0.1</b>'

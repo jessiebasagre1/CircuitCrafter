@@ -9,6 +9,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class PCPartItem : MonoBehaviour
 {
+    public bool IsPickupReady { get; private set; }
     [Header("Identity")]
     public string partId;
     public PartType partType;
@@ -122,11 +123,11 @@ public class PCPartItem : MonoBehaviour
 
     void Update()
     {
-        if (pickupReadyVisual == null) return;
-
-        // Only relevant while actually installed in a socket � HomeSocket is null
-        // while mid-drag or sitting in the hotbar, where "ready to pick up" doesn't apply.
         bool ready = HomeSocket != null && CanPickup() && RemovalOrderBlocker() == null;
+        IsPickupReady = ready;
+
+        if (pickupReadyVisual == null) return;      // was the first line
+
         if (ready == pickupReadyVisualActive) return;
 
         Debug.Log($"{name}: pickup-ready visual changing to {ready} (HomeSocket={(HomeSocket != null ? HomeSocket.name : "null")})", this);

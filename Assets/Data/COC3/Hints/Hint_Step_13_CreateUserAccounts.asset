@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Hint_Step_13_CreateUserAccounts
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 Active Directory Users and Computers</b>.\n\nSelect the
-      <b>Users</b> container in the tree first, then <b>New > User</b>.\n\nUser logon
-      name:  <b>student01</b>"
+  - speakerName: Required input
+    text: 'Container:  <b>Users</b>
+
+
+      User logon name:  <b>student01</b>'

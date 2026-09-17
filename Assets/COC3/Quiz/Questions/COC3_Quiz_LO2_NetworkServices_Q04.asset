@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO2_NetworkServices_Q04
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Promoting the server created a forward lookup zone automatically.
+    Why did you still have to create a reverse zone by hand?
+  choices:
+  - The forward zone was created incorrectly
+  - Reverse zones are only needed on client machines
+  - Promotion creates only what the domain itself needs; reverse resolution is optional
+  - Reverse zones cannot be created automatically by any version of Windows
+  correctChoiceIndex: 2
+  points: 10
+  explanation: A domain works without reverse lookup. It is needed for turning an
+    address back into a name - diagnostics, logging, and some services that check
+    the caller.

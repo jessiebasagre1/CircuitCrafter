@@ -13,7 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_09_FileServicesConfig
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "Reading only - press <b>NEXT</b>.\n\n<b>File and Storage Services \u25B8
-      File Server</b> is what lets this machine host a share over SMB. You ticked
-      it back at step 5."
+  - speakerName: Required input
+    text: Nothing to enter. Read the panel and press <b>NEXT</b>.

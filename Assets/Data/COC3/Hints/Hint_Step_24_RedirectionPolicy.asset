@@ -13,10 +13,6 @@ MonoBehaviour:
   m_Name: Hint_Step_24_RedirectionPolicy
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: '<b>Group Policy Management Editor</b>: User Configuration > Policies >
-      Windows Settings > <b>Folder Redirection</b> > <b>Documents</b>.
-
-
-      Set
-      it to <b>Basic - Redirect everyone''s folder to the same location</b>.'
+  - speakerName: Required input
+    text: 'Tree node:  <b>User Configuration > Policies > Windows Settings > Folder
+      Redirection > Documents</b>'

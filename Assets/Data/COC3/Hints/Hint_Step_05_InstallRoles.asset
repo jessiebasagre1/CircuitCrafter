@@ -13,8 +13,18 @@ MonoBehaviour:
   m_Name: Hint_Step_05_InstallRoles
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Server Manager</b> is on the desktop and on the Start menu.\n\n<b>Manage
-      \u25BE</b>, or the tile \"2  Add roles and features\". On the Server Roles
-      page tick <b>all five</b>:\n\nActive Directory Domain Services\nDHCP Server\nDNS
-      Server\nFile and Storage Services\nPrint and Document Services\n\nThen <b>Install</b>."
+  - speakerName: Required input
+    text: 'Tick all five:
+
+
+      <b>Active Directory Domain Services</b>
+
+      <b>DHCP
+      Server</b>
+
+      <b>DNS Server</b>
+
+      <b>File and Storage Services</b>
+
+      <b>Print
+      and Document Services</b>'

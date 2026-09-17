@@ -13,13 +13,5 @@ MonoBehaviour:
   m_Name: Hint_Step_23_CreateRedirectionFolder
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: 'On the server, the folder that will receive the redirected data:
-
-
-      <b>C:\ServerData\Redirected</b>
-
-
-      Separate
-      from the SharedDocs folder on purpose - one is a share people open, the other
-      is where their own documents actually live.'
+  - speakerName: Required input
+    text: 'Folder name:  <b>Redirected</b>'

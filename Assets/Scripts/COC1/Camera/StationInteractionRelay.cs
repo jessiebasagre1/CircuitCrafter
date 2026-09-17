@@ -1,59 +1,72 @@
-// StationInteractionRelay.cs
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// One on-screen Enter/Exit Station button that works for EVERY station in the game - assembly,
-/// bootable USB, OS install, service report - by routing through whichever station the player is
-/// near or inside.
+/// Drives the on-screen station button(s) for every station in the game, by routing through
+/// StationCameraSwitch - the component that owns entering and leaving a station view.
 ///
-/// Setup:
-///   1. Create ONE UI Button on your mobile controls (not one per station).
-///   2. Add this component and assign Button Root.
-///   3. Wire the Button's OnClick to this component's RequestInteract().
-///   4. Optionally assign a TMP_Text to Button Label for an "Exit Service Report" caption.
+/// TWO LAYOUTS, AND YOU PICK BY WHICH FIELDS YOU FILL IN.
 ///
-/// A STATION YOU ARE INSIDE ALWAYS WINS
+/// ONE SHARED BUTTON (Button Root). It sits in one place and its caption changes - "Enter
+/// Assembly Station" while outside, "Exit Assembly Station" while inside. The thumb learns one
+/// position and the label carries the meaning.
 ///
-/// NearbyOrActive is written by trigger events, and a trigger event is a one-off: if the player is
-/// moved, hidden or re-parented while a station view is up - which several stations do - the exit
-/// event can arrive at a moment nothing is listening, and the reference is left pointing at
-/// nothing. On a keyboard that is survivable, because Escape and the E key are still there. On a
-/// phone this button is the ONLY way out, so the same lost event becomes a learner stuck on the
-/// service report screen with no control that does anything.
+/// SEPARATE BUTTONS (Enter Button Root + Exit Button Root). Two buttons in two places, only
+/// ever one on screen at a time. Worth it when the two actions want different corners - Enter
+/// under the right thumb where the player is walking, Exit somewhere it cannot be hit by
+/// accident while working.
 ///
-/// So this does not trust the reference on its own. Each frame it looks for a station that is
-/// actually showing its own camera right now, and prefers that over whatever the triggers last
-/// said. A station that is on screen is a station you can leave, whatever physics believes.
-///
-/// THE OTHER WAY OUT GOES MISSING
-///
-/// The button can also be present, correct and invisible: stations hide the touch controls while
-/// their view is up, via Disable On Station View, and a button parented under those controls is
-/// switched off along with them. Nothing errors - the exit button simply is not drawn, on exactly
-/// the screens it is needed on. That one is checked for at startup and named, because it is
-/// invisible in the Inspector and impossible to guess at from the symptom.
+/// Fill in either set, or both while you are deciding.
 /// </summary>
 public class StationInteractionRelay : MonoBehaviour
 {
+    [Header("One shared button")]
+    [Tooltip("A single button whose caption changes between Enter and Exit. Leave empty if you " +
+             "are using two separate buttons below.")]
     [SerializeField] private GameObject buttonRoot;
     [SerializeField] private TMP_Text buttonLabel; // optional
 
+    [Header("Or two separate buttons")]
+    [Tooltip("Shown only when the player is NEAR a station and not inside it.")]
+    [SerializeField] private GameObject enterButtonRoot;
+
+    [Tooltip("Optional caption for the Enter button.")]
+    [SerializeField] private TMP_Text enterButtonLabel;
+
+    [Tooltip("Shown only when the player is INSIDE a station.\n\n" +
+             "This is the one that matters on a phone. If it is missing, or hidden, the learner " +
+             "is stuck in the station.")]
+    [SerializeField] private GameObject exitButtonRoot;
+
+    [Tooltip("Optional caption for the Exit button.")]
+    [SerializeField] private TMP_Text exitButtonLabel;
+
+    [Header("Labels")]
+    [Tooltip("Write the station's own name into the captions - \"Enter Assembly Station\" rather " +
+             "than just \"Enter\".\n\n" +
+             "Turn this OFF when your buttons carry a fixed word or an icon you do not want " +
+             "overwritten. With two separate buttons that is reasonable: their position already " +
+             "says which is which.")]
+    [SerializeField] private bool updateLabels = true;
+
     [Header("Diagnostics")]
-    [Tooltip("Say when the button shows and hides, and name the reason when it cannot appear. " +
+    [Tooltip("Say when a button shows and hides, and name the reason when it cannot appear. " +
              "Leave ON until the button behaves - a missing button gives you nothing to search for.")]
     [SerializeField] private bool logVisibility = true;
 
-    [Tooltip("At startup, check whether Button Root is parented under anything a station hides " +
-             "while its view is up. That is the one fault that makes the exit button vanish " +
+    [Tooltip("At startup, check whether any assigned button is parented under anything a station " +
+             "hides while its view is up. That is the one fault that makes the exit button vanish " +
              "precisely when it is needed, and it cannot be seen in the Inspector.")]
     [SerializeField] private bool auditParentsAtStart = true;
 
-    bool lastShown;
+    bool lastSharedShown, lastEnterShown, lastExitShown;
     bool warnedAboutHiddenParent;
+    bool warnedNothingAssigned;
     float nextScan;
     StationCameraSwitch[] known = new StationCameraSwitch[0];
+
+    // ==================================================================
 
     void Start()
     {
@@ -63,14 +76,16 @@ public class StationInteractionRelay : MonoBehaviour
 
     void Update()
     {
-        if (buttonRoot == null)
+        if (buttonRoot == null && enterButtonRoot == null && exitButtonRoot == null)
         {
-            if (!warnedAboutHiddenParent)
+            if (!warnedNothingAssigned)
             {
-                warnedAboutHiddenParent = true;
-                Debug.LogWarning("[StationInteractionRelay] Button Root is not assigned, so the " +
-                                 "Enter/Exit button can never show. On a touch build that means no " +
-                                 "way into or out of any station.", this);
+                warnedNothingAssigned = true;
+                Debug.LogWarning("[StationInteractionRelay] No button is assigned - not Button Root, " +
+                                 "not Enter Button Root, not Exit Button Root. The Enter/Exit button " +
+                                 "can never show. On a touch build that means no way into or out of " +
+                                 "any station.\n\nFill in EITHER Button Root (one button whose " +
+                                 "caption changes) OR Enter Button Root and Exit Button Root.", this);
             }
             return;
         }
@@ -78,16 +93,42 @@ public class StationInteractionRelay : MonoBehaviour
         if (Time.unscaledTime >= nextScan) Rescan();
 
         StationCameraSwitch station = Target();
-        bool shouldShow = station != null;
+        bool near = station != null;
+        bool inside = near && station.IsUsingStationCamera;
 
-        if (buttonRoot.activeSelf != shouldShow)
+        Apply(buttonRoot, near, ref lastSharedShown, "Enter/Exit button", station, inside);
+        Apply(enterButtonRoot, near && !inside, ref lastEnterShown, "Enter button", station, inside);
+        Apply(exitButtonRoot, inside, ref lastExitShown, "Exit button", station, inside);
+
+        if (near && updateLabels)
         {
-            buttonRoot.SetActive(shouldShow);
+            string label = station.DisplayName;
+
+            if (buttonLabel != null)
+                buttonLabel.text = inside ? $"Exit {label}" : $"Enter {label}";
+
+            if (enterButtonLabel != null) enterButtonLabel.text = $"Enter {label}";
+            if (exitButtonLabel != null) exitButtonLabel.text = $"Exit {label}";
+        }
+    }
+
+    /// <summary>
+    /// Shows or hides one root, and reports the one failure the Inspector cannot show: switched
+    /// on and still not drawn.
+    /// </summary>
+    void Apply(GameObject root, bool shouldShow, ref bool lastShown, string what,
+               StationCameraSwitch station, bool inside)
+    {
+        if (root == null) return;
+
+        if (root.activeSelf != shouldShow)
+        {
+            root.SetActive(shouldShow);
 
             if (logVisibility && shouldShow != lastShown)
-                Debug.Log("[StationInteractionRelay] Enter/Exit button " +
-                          (shouldShow ? "SHOWN for '" + station.name + "'" : "hidden - no station " +
-                           "near or active"), this);
+                Debug.Log("[StationInteractionRelay] " + what + " " +
+                          (shouldShow ? "SHOWN for '" + station.name + "'"
+                                      : "hidden - no station near or active"), this);
 
             lastShown = shouldShow;
         }
@@ -95,24 +136,18 @@ public class StationInteractionRelay : MonoBehaviour
         // Switched on, and still not drawn. The only way that happens is a parent being off, and
         // it is worth an error rather than a warning: the player is inside a station with no way
         // out, which on a phone is the end of the run.
-        if (shouldShow && !buttonRoot.activeInHierarchy && !warnedAboutHiddenParent)
+        if (shouldShow && !root.activeInHierarchy && !warnedAboutHiddenParent)
         {
             warnedAboutHiddenParent = true;
-            Debug.LogError("[StationInteractionRelay] The Enter/Exit button is switched ON but " +
-                           "still not drawn, because " + NameHiddenAncestor() + " is switched off." +
-                           (station != null && station.IsUsingStationCamera
+            Debug.LogError("[StationInteractionRelay] The " + what + " '" + root.name + "' is " +
+                           "switched ON but still not drawn, because " + NameHiddenAncestor(root) +
+                           " is switched off." +
+                           (station != null && inside
                                ? " The player is INSIDE '" + station.name + "' right now and has no " +
                                  "way out on a touch device."
                                : "") +
                            "\n\nMove the button out from under that object - give it its own small " +
                            "canvas that nothing disables - and this cannot happen again.", this);
-        }
-
-        if (shouldShow && buttonLabel != null)
-        {
-            buttonLabel.text = station.IsUsingStationCamera
-                ? $"Exit {station.DisplayName}"
-                : $"Enter {station.DisplayName}";
         }
     }
 
@@ -141,7 +176,10 @@ public class StationInteractionRelay : MonoBehaviour
             FindObjectsInactive.Include, FindObjectsSortMode.None);
     }
 
-    /// <summary>Wire this to the mobile Enter/Exit Station button's OnClick.</summary>
+    // ------------------------------------------------------------------ what the buttons call
+
+    /// <summary>Wire this to the SHARED Enter/Exit button's OnClick. Enters if outside, exits
+    /// if inside.</summary>
     public void RequestInteract()
     {
         StationCameraSwitch station = Target();
@@ -157,10 +195,36 @@ public class StationInteractionRelay : MonoBehaviour
         station.HandleInteractPressed();
     }
 
+    /// <summary>
+    /// Wire this to the ENTER button's OnClick. Does nothing if the player is already inside.
+    ///
+    /// The check is not redundant. HandleInteractPressed TOGGLES, so an Enter button that
+    /// reached the player's thumb while it was still on screen - a tap landing in the same frame
+    /// the state flipped, or a button left visible by something else - would throw them straight
+    /// back OUT of the station they just entered. A button named Enter must only ever enter.
+    /// </summary>
+    public void RequestEnter()
+    {
+        StationCameraSwitch station = Target();
+        if (station == null || station.IsUsingStationCamera) return;
+
+        station.HandleInteractPressed();
+    }
+
+    /// <summary>Wire this to the EXIT button's OnClick. Does nothing if the player is not
+    /// inside a station.</summary>
+    public void RequestExit()
+    {
+        StationCameraSwitch station = Target();
+        if (station == null || !station.IsUsingStationCamera) return;
+
+        station.HandleInteractPressed();
+    }
+
     // ------------------------------------------------------------------ self-reporting
 
     /// <summary>
-    /// Warns when the button lives under something a station switches off.
+    /// Warns when a button lives under something a station switches off.
     ///
     /// Checked at startup rather than waiting for it to happen, because when it does happen the
     /// player is already inside the station and already stuck - and the Console is the last place
@@ -168,16 +232,42 @@ public class StationInteractionRelay : MonoBehaviour
     /// </summary>
     void AuditButtonParents()
     {
-        if (buttonRoot == null) return;
-
-        HashSet<Transform> ancestors = new HashSet<Transform>();
-        Transform t = buttonRoot.transform;
-        while (t != null) { ancestors.Add(t); t = t.parent; }
+        StationCameraSwitch[] stations = Object.FindObjectsByType<StationCameraSwitch>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         List<string> clashes = new List<string>();
 
-        StationCameraSwitch[] stations = Object.FindObjectsByType<StationCameraSwitch>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        AuditOne(buttonRoot, "Enter/Exit button", stations, clashes);
+        AuditOne(enterButtonRoot, "Enter button", stations, clashes);
+        AuditOne(exitButtonRoot, "Exit button", stations, clashes);
+
+        if (clashes.Count == 0)
+        {
+            if (logVisibility)
+                Debug.Log("[StationInteractionRelay] " + DescribeLayout() + " covering " +
+                          stations.Length + " station(s), and nothing hides them while a station " +
+                          "view is up.", this);
+            return;
+        }
+
+        string msg = "[StationInteractionRelay] A station button is parented under something that " +
+                     "gets switched off while a station view is up, so it will DISAPPEAR at " +
+                     "exactly the moment it is the only way out:";
+        foreach (string c in clashes) msg += "\n  - " + c;
+        msg += "\n\nOn a keyboard this is survivable - E still works. On a phone the learner is " +
+               "stuck in the station.\n\nFix: give the button its own canvas, outside the touch " +
+               "controls, and leave that canvas out of every station's Disable On Station View list.";
+
+        Debug.LogError(msg, this);
+    }
+
+    void AuditOne(GameObject root, string what, StationCameraSwitch[] stations, List<string> clashes)
+    {
+        if (root == null) return;
+
+        HashSet<Transform> ancestors = new HashSet<Transform>();
+        Transform t = root.transform;
+        while (t != null) { ancestors.Add(t); t = t.parent; }
 
         foreach (StationCameraSwitch s in stations)
         {
@@ -186,34 +276,27 @@ public class StationInteractionRelay : MonoBehaviour
             foreach (GameObject hidden in s.disableOnStationView)
             {
                 if (hidden == null || !ancestors.Contains(hidden.transform)) continue;
-                clashes.Add("'" + s.name + "' hides '" + hidden.name + "'");
+                clashes.Add(what + " '" + root.name + "': '" + s.name + "' hides '" + hidden.name + "'");
             }
         }
-
-        if (clashes.Count == 0)
-        {
-            if (logVisibility)
-                Debug.Log("[StationInteractionRelay] Enter/Exit button '" + buttonRoot.name +
-                          "' covers " + stations.Length + " station(s), and nothing hides it while " +
-                          "a station view is up.", this);
-            return;
-        }
-
-        string msg = "[StationInteractionRelay] The Enter/Exit button is parented under something " +
-                     "that gets switched off while a station view is up, so it will DISAPPEAR at " +
-                     "exactly the moment it is the only way out:";
-        foreach (string c in clashes) msg += "\n  - " + c;
-        msg += "\n\nOn a keyboard this is survivable - E still works. On a phone the learner is " +
-               "stuck in the station.\n\nFix: give the Enter/Exit button its own canvas, outside " +
-               "the touch controls, and leave that canvas out of every station's Disable On " +
-               "Station View list.";
-
-        Debug.LogError(msg, this);
     }
 
-    string NameHiddenAncestor()
+    string DescribeLayout()
     {
-        Transform t = buttonRoot != null ? buttonRoot.transform.parent : null;
+        bool shared = buttonRoot != null;
+        bool split = enterButtonRoot != null || exitButtonRoot != null;
+
+        if (shared && split) return "One shared button AND a separate Enter/Exit pair";
+        if (shared) return "One shared Enter/Exit button '" + buttonRoot.name + "'";
+
+        string e = enterButtonRoot != null ? "'" + enterButtonRoot.name + "'" : "NONE";
+        string x = exitButtonRoot != null ? "'" + exitButtonRoot.name + "'" : "NONE";
+        return "Separate buttons - Enter " + e + ", Exit " + x;
+    }
+
+    string NameHiddenAncestor(GameObject root)
+    {
+        Transform t = root != null ? root.transform.parent : null;
         while (t != null)
         {
             if (!t.gameObject.activeSelf) return "its parent '" + t.name + "'";
@@ -222,7 +305,8 @@ public class StationInteractionRelay : MonoBehaviour
         return "one of its parents";
     }
 
-    /// <summary>Prints which station the button would operate, and why it is or is not showing.</summary>
+    /// <summary>Prints which station the button would operate, and why each button is or is not
+    /// showing.</summary>
     [ContextMenu("Why is the station button hidden?")]
     public void LogState()
     {
@@ -232,15 +316,33 @@ public class StationInteractionRelay : MonoBehaviour
             if (s != null && s.IsUsingStationCamera) { active = s; break; }
 
         Debug.LogWarning("[StationInteractionRelay]" +
-            "\n    Button Root        : " + (buttonRoot != null
-                ? "'" + buttonRoot.name + "'  activeSelf=" + buttonRoot.activeSelf +
-                  "  activeInHierarchy=" + buttonRoot.activeInHierarchy
-                : "NOT ASSIGNED") +
+            "\n    layout             : " + DescribeLayout() +
+            "\n    Button Root        : " + Describe(buttonRoot) +
+            "\n    Enter Button Root  : " + Describe(enterButtonRoot) +
+            "\n    Exit Button Root   : " + Describe(exitButtonRoot) +
             "\n    station in view    : " + (active != null ? "'" + active.name + "'" : "none") +
             "\n    NearbyOrActive     : " + (StationCameraSwitch.NearbyOrActive != null
                 ? "'" + StationCameraSwitch.NearbyOrActive.name + "'" : "null") +
-            "\n    button would operate: " + (target != null ? "'" + target.name + "'" : "nothing") +
-            (buttonRoot != null && buttonRoot.activeSelf && !buttonRoot.activeInHierarchy
-                ? "\n    BLOCKED BY         : " + NameHiddenAncestor() : ""), this);
+            "\n    button would operate: " + (target != null ? "'" + target.name + "'" : "nothing"),
+            this);
+    }
+
+    string Describe(GameObject root)
+    {
+        if (root == null) return "not assigned";
+
+        string line = "'" + root.name + "'  activeSelf=" + root.activeSelf +
+                      "  activeInHierarchy=" + root.activeInHierarchy;
+
+        if (root.activeSelf && !root.activeInHierarchy)
+            line += "   BLOCKED BY " + NameHiddenAncestor(root);
+
+        var button = root.GetComponentInChildren<UnityEngine.UI.Button>(true);
+        if (button == null)
+            line += "   <-- no Button on it or under it: it will show and hide and do nothing when tapped";
+        else if (button.onClick.GetPersistentEventCount() == 0)
+            line += "   <-- its Button has an EMPTY On Click";
+
+        return line;
     }
 }

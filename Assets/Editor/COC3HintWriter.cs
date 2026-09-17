@@ -53,7 +53,8 @@ public class COC3HintWriter : EditorWindow
         EditorGUILayout.HelpBox(
             "Creates one DialogSequence per step and drops it into the matching slot on " +
             "COC3Tutorial ▸ Step Hint Dialogs.\n\n" +
-            "Each hint says where the control lives and what to type, with the value in bold.\n\n" +
+            "Each hint is just the ANSWER - the values and options that step wants, in bold. " +
+            "Navigation belongs on the instruction label, not here.\n\n" +
             "Matched on stepId, not on position, so a reordered step list cannot misfile a hint.",
             MessageType.None);
 
@@ -189,9 +190,10 @@ public class COC3HintWriter : EditorWindow
 
         sequence.lines = new List<DialogLine>
         {
-            // The speaker name becomes the hint panel's TITLE, so it says what the step is about
-            // rather than repeating the word "Hint" thirty-five times.
-            new DialogLine { speakerName = "Hint", text = body }
+            // The speaker name becomes the hint panel's TITLE. These are answers, not coaching,
+            // and the title should say so - a learner who opens this is asking "what goes in the
+            // box", not "how do I get there". The instruction label already told them that.
+            new DialogLine { speakerName = "Required input", text = body }
         };
 
         if (existing == null) AssetDatabase.CreateAsset(sequence, path);
@@ -230,229 +232,143 @@ public class COC3HintWriter : EditorWindow
     {
         switch (stepId)
         {
+            // ---- nothing to enter ----
             case "Step_01_OHSAndJobOrder":
-                return "Nothing to configure yet - this is the job order.\n\n" +
-                       "Read what the client has asked for, then press <b>NEXT</b>. Everything you " +
-                       "type from here comes from this page.";
+            case "Step_09_FileServicesConfig":
+            case "Step_10_OtherServices":
+            case "Step_18_PrepareTestPlan":
+            case "Step_35_ServiceReport":
+                return "Nothing to enter. Read the panel and press <b>NEXT</b>.";
 
+            case "Step_30_VerifyRemoteAccess":
+                return "Nothing to enter. Run the ping and watch the replies.";
+
+            // ---- LO2: build the server ----
             case "Step_02_ComputerName":
-                return "<b>Start ▸ System</b>, then <b>Change...</b>\n\n" +
-                       "Computer name:  <b>" + Server + "</b>\n\n" +
-                       "A server is found by name long before anyone knows its address, so this is " +
-                       "the first thing the job order fixes.";
+                return "Computer name:  <b>" + Server + "</b>";
 
             case "Step_03_StaticIPConfig":
-                return "<b>Start ▸ Network Connections ▸ Ethernet ▸ Properties</b>, select " +
-                       "<b>Internet Protocol Version 4 (TCP/IPv4)</b>, then <b>Properties</b>.\n\n" +
-                       "Choose <b>Use the following IP address</b>, then:\n\n" +
+                return "<b>Use the following IP address</b>\n\n" +
                        "IP address:  <b>192.168.10.10</b>\n" +
                        "Subnet mask:  <b>255.255.255.0</b>\n" +
-                       "Default gateway:  <b>192.168.10.1</b>\n\n" +
-                       "A server must never lease its own address from DHCP.";
+                       "Default gateway:  <b>192.168.10.1</b>";
 
             case "Step_04_DNSConfig":
-                return "Reading only - press <b>NEXT</b>.\n\n" +
-                       "The preferred DNS server is <b>127.0.0.1</b>, the loopback address. This " +
-                       "machine is about to host DNS itself, so it resolves names by asking itself.";
+                return "Preferred DNS server:  <b>127.0.0.1</b>";
 
             case "Step_05_InstallRoles":
-                return "<b>Server Manager</b> is on the desktop and on the Start menu.\n\n" +
-                       "<b>Manage ▾</b>, or the tile \"2  Add roles and features\". On the Server " +
-                       "Roles page tick <b>all five</b>:\n\n" +
-                       "Active Directory Domain Services\nDHCP Server\nDNS Server\n" +
-                       "File and Storage Services\nPrint and Document Services\n\n" +
-                       "Then <b>Install</b>.";
+                return "Tick all five:\n\n" +
+                       "<b>Active Directory Domain Services</b>\n" +
+                       "<b>DHCP Server</b>\n" +
+                       "<b>DNS Server</b>\n" +
+                       "<b>File and Storage Services</b>\n" +
+                       "<b>Print and Document Services</b>";
 
             case "Step_06_PromoteToDomainController":
-                return "Installing the role does not create the domain.\n\n" +
-                       "Back in Server Manager, click the <b>notification flag</b> - the orange dot " +
-                       "at the top right.\n\n" +
-                       "Choose <b>Add a new forest</b>.\n" +
+                return "<b>Add a new forest</b>\n\n" +
                        "Root domain name:  <b>" + Domain + "</b>";
 
             case "Step_07_DHCPConfig":
-                return "<b>Start ▸ DHCP</b>, then click <b>IPv4</b> in the tree.\n\n" +
-                       "Start IP address:  <b>192.168.10.100</b>\n" +
+                return "Start IP address:  <b>192.168.10.100</b>\n" +
                        "Subnet mask:  <b>255.255.255.0</b>\n" +
-                       "Router (default gateway):  <b>192.168.10.1</b>\n\n" +
-                       "The pool starts at .100 because " + Server + " holds .10 - a scope that " +
-                       "began lower would eventually hand a client the server's own address.";
+                       "Router:  <b>192.168.10.1</b>";
 
             case "Step_08_DNSServerConfig":
-                return "<b>Start ▸ DNS Manager</b>.\n\n" +
-                       "Select <b>Reverse Lookup Zones</b> in the tree - promotion already created " +
-                       "the forward zone, and noticing the reverse one is missing is the step.\n\n" +
-                       "<b>New Zone...</b>, choose <b>IPv4 Reverse Lookup Zone</b>.\n" +
+                return "Tree node:  <b>Reverse Lookup Zones</b>\n" +
+                       "Zone type:  <b>IPv4 Reverse Lookup Zone</b>\n\n" +
                        "Network ID:  <b>192.168.10</b>";
 
-            case "Step_09_FileServicesConfig":
-                return "Reading only - press <b>NEXT</b>.\n\n" +
-                       "<b>File and Storage Services ▸ File Server</b> is what lets this machine " +
-                       "host a share over SMB. You ticked it back at step 5.";
-
-            case "Step_10_OtherServices":
-                return "Reading only - press <b>NEXT</b>.\n\n" +
-                       "<b>Print and Document Services</b> does the same job for printers - it is " +
-                       "what lets a printer be published to the domain by name.";
-
             case "Step_11_JoinClientToDomain":
-                return "This one happens on the client. Use the <b>" + Client + "</b> icon on the " +
-                       "desktop, then <b>Change...</b>\n\n" +
-                       "Select <b>Domain</b> and type:  <b>" + Domain + "</b>\n\n" +
-                       "A workgroup member cannot use domain accounts or receive Group Policy, so " +
-                       "nothing after this point would work.";
+                return "<b>Domain</b>\n\n" +
+                       "Domain name:  <b>" + Domain + "</b>";
 
+            // ---- LO1: user access ----
             case "Step_12_CreateUserFolders":
-                return "<b>File Explorer</b> is on the desktop, already showing C:\\ServerData.\n\n" +
-                       "<b>New folder</b>, then\nFolder name:  <b>Users</b>\n\n" +
-                       "Type the folder's own name, not the whole path - the box above already " +
-                       "says where it goes. The result is <b>C:\\ServerData\\Users</b>.";
+                return "Folder name:  <b>Users</b>";
 
             case "Step_13_CreateUserAccounts":
-                return "<b>Start ▸ Active Directory Users and Computers</b>.\n\n" +
-                       "Select the <b>Users</b> container in the tree first, then " +
-                       "<b>New > User</b>.\n\n" +
+                return "Container:  <b>Users</b>\n\n" +
                        "User logon name:  <b>student01</b>";
 
             case "Step_14_AccessLevels":
-                return "Two halves, and only the second one completes the step.\n\n" +
-                       "Same console, Users still selected: <b>New > Group</b>\n" +
-                       "Group name:  <b>STUDENTS</b>\n" +
-                       "Scope <b>Global</b>, type <b>Security</b> - only a security group can be " +
-                       "given permissions.\n\n" +
-                       "STUDENTS Properties opens on General. Click the <b>Members</b> tab, type " +
-                       "<b>student01</b>, and press <b>Add</b>. That is the step.";
+                return "Group name:  <b>STUDENTS</b>\n" +
+                       "Scope:  <b>Global</b>      Type:  <b>Security</b>\n\n" +
+                       "Members tab, object name:  <b>student01</b>";
 
             case "Step_15_AccessPolicies":
-                return "<b>Start ▸ Group Policy Management</b>.\n\n" +
-                       "Computer Configuration > Policies > Windows Settings > Security Settings > " +
-                       "Account Policies, then select <b>Password Policy</b> in the tree.\n\n" +
-                       "Open <b>Minimum password length</b>.\n" +
-                       "Tick <b>Define this policy setting</b>, then enter <b>8</b>.\n\n" +
-                       "The tick box is what turns the policy on - the number alone does nothing.";
+                return "Tree node:  <b>Password Policy</b>\n\n" +
+                       "Tick <b>Define this policy setting</b>\n" +
+                       "Characters:  <b>8</b>";
 
             case "Step_16_CreateSharedFolder":
-                return "<b>File Explorer</b>, select the <b>Users</b> folder, then " +
-                       "<b>Properties</b>.\n\n" +
-                       "It opens on General. Go to the <b>Sharing</b> tab, then " +
-                       "<b>Advanced Sharing...</b>\n\n" +
-                       "Tick <b>Share this folder</b>.\n" +
-                       "Share name:  <b>SharedDocs</b>\n\n" +
-                       "The share name does not have to match the folder name on disk.";
+                return "Tick <b>Share this folder</b>\n\n" +
+                       "Share name:  <b>SharedDocs</b>";
 
             case "Step_17_FolderPermissions":
-                return "Same property sheet, the <b>Security</b> tab - Sharing puts the folder on " +
-                       "the network, Security decides who may do what with it.\n\n" +
-                       "<b>Edit...</b>, select <b>STUDENTS</b> in the list, then tick " +
-                       "<b>Modify</b> under Allow.\n\n" +
-                       "Leave <b>Full control</b> clear. It also lets the group change these " +
-                       "permissions and take ownership, which no user group should have.";
+                return "Select:  <b>STUDENTS</b>\n\n" +
+                       "Tick <b>Modify</b> under Allow.\n" +
+                       "Leave <b>Full control</b> clear.";
 
-            case "Step_18_PrepareTestPlan":
-                return "Reading only - press <b>NEXT</b>.\n\n" +
-                       "The plan is written before the testing, so nothing is skipped and the " +
-                       "result is not decided after the fact. Five tests, all performed on " +
-                       Client + ".";
-
+            // ---- LO3: the tests ----
             case "Step_19_TestClientAccess":
-                return "The full UNC path to the share:\n\n" +
-                       "<b>\\\\" + Server + "\\SharedDocs</b>\n\n" +
-                       "Two backslashes at the front, one in the middle. The share name is the one " +
-                       "you typed at step 16, not the folder name on disk.";
+                return "Open:  <b>\\\\" + Server + "\\SharedDocs</b>";
 
             case "Step_20_InstallSharedPrinter":
-                return "<b>Devices and Printers ▸ Printer Properties ▸ Sharing</b>.\n\n" +
-                       "Tick <b>Share this printer</b>.\n\n" +
-                       "Publishing it to the domain is what lets a client install it by name " +
-                       "rather than by hunting for a driver.";
+                return "Sharing tab:\n\n" +
+                       "Tick <b>Share this printer</b>\n" +
+                       "Tick <b>List in the directory</b>";
 
             case "Step_21_PrinterPermissions":
-                return "The printer's <b>Security</b> tab.\n\n" +
-                       "Grant <b>STUDENTS</b> the <b>Print</b> permission, and remove " +
-                       "<b>Everyone</b>.\n\n" +
-                       "Same principle as the shared folder: the right goes to the group, and " +
-                       "Everyone left in place undoes the restriction you just made.";
+                return "Security tab:\n\n" +
+                       "Select <b>Everyone</b> and press <b>Remove</b>\n" +
+                       "Select <b>STUDENTS</b>, tick <b>Print</b> under Allow\n" +
+                       "Leave <b>Manage this printer</b> clear.";
 
             case "Step_22_TestPrintFromClient":
-                return "On " + Client + ": connect to the shared printer, then open its " +
-                       "properties and press <b>Print Test Page</b> on the General tab.\n\n" +
-                       "A printer that has only been checked on the server has not been tested.";
+                return "Select:  <b>HP LaserJet 1020 on " + Server + "</b>\n\n" +
+                       "Nothing to type - press <b>Print Test Page</b>.";
 
             case "Step_23_CreateRedirectionFolder":
-                return "On the server, the folder that will receive the redirected data:\n\n" +
-                       "<b>C:\\ServerData\\Redirected</b>\n\n" +
-                       "Separate from the SharedDocs folder on purpose - one is a share people " +
-                       "open, the other is where their own documents actually live.";
+                return "Folder name:  <b>Redirected</b>";
 
             case "Step_24_RedirectionPolicy":
-                return "<b>Group Policy Management Editor</b>: User Configuration > Policies > " +
-                       "Windows Settings > <b>Folder Redirection</b> > <b>Documents</b>.\n\n" +
-                       "Set it to <b>Basic - Redirect everyone's folder to the same location</b>.";
+                return "Tree node:  <b>User Configuration > Policies > Windows Settings > " +
+                       "Folder Redirection > Documents</b>";
 
             case "Step_25_RedirectFoldersTarget":
-                return "The root path the policy points at:\n\n" +
-                       "<b>\\\\" + Server + "\\Redirected</b>\n\n" +
-                       "A UNC path, not a local one - the client has to reach it over the network, " +
-                       "and C:\\ on the client is not the same C:\\ as on the server.";
+                return "Setting:  <b>Basic - Redirect everyone's folder to the same location</b>\n\n" +
+                       "Root Path:  <b>\\\\" + Server + "\\Redirected</b>";
 
             case "Step_26_TestRedirectionClient":
-                return "Sign in to " + Client + " as <b>student01</b> - a domain account, which " +
-                       "only works because you joined the client at step 11.\n\n" +
-                       "Open <b>Documents ▸ Properties ▸ Location</b> and check it now points at " +
-                       "the server.";
+                return "Tab:  <b>Location</b>\n\n" +
+                       "Nothing to type - select that tab and press <b>OK</b>.";
 
             case "Step_27_EnableRDP":
-                return "<b>System Properties ▸ Remote</b> tab.\n\n" +
-                       "Select <b>Allow remote connections to this computer</b>.\n\n" +
-                       "Enabling it is not the same as permitting anyone - that is the next step.";
+                return "Remote tab:\n\n" +
+                       "<b>Allow remote connections to this computer</b>";
 
             case "Step_28_AllowedRDPUsers":
-                return "<b>Select Users...</b> on the Remote tab.\n\n" +
-                       "User account:  <b>student01</b>\n\n" +
-                       "Administrators already have access without being listed, which is why " +
-                       "testing as an administrator proves nothing here.";
+                return "Object name:  <b>student01</b>";
 
             case "Step_29_ConnectFromClient":
-                return "On " + Client + ", open <b>Remote Desktop Connection</b> (mstsc).\n\n" +
-                       "Computer:  <b>192.168.10.10</b>\n\n" +
-                       "The server's static address - the one you set at step 3.";
-
-            case "Step_30_VerifyRemoteAccess":
-                return "Press the ping button and watch the replies.\n\n" +
-                       "Nothing to type. This passes only if the addressing from step 3 was right, " +
-                       "so a failure here is a fault further back, not on this page.";
+                return "Computer:  <b>192.168.10.10</b>";
 
             case "Step_31_FirewallCheck":
-                return "<b>Windows Defender Firewall ▸ Advanced Settings ▸ Inbound Rules</b>.\n\n" +
-                       "Confirm <b>Remote Desktop</b> is allowed on the profile in use.\n\n" +
-                       "Switching the firewall off would also make it work, and would be the wrong " +
-                       "answer - the rule is the fix, not the firewall.";
+                return "Tree node:  <b>Inbound Rules</b>\n" +
+                       "Rule:  <b>Remote Desktop - User Mode (TCP-In)</b>\n\n" +
+                       "Press <b>Enable Rule</b>.";
 
             case "Step_32_UserPermissionsCheck":
-                return "On the shared folder: <b>Security ▸ Advanced ▸ Effective Access</b>.\n\n" +
-                       "Select <b>student01</b> and press <b>View effective access</b>.\n\n" +
-                       "This shows what the account can ACTUALLY do, after every group and " +
-                       "inherited entry is resolved - which is not always what you intended.";
+                return "Tab:  <b>Effective Access</b>\n\n" +
+                       "Select a user:  <b>student01</b>";
 
             case "Step_33_SharedFolderSecurityCheck":
-                return "<b>Security ▸ Advanced</b> on SharedDocs.\n\n" +
-                       "Read the permission entries and <b>disable inheritance</b> if " +
-                       "<b>Everyone</b> still appears.\n\n" +
-                       "An inherited entry from the parent folder is the usual way a share ends up " +
-                       "open to people you never granted.";
+                return "Tab:  <b>Permissions</b>\n\n" +
+                       "Nothing to type - press <b>Disable inheritance</b>.";
 
             case "Step_34_UnauthorizedAccessCheck":
-                return "<b>Event Viewer ▸ Windows Logs ▸ Security</b>, filtered for " +
-                       "<b>Audit Failure</b>.\n\n" +
-                       "A failed access attempt from an account outside STUDENTS is evidence the " +
-                       "permissions are doing their job. No failures at all can mean nobody has " +
-                       "tried, not that the folder is safe.";
-
-            case "Step_35_ServiceReport":
-                return "Reading only - press <b>NEXT</b>.\n\n" +
-                       "The report is what the client is actually paying for: what was configured, " +
-                       "what was tested, and what the result was. Undocumented work cannot be " +
-                       "handed over.";
+                return "Log:  <b>Security</b>\n\n" +
+                       "Filter keyword:  <b>Audit Failure</b>";
 
             default:
                 return null;

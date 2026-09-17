@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Hint_Step_07_DHCPConfig
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
-  - speakerName: Hint
-    text: "<b>Start \u25B8 DHCP</b>, then click <b>IPv4</b> in the tree.\n\nStart
-      IP address:  <b>192.168.10.100</b>\nSubnet mask:  <b>255.255.255.0</b>\nRouter
-      (default gateway):  <b>192.168.10.1</b>\n\nThe pool starts at .100 because
-      SERVER01 holds .10 - a scope that began lower would eventually hand a client
-      the server's own address."
+  - speakerName: Required input
+    text: 'Start IP address:  <b>192.168.10.100</b>
+
+      Subnet mask:  <b>255.255.255.0</b>
+
+      Router: 
+      <b>192.168.10.1</b>'

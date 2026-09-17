@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO3_Testing_Q03
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What shape does a path to a network share take?
+  choices:
+  - A drive letter followed by the share name
+  - Two backslashes, the server name, one backslash, then the SHARE name
+  - The server's IP address followed by a colon and a port
+  - Two forward slashes, the domain, then the folder path on disk
+  correctChoiceIndex: 1
+  points: 10
+  explanation: It names the server and the share, not the folder on the server's
+    disk. That is why the share name matters and the folder name does not.

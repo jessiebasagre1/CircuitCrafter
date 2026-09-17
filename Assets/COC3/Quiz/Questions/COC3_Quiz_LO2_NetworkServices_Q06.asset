@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: COC3_Quiz_LO2_NetworkServices_Q06
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: Why must a client be joined to the domain before it can use domain
+    accounts?
+  choices:
+  - Domain accounts are stored on the client once it joins
+  - It is only a licensing requirement
+  - Joining installs Active Directory on the client
+  - Only a member computer can ask the domain controller to authenticate a sign-in
+  correctChoiceIndex: 3
+  points: 10
+  explanation: A workgroup machine has no trust relationship with the domain, so
+    it has nobody to ask. It also receives no Group Policy, which is how everything
+    later in this job order reaches it.
