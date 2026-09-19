@@ -60,6 +60,22 @@ namespace CircuitCrafter.Assessment
         [Tooltip("Total graded attempts across the run. firstAttemptCorrect / gradedAttempts is the accuracy figure worth reporting.")]
         public int gradedAttempts;
 
+        // ---- underpinning knowledge (the quiz) -----------------------
+        //
+        // SEPARATE FROM score AND maxScore, DELIBERATELY. TESDA's Evidence Plan lists
+        // "Demonstration with oral questioning" and "Written test" as two requirements that must
+        // BOTH be met, not one blended figure. Quiz points used to be added into ScoreManager,
+        // which meant good answers could carry a weak performance over the pass threshold and bad
+        // ones could sink a good performance. An assessor has to be able to see each on its own.
+        [Tooltip("Quiz questions answered during this run. 0 means no quiz was taken.")]
+        public int knowledgeQuestions;
+
+        [Tooltip("How many of those were answered correctly.")]
+        public int knowledgeCorrect;
+
+        [Tooltip("How many separate quizzes contributed. For a report that wants to say 'across 3 quizzes'.")]
+        public int knowledgeQuizzes;
+
         public List<StageOutcome> stages = new List<StageOutcome>();
         public List<MistakeEntry> mistakes = new List<MistakeEntry>();
         public List<CriterionOutcome> criteria = new List<CriterionOutcome>();
@@ -88,6 +104,20 @@ namespace CircuitCrafter.Assessment
                 return Mathf.Clamp(Mathf.RoundToInt(100f * firstAttemptCorrect / gradedAttempts), 0, 100);
             }
         }
+
+        /// <summary>Percentage of quiz questions answered correctly, or -1 when no quiz was taken -
+        /// so a report prints "not taken" rather than a misleading 0%.</summary>
+        public int KnowledgePercent
+        {
+            get
+            {
+                if (knowledgeQuestions <= 0) return -1;
+                return Mathf.Clamp(Mathf.RoundToInt(100f * knowledgeCorrect / knowledgeQuestions), 0, 100);
+            }
+        }
+
+        /// <summary>True when this run has any knowledge evidence at all.</summary>
+        public bool KnowledgeAttempted => knowledgeQuestions > 0;
 
         public SessionMode Mode => (SessionMode)mode;
 

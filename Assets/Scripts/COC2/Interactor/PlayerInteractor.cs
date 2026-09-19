@@ -459,6 +459,33 @@ namespace CSSSimulation.Interaction
         {
             bool keyThisFrame = Input.GetKeyDown(interactKey) || Input.GetKeyDown(pickupKey);
 
+            // A KEYPRESS THAT BELONGS TO A TEXT FIELD IS NOT A KEYPRESS FOR THE WORLD.
+            //
+            // Interact Key is E and Pickup Key is G, and both are letters the learner types:
+            // "rufus.ie" into the browser station, "SERVER01" into a computer name. Unity's legacy
+            // Input reads the physical keyboard and knows nothing about the TMP_InputField receiving
+            // the same keystroke, so the E in rufus.ie reached the world and shut the station.
+            //
+            // This is the same root cause PlayerInputLock was written for - "rufus.ie" walking the
+            // player backwards on the S - but that only covered the movement axes. The interact keys
+            // were left exposed, and a letter key that leaves the station mid-URL is worse than one
+            // that nudges the player, because the work in the field is lost with it.
+            //
+            // A mobile TAP is deliberate and is NOT swallowed - only the keyboard is ambiguous. So
+            // this is a flag rather than an early return: the key is ignored for the rest of this
+            // method while an on-screen button still works normally.
+            bool keysBelongToAField = TypingGuard.IsTyping;
+
+            if (keysBelongToAField)
+            {
+                keyThisFrame = false;
+
+                if (logIgnoredPresses)
+                    Debug.Log($"[PlayerInteractor] Key IGNORED - the learner is typing into " +
+                              $"'{TypingGuard.FocusedFieldName()}', so letter keys belong to that " +
+                              "field, not to the world.", this);
+            }
+
             // Don't let a mobile tap or stray key press reach the world while a tutorial
             // popup is open, same guard the COC1 PlayerInteractor uses.
             if (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen)
@@ -514,7 +541,10 @@ namespace CSSSimulation.Interaction
                                  "and not repointing the On Click.", this);
             }
 
-            bool pressed = Input.GetKeyDown(isPickup ? pickupKey : interactKey) || tapped;
+            // keysBelongToAField is the typing guard from the top of this method. The TAP is
+            // still honoured - only the keyboard half is dropped.
+            bool pressed = (!keysBelongToAField && Input.GetKeyDown(isPickup ? pickupKey : interactKey))
+                           || tapped;
 
             interactRequested = false;
             pickupRequested = false;

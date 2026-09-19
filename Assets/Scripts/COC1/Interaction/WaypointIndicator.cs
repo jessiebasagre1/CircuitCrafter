@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// World-space waypoint arrow. Attach this to a GameObject that has a

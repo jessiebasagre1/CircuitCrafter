@@ -86,7 +86,11 @@ namespace CircuitCrafter.Assessment
                 sb.AppendLine("result_id,finished_utc,module,mode,learner,section,completed," +
                               "duration_seconds,score,max_score,score_percent," +
                               "mistakes,graded_attempts,first_attempt_correct,first_attempt_percent," +
-                              "stages_completed,stages_total,outcomes_competent,outcomes_total");
+                              "stages_completed,stages_total,outcomes_competent,outcomes_total," +
+                              // Appended, never inserted. A CSV that already has rows keeps its
+                              // existing header, and new columns landing at the END means the old
+                              // rows still line up when both are opened in one spreadsheet.
+                              "knowledge_questions,knowledge_correct,knowledge_percent");
             }
 
             int competent = 0;
@@ -114,7 +118,10 @@ namespace CircuitCrafter.Assessment
                 result.StagesCompleted.ToString(CultureInfo.InvariantCulture),
                 result.stages.Count.ToString(CultureInfo.InvariantCulture),
                 competent.ToString(CultureInfo.InvariantCulture),
-                result.criteria.Count.ToString(CultureInfo.InvariantCulture)));
+                result.criteria.Count.ToString(CultureInfo.InvariantCulture),
+                result.knowledgeQuestions.ToString(CultureInfo.InvariantCulture),
+                result.knowledgeCorrect.ToString(CultureInfo.InvariantCulture),
+                result.KnowledgePercent.ToString(CultureInfo.InvariantCulture)));
 
             File.AppendAllText(csvPath, sb.ToString());
         }

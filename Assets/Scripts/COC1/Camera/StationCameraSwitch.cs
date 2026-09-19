@@ -50,7 +50,19 @@ public class StationCameraSwitch : MonoBehaviour
 
     void Update()
     {
-        if (playerNearby && Input.GetKeyDown(KeyCode.E))
+        // TypingGuard is what stops "rufus.ie" closing the browser station.
+        //
+        // E is both the station key and a letter the learner types. Unity's legacy Input reads the
+        // physical keyboard and knows nothing about the TMP_InputField receiving the same keystroke,
+        // so typing a web address used to walk out of the station on the 'e' - losing whatever had
+        // been typed so far.
+        //
+        // PlayerInputLock already solved the movement half of this exact problem ("rufus.ie" pushing
+        // the player backwards on the 's'). This is the half it did not cover.
+        //
+        // Only the KEYBOARD path is guarded. HandleInteractPressed is also called by
+        // StationInteractionRelay for the on-screen button, and a deliberate tap is never ambiguous.
+        if (playerNearby && Input.GetKeyDown(KeyCode.E) && !TypingGuard.IsTyping)
         {
             HandleInteractPressed();
         }

@@ -25,7 +25,7 @@ MonoBehaviour:
     - coc4_ticket_3
     - coc4_ticket_4
     - coc4_ticket_5
-    requiredEvidenceCount: 3
+    requiredEvidenceCount: 5
   - code: LO2
     title: Diagnose faults in computer systems
     criteria: 
@@ -44,4 +44,4 @@ MonoBehaviour:
     evidenceTaskIds:
     - coc4_verify
     - coc4_all_resolved
-    requiredEvidenceCount: 1
+    requiredEvidenceCount: 2

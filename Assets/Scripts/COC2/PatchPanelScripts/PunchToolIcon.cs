@@ -49,6 +49,13 @@ namespace CSSSimulation.Networking
         Vector3 homeScale;
         Quaternion homeRotation;
         Vector2 pointerOffset;
+
+        /// <summary>Set while dragging if this icon sits under a layout group, so ReturnHome can
+        /// hand it back. A LayoutGroup rewrites its children's anchoredPosition EVERY frame, which
+        /// is what stopped the icon following the cursor: the drag set the position and the layout
+        /// put it straight back, same frame.</summary>
+        LayoutElement layoutEscape;
+        bool addedLayoutElement;
         bool lastReady;
         bool captured;
 
@@ -117,11 +124,49 @@ namespace CSSSimulation.Networking
             if (board == null || !board.AcceptsInput) return;
 
             IsDragging = true;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rect, eventData.position, board.UICamera, out pointerOffset);
 
-            if (board.dragLayer != null) rect.SetParent(board.dragLayer, true);
+            // ---- 1. GET OUT OF ANY LAYOUT GROUP ------------------------------------------
+            //
+            // THE ACTUAL CAUSE OF "THE ICON DOES NOT FOLLOW THE CURSOR". A Horizontal/Vertical/Grid
+            // Layout Group owns its children's anchoredPosition and rewrites it every frame. OnDrag
+            // was setting the position correctly and the layout group was putting it straight back
+            // on the same frame, so the icon sat perfectly still while the drag worked underneath.
+            //
+            // ignoreLayout is the surgical way out: the group stops managing this one child and
+            // leaves everything else in the row alone. Reparenting alone does not help when
+            // dragLayer is unassigned, which is the usual case.
+            EscapeLayout();
+
+            // ---- 2. LEAVE THE HOLSTER, WITH A FALLBACK -----------------------------------
+            //
+            // dragLayer unassigned used to mean the icon stayed inside the holster, where a Rect
+            // Mask or a parent with clipping could also hide it mid-drag. The root canvas is always
+            // there and is always on top, so there is no configuration in which this does nothing.
+            Transform layer = board.dragLayer != null ? board.dragLayer : RootCanvasTransform();
+            if (layer != null) rect.SetParent(layer, true);
+
             rect.SetAsLastSibling();
+
+            // ---- 3. MEASURE THE GRAB OFFSET IN THE PARENT'S SPACE, AFTER REPARENTING ------
+            //
+            // It used to be measured against `rect` - the icon itself - and then subtracted from a
+            // point in the PARENT's space in OnDrag. Two different rectangles with different
+            // origins, and different scales once dragScale is applied, so the icon was offset from
+            // the cursor by however far apart those two spaces happened to be.
+            //
+            // Measured here, after the reparent, both ends of the sum are finally in the same space.
+            RectTransform parentRect = rect.parent as RectTransform;
+            if (parentRect != null &&
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    parentRect, eventData.position, board.UICamera, out Vector2 grabPoint))
+            {
+                pointerOffset = grabPoint - rect.anchoredPosition;
+            }
+            else
+            {
+                pointerOffset = Vector2.zero;
+            }
+
             rect.localScale = homeScale * dragScale;
             if (dragTilt != 0f) rect.localRotation = Quaternion.Euler(0f, 0f, dragTilt);
 
@@ -164,6 +209,8 @@ namespace CSSSimulation.Networking
             Capture();
             if (!captured) return;
 
+            RestoreLayout();
+
             if (homeParent != null)
             {
                 rect.SetParent(homeParent, false);
@@ -173,6 +220,54 @@ namespace CSSSimulation.Networking
             rect.localScale = homeScale;
             rect.localRotation = homeRotation;
             lastReady = !lastReady;   // re-evaluate the tint next frame
+        }
+
+        // ------------------------------------------------------------------
+
+        /// <summary>Takes this icon out of its parent's layout group for the duration of the drag.</summary>
+        void EscapeLayout()
+        {
+            if (layoutEscape == null)
+            {
+                layoutEscape = GetComponent<LayoutElement>();
+                if (layoutEscape == null)
+                {
+                    layoutEscape = gameObject.AddComponent<LayoutElement>();
+                    addedLayoutElement = true;
+                }
+            }
+
+            layoutEscape.ignoreLayout = true;
+        }
+
+        /// <summary>Puts it back under the layout group's control, and removes the LayoutElement
+        /// again if this script was the one that added it - leaving components behind on someone
+        /// else's prefab is how a scene slowly fills with things nobody put there.</summary>
+        void RestoreLayout()
+        {
+            if (layoutEscape == null) return;
+
+            if (addedLayoutElement)
+            {
+                Destroy(layoutEscape);
+                addedLayoutElement = false;
+            }
+            else
+            {
+                layoutEscape.ignoreLayout = false;
+            }
+
+            layoutEscape = null;
+        }
+
+        /// <summary>The top canvas this icon lives under, used when Drag Layer is unassigned.</summary>
+        Transform RootCanvasTransform()
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) return null;
+
+            Canvas root = canvas.rootCanvas;
+            return root != null ? root.transform : canvas.transform;
         }
     }
 }

@@ -445,6 +445,18 @@ namespace CSSSimulation.Networking
                 savedCursorVisible = Cursor.visible;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
+
+                // TELL CursorKeeper, OR IT WILL TAKE THE CURSOR STRAIGHT BACK.
+                //
+                // CursorKeeper re-locks the cursor every frame that the learner is in first-person
+                // control and nothing has claimed it. That is what keeps the cursor captured while
+                // walking - and freeing it here without claiming it means the keeper undoes this
+                // line on the very next frame, leaving a desktop full of fields that cannot be
+                // clicked or typed into.
+                //
+                // Claim is counted and paired with the Release in Close(), so nesting - a shell
+                // inside a desktop - cannot hand the cursor back early.
+                CursorKeeper.Claim();
             }
             if (freezeTime) { savedTimeScale = Time.timeScale; Time.timeScale = 0f; }
 
@@ -474,7 +486,12 @@ namespace CSSSimulation.Networking
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(true);
             foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = true;
 
-            if (releaseCursor) { Cursor.lockState = savedLock; Cursor.visible = savedCursorVisible; }
+            if (releaseCursor)
+            {
+                CursorKeeper.Release();      // paired with the Claim in Open()
+                Cursor.lockState = savedLock;
+                Cursor.visible = savedCursorVisible;
+            }
             if (freezeTime) Time.timeScale = savedTimeScale;
 
             OnClosed?.Invoke();

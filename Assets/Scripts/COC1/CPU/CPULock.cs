@@ -40,8 +40,69 @@ public class CPULock : MonoBehaviour
              "mounted, or tries to open the case lock before the main lock.")]
     public DialogSequence blockedDialog;
 
-    Vector3 closedPosition;
-    Quaternion closedRotation;
+
+    // ---- POSES ARE STORED RELATIVE TO THE PARENT, NOT IN WORLD SPACE ----------------
+    //
+    // THE BUG THIS FIXES: the system unit lies down in COC 4, and the locks stayed behind at the
+    // world spot the unit used to stand in. Both poses were world-space snapshots - the closed one
+    // captured from transform.position, the open one read live from openPosition, which is a loose
+    // scene object that does not move with the unit either. Neither knew the unit had moved.
+    //
+    // Converting both into the PARENT's local space once, at wake-up, makes them ride along with
+    // whatever the lock is attached to - lying down, standing up, rotated, carried. Exactly the
+    // same fix as the inspector camera.
+    //
+    // Nothing changes for a unit that never moves: local and world agree when the parent has not
+    // been touched.
+    Vector3 closedLocalPosition;
+    Quaternion closedLocalRotation;
+    Vector3 openLocalPosition;
+    Quaternion openLocalRotation;
+    bool openPoseCaptured;
+
+    /// <summary>Records both poses in parent space. Safe to call more than once; only the first
+    /// call counts, so a restore that moves this transform cannot overwrite the real pose.</summary>
+    void CapturePoses()
+    {
+        if (openPoseCaptured) return;
+        openPoseCaptured = true;
+
+        closedLocalPosition = transform.localPosition;
+        closedLocalRotation = transform.localRotation;
+
+        if (openPosition == null) return;
+
+        Transform parent = transform.parent;
+        if (parent != null)
+        {
+            // World -> parent space, once. After this the open pose is a local offset like any
+            // other, so it follows the unit without openPosition having to be parented under it.
+            openLocalPosition = parent.InverseTransformPoint(openPosition.position);
+            openLocalRotation = Quaternion.Inverse(parent.rotation) * openPosition.rotation;
+        }
+        else
+        {
+            // No parent: local IS world, so this behaves exactly as the old code did.
+            openLocalPosition = openPosition.position;
+            openLocalRotation = openPosition.rotation;
+        }
+    }
+
+    void ApplyOpenPose()
+    {
+        CapturePoses();
+        if (openPosition == null) return;
+        transform.localPosition = openLocalPosition;
+        transform.localRotation = openLocalRotation;
+    }
+
+    void ApplyClosedPose()
+    {
+        CapturePoses();
+        transform.localPosition = closedLocalPosition;
+        transform.localRotation = closedLocalRotation;
+    }
+
 
     public bool IsOpen { get; private set; }
 
@@ -56,11 +117,12 @@ public class CPULock : MonoBehaviour
     /// </summary>
     public bool IsCovered => heatsinkSocket != null && !heatsinkSocket.IsEmpty;
 
-    void Start()
+    void Awake()
     {
-        // Save the original (closed) position and rotation
-        closedPosition = transform.position;
-        closedRotation = transform.rotation;
+        // AWAKE, NOT START - the same reason RAMLock gives. SaveManager restores latch state from
+        // sceneLoaded, which fires after Awake but BEFORE Start. Capturing in Start meant a restore
+        // moved this transform first, and Start then cached that moved pose as "closed" forever.
+        CapturePoses();
     }
 
 
@@ -85,15 +147,13 @@ public class CPULock : MonoBehaviour
                 return;
             }
             // Open this lock
-            transform.position = openPosition.position;
-            transform.rotation = openPosition.rotation;
+            ApplyOpenPose();
             IsOpen = true;
         }
         else
         {
             // Close this lock
-            transform.position = closedPosition;
-            transform.rotation = closedRotation;
+            ApplyClosedPose();
             IsOpen = false;
         }
     }

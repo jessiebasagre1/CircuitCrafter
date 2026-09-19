@@ -23,6 +23,17 @@ public class QuizManager : MonoBehaviour
 
     [SerializeField] private QuizView quizView;
 
+    [Header("Scoring")]
+    [Tooltip("Add the quiz's points to the module score as well as recording it as knowledge " +
+             "evidence.\n\n" +
+             "OFF is correct for assessment. Quiz points land in the same score the competency " +
+             "ledger checks against its pass threshold, so with this on a good quiz can carry a weak " +
+             "performance over the line and a bad one can sink a good performance - which is exactly " +
+             "the averaging TESDA's Evidence Plan avoids by listing demonstration and written test as " +
+             "separate requirements.\n\n" +
+             "Tick it only for a story-mode scene where the quiz should feel worth points.")]
+    [SerializeField] private bool addPointsToModuleScore = false;
+
     [Header("Leaving a station first")]
     [Tooltip("Called just before the quiz appears, to step the player out of whatever close-up " +
              "view they finished the task in.\n\n" +
@@ -239,10 +250,34 @@ public class QuizManager : MonoBehaviour
         if (QuizCameraController.Instance != null)
             QuizCameraController.Instance.NotifyQuizFinished();
 
-        if (ScoreManager.Instance != null)
+        // ---- knowledge evidence ------------------------------------------------------
+        //
+        // The quiz is UNDERPINNING KNOWLEDGE and is recorded as its own kind of evidence, which
+        // CompetencyLedger then requires alongside the performance score before it will award
+        // Competent. No-op in a scene without the assessment layer.
+        CircuitCrafter.Assessment.KnowledgeCheck.Report(
+            result.taskId, result.totalQuestions, result.correctAnswers);
+
+        // ---- points ------------------------------------------------------------------
+        //
+        // OFF BY DEFAULT NOW, AND THAT IS THE POINT OF THE CHANGE.
+        //
+        // These points used to go straight into ScoreManager - the same score CompetencyLedger
+        // checks against its pass threshold. That averaged two things TESDA never averages: a weak
+        // performance could be carried over the line by good quiz answers, and a strong one sunk by
+        // bad ones. An assessor has to see demonstration and written test each met on their own.
+        //
+        // The knowledge line above is where the quiz now counts. Ticking this back on is for a
+        // module that wants the quiz to feel worth points in STORY mode - it will then distort a
+        // graded run's performance percentage, which is why it defaults off.
+        if (addPointsToModuleScore && ScoreManager.Instance != null)
             ScoreManager.Instance.AddScore(result.pointsEarned, $"quiz:{result.taskId}");
 
-        Debug.Log($"[QuizManager] Quiz for '{result.taskId}' finished: {result.correctAnswers}/{result.totalQuestions} correct, +{result.pointsEarned} pts.");
+        Debug.Log($"[QuizManager] Quiz for '{result.taskId}' finished: " +
+                  $"{result.correctAnswers}/{result.totalQuestions} correct. " +
+                  (addPointsToModuleScore
+                      ? $"+{result.pointsEarned} pts added to the module score."
+                      : "Recorded as knowledge evidence; no points added to the module score."));
 
         OnQuizCompleted?.Invoke(result);
     }

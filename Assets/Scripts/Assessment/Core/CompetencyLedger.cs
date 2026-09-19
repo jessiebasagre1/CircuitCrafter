@@ -5,6 +5,33 @@ using UnityEngine;
 
 namespace CircuitCrafter.Assessment
 {
+    /// <summary>
+    /// A learner's standing on one module's UNDERPINNING KNOWLEDGE - the quiz.
+    ///
+    /// Kept beside the outcome records rather than inside them because TESDA issues one written
+    /// test per unit of competency, not one per learning outcome. Best-ever is stored, matching
+    /// how OutcomeRecord keeps the best evidence position: a rushed retry must not make a learner
+    /// look like they have gone backwards.
+    /// </summary>
+    [Serializable]
+    public class KnowledgeRecord
+    {
+        public string moduleId = "";
+
+        [Tooltip("Best percentage achieved so far. -1 means the quiz has never been taken.")]
+        public int bestPercent = -1;
+
+        [Tooltip("True once a GRADED run's quiz reached the knowledge threshold. Never goes back to false.")]
+        public bool passed;
+
+        public int attempts;
+
+        [Tooltip("resultId of the run that produced bestPercent, so the evidence file can be found.")]
+        public string evidenceResultId = "";
+
+        public string achievedUtc = "";
+    }
+
     /// <summary>One learner's standing on one learning outcome, accumulated
     /// across every run they've ever done.</summary>
     [Serializable]
@@ -72,6 +99,19 @@ namespace CircuitCrafter.Assessment
         [Range(0, 100)]
         [SerializeField] private int passThresholdPercent = 80;
 
+        [Header("Underpinning knowledge (the quiz)")]
+        [Tooltip("Require the module's quiz to be passed before any outcome can be marked Competent.\n\n" +
+                 "TESDA's Evidence Plan lists demonstration AND written test as separate requirements " +
+                 "that must both be met - it does not average them. Leaving this ON is the behaviour " +
+                 "that matches the real instrument.\n\n" +
+                 "Untick it only if a module genuinely has no quiz; a module with no quiz and this " +
+                 "ticked can never award Competent, and the Console will say so.")]
+        [SerializeField] private bool requireKnowledgeEvidence = true;
+
+        [Tooltip("Minimum quiz percentage. TESDA written tests are commonly set at 75%.")]
+        [Range(0, 100)]
+        [SerializeField] private int knowledgeThresholdPercent = 75;
+
         /// <summary>Fires whenever any record changes. A competency profile screen
         /// should subscribe rather than poll.</summary>
         public event Action OnLedgerChanged;
@@ -81,6 +121,11 @@ namespace CircuitCrafter.Assessment
         {
             public string profileId = "";
             public List<OutcomeRecord> records = new List<OutcomeRecord>();
+
+            // Added after the first ledgers were written. JsonUtility simply leaves a field it
+            // cannot find at its default, so an existing ledger_*.json loads with an empty list
+            // and fills in from the next run - no migration, nothing to delete.
+            public List<KnowledgeRecord> knowledge = new List<KnowledgeRecord>();
         }
 
         private LedgerFile ledger = new LedgerFile();
@@ -187,11 +232,26 @@ namespace CircuitCrafter.Assessment
                     string.IsNullOrWhiteSpace(id) ? id : id.Trim()))
                 || HasCompletedStage(result, id);
 
+            // Knowledge evidence is gathered here rather than by whoever built the result, because
+            // RecordResult runs BEFORE ResultsRepository.Save in both the recorder and the legacy
+            // bridge - so the JSON evidence file and the CSV row carry these numbers too, without
+            // either of those scripts having to change.
+            KnowledgeCheck.FillInto(result);
+
             bool modeOk = result.Mode == SessionMode.Assessment;
             bool completedOk = result.completed;
             bool scoreOk = result.ScorePercent >= passThresholdPercent;
 
-            bool canAwardCompetent = modeOk && completedOk && scoreOk;
+            // THE SECOND EVIDENCE REQUIREMENT, NOT A SECOND HALF OF THE FIRST.
+            //
+            // Performance and underpinning knowledge are separate requirements in TESDA's Evidence
+            // Plan and both must be met; they are never averaged. So this is another AND, and the
+            // quiz result is deliberately NOT mixed into result.score.
+            bool knowledgeOk = !requireKnowledgeEvidence
+                               || (result.KnowledgeAttempted &&
+                                   result.KnowledgePercent >= knowledgeThresholdPercent);
+
+            bool canAwardCompetent = modeOk && completedOk && scoreOk && knowledgeOk;
 
             // SAY WHY, WHEN THE ANSWER IS NO.
             //
@@ -213,6 +273,14 @@ namespace CircuitCrafter.Assessment
                 if (!scoreOk)
                     why = Add(why, $"the score was {result.ScorePercent}%, below the {passThresholdPercent}% " +
                                    "pass threshold on this ledger");
+                if (!knowledgeOk)
+                    why = Add(why, result.KnowledgeAttempted
+                        ? $"the quiz scored {result.KnowledgePercent}% ({result.knowledgeCorrect} of " +
+                          $"{result.knowledgeQuestions}), below the {knowledgeThresholdPercent}% knowledge " +
+                          "threshold - performance and knowledge are separate requirements and both must be met"
+                        : "no quiz was answered during the run, so there is no underpinning-knowledge " +
+                          "evidence. If this module has no quiz, untick Require Knowledge Evidence on " +
+                          "this ledger - otherwise it can never award Competent");
 
                 Debug.LogWarning($"[CompetencyLedger] '{result.moduleId}' run recorded, but NOTHING can " +
                                  $"be marked Competent from it: {why}.\n\n" +
@@ -231,6 +299,25 @@ namespace CircuitCrafter.Assessment
 
                 evidenceReport.AppendLine($"  {outcome.code} '{outcome.title}': evidence {have}/{need}" +
                                           (satisfied ? " - satisfied" : " - NOT satisfied"));
+
+                // NAME THE IDs THAT DID NOT MATCH, AND THE ONES THAT WERE AVAILABLE.
+                //
+                // "0 of 1 evidenced" is the single most common thing to go wrong here and the least
+                // informative message possible: it says an outcome was not evidenced without saying
+                // WHICH id was looked for or what the run actually closed. The two lists almost
+                // always differ by a typo, or by an id the module names at runtime that the asset
+                // could not have known - COC 4 names its repair stages per ticket.
+                //
+                // Printed only for outcomes that failed, so a clean run stays quiet.
+                if (!satisfied && outcome.evidenceTaskIds != null)
+                {
+                    foreach (string id in outcome.evidenceTaskIds)
+                    {
+                        if (string.IsNullOrWhiteSpace(id)) continue;
+                        evidenceReport.AppendLine($"      looking for '{id.Trim()}' : " +
+                                                  (isComplete(id) ? "found" : "NOT FOUND"));
+                    }
+                }
 
                 CompetencyStatus earned;
                 if (satisfied && canAwardCompetent) earned = CompetencyStatus.Competent;
@@ -252,10 +339,38 @@ namespace CircuitCrafter.Assessment
             // Printed whether or not anything was awarded. An outcome sitting at 2/3 names the one
             // piece of evidence that never arrived, which is usually an evidenceTaskIds entry that
             // does not match any task id the module actually reports.
-            Debug.Log($"[CompetencyLedger] '{result.moduleId}' outcomes judged " +
-                      $"(score {result.ScorePercent}%, threshold {passThresholdPercent}%, " +
-                      $"all stages complete: {result.completed}, mode {result.Mode}):\n" +
+            string knowledgeLine = result.KnowledgeAttempted
+                ? $"{result.KnowledgePercent}% ({result.knowledgeCorrect}/{result.knowledgeQuestions} " +
+                  $"across {result.knowledgeQuizzes} quiz(zes)), threshold {knowledgeThresholdPercent}%"
+                : "not taken";
+
+            Debug.Log($"[CompetencyLedger] '{result.moduleId}' outcomes judged\n" +
+                      $"  Performance : {result.ScorePercent}%, threshold {passThresholdPercent}%\n" +
+                      $"  Knowledge   : {knowledgeLine}" +
+                      (requireKnowledgeEvidence ? "" : "   (not required on this ledger)") + "\n" +
+                      $"  All stages complete: {result.completed}, mode {result.Mode}\n" +
                       evidenceReport);
+
+            // What the run ACTUALLY produced, once, under the per-outcome lines. Copy the ids from
+            // here into the CompetencyDefinition's Evidence Task Ids and the outcome starts
+            // evidencing - no guessing at what a module calls its stages.
+            if (result.stages != null && result.stages.Count > 0)
+            {
+                var closed = new System.Text.StringBuilder();
+                foreach (var stage in result.stages)
+                {
+                    if (stage == null || !stage.completed) continue;
+                    if (closed.Length > 0) closed.Append(", ");
+                    closed.Append(stage.stageId);
+                }
+
+                Debug.Log($"[CompetencyLedger] Stage ids this '{result.moduleId}' run actually closed:\n  " +
+                          (closed.Length > 0 ? closed.ToString() : "(none)") +
+                          "\n\nAn outcome stuck at 0 of N is looking for an id that is not in this list. " +
+                          "Paste the right ones into that outcome's Evidence Task Ids.");
+            }
+
+            RecordKnowledge(result);
 
             Save();
             OnLedgerChanged?.Invoke();
@@ -265,6 +380,73 @@ namespace CircuitCrafter.Assessment
         {
             return all == null ? line : all + "; and " + line;
         }
+
+        // ------------------------------------------------------------------
+        // Underpinning knowledge
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Folds this run's quiz into the module's knowledge standing.
+        ///
+        /// BEST-EVER, NEVER WORSE - the same rule OutcomeRecord follows for evidence position. A
+        /// learner who scored 90% and then replays the module and rushes the quiz has not become
+        /// less knowledgeable, and a record that slid backwards would make the screen useless as a
+        /// history.
+        ///
+        /// 'passed' is one-way and only a GRADED run can set it, for the same reason a Guided run
+        /// cannot award Competent: answering questions with the game leading you is exposure.
+        /// Practice attempts still update bestPercent, so progress is visible.
+        /// </summary>
+        private void RecordKnowledge(AssessmentResult result)
+        {
+            if (result == null || !result.KnowledgeAttempted) return;
+            if (string.IsNullOrEmpty(result.moduleId)) return;
+
+            KnowledgeRecord record = ledger.knowledge.Find(
+                k => k != null && k.moduleId == result.moduleId);
+
+            if (record == null)
+            {
+                record = new KnowledgeRecord { moduleId = result.moduleId };
+                ledger.knowledge.Add(record);
+            }
+
+            record.attempts++;
+
+            int percent = result.KnowledgePercent;
+            if (percent > record.bestPercent)
+            {
+                record.bestPercent = percent;
+                record.evidenceResultId = result.resultId;
+                record.achievedUtc = result.finishedUtc;
+            }
+
+            if (result.Mode == SessionMode.Assessment && percent >= knowledgeThresholdPercent)
+                record.passed = true;
+
+            Debug.Log($"[CompetencyLedger] Knowledge for '{result.moduleId}': this run {percent}%, " +
+                      $"best {record.bestPercent}%, passed: {record.passed} " +
+                      $"(attempt {record.attempts}).");
+        }
+
+        /// <summary>This learner's knowledge standing for a module, or null if they have never
+        /// answered a question in it. Safe to call on the main menu - it reads the ledger only.</summary>
+        public KnowledgeRecord GetKnowledge(string moduleId)
+        {
+            if (string.IsNullOrEmpty(moduleId) || ledger.knowledge == null) return null;
+            return ledger.knowledge.Find(k => k != null && k.moduleId == moduleId);
+        }
+
+        /// <summary>The knowledge threshold, so a screen can say "75% needed" without hard-coding
+        /// a number that lives on this component.</summary>
+        public int KnowledgeThresholdPercent => knowledgeThresholdPercent;
+
+        /// <summary>Whether this ledger demands knowledge evidence at all, so a screen can hide the
+        /// knowledge line entirely on a build that does not use quizzes.</summary>
+        public bool RequiresKnowledgeEvidence => requireKnowledgeEvidence;
+
+        /// <summary>The performance threshold, for the same reason.</summary>
+        public int PassThresholdPercent => passThresholdPercent;
 
         /// <summary>True if this run closed a stage with the given id. Lets a
         /// manual stage id stand as evidence for modules that don't route their
@@ -436,6 +618,7 @@ namespace CircuitCrafter.Assessment
             {
                 ledger = JsonUtility.FromJson<LedgerFile>(File.ReadAllText(path)) ?? new LedgerFile();
                 if (ledger.records == null) ledger.records = new List<OutcomeRecord>();
+                if (ledger.knowledge == null) ledger.knowledge = new List<KnowledgeRecord>();
                 ledger.profileId = profileId;
                 Debug.Log($"[CompetencyLedger] Loaded {ledger.records.Count} record(s) for profile '{profileId}'.");
             }

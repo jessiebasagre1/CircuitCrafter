@@ -279,6 +279,10 @@ namespace CSSSimulation.Networking
 
         Camera cam;
         int activeIndex = -1;
+
+        /// <summary>True once LateUpdate has executed. Tells "-1 because everything is finished"
+        /// apart from "-1 because this component has never run", which look identical otherwise.</summary>
+        bool hasRun;
         bool suppressed;
         bool lockedOffForAssessment;
         bool allDoneFired;
@@ -345,6 +349,8 @@ namespace CSSSimulation.Networking
 
         void LateUpdate()
         {
+            hasRun = true;
+
             // LateUpdate, not Update. Stations move cameras and the player in Update; pointing at
             // where things were a frame ago is exactly the kind of one-frame swim that reads as the
             // arrow lagging behind the player's head.
@@ -359,11 +365,12 @@ namespace CSSSimulation.Networking
             if (next != activeIndex) ChangeStep(next);
 
             Step step = ActiveStep;
-            if (step == null || suppressed)
+
+            if (step == null)
             {
                 ShowWorldArrow(false);
                 ShowScreenArrow(false);
-                if (step == null && hideWhenAllDone)
+                if (hideWhenAllDone)
                 {
                     SetText(labelText, "");
                     if (distanceText != labelText) SetText(distanceText, "");
@@ -371,7 +378,29 @@ namespace CSSSimulation.Networking
                 return;
             }
 
+            // The LABEL is updated before the suppression check, the arrows after it.
+            //
+            // Suppression exists to stop a marker hovering over a bench somewhere behind the
+            // player's head while they are looking at a motherboard in close-up. It was never meant
+            // to freeze the instruction text, but that is what it did: the early return skipped this
+            // line, so the label kept whatever it said when the station view opened.
+            //
+            // That matters most at exactly the moment it is least obvious. The learner unplugs the
+            // flash drive INSIDE the station view - the step advances correctly, the arrow is
+            // correctly hidden, and the label still reads "Take the flash drive back out", the thing
+            // they just did. Every visible sign says the waypoint is stuck. It is not; it is
+            // suppressed, and pointing somewhere they cannot see from in here.
+            //
+            // Hide Arrow During Step already draws this distinction for a single step - arrow off,
+            // label live. Suppress now behaves the same way.
             SetText(labelText, step.label);
+
+            if (suppressed)
+            {
+                ShowWorldArrow(false);
+                ShowScreenArrow(false);
+                return;
+            }
 
             if (step.target == null) { ShowWorldArrow(false); ShowScreenArrow(false); return; }
 
@@ -893,7 +922,28 @@ namespace CSSSimulation.Networking
                        "   now: " + (done ? "DONE" : "waiting") +
                        (s.latched ? " (latched)" : s.latchWhenDone ? " (latching)" : "");
             }
-            msg += "\n    ---- active step: " + (activeIndex < 0 ? "none, all done" : activeIndex.ToString()) +
+            // "activeIndex < 0" used to print "none, all done" on its own, and that was wrong in a
+            // way that actively sent people the wrong direction.
+            //
+            // activeIndex STARTS at -1 and is only ever changed by LateUpdate. So -1 means one of
+            // two opposite things: every step is finished, or LateUpdate has never run once. The
+            // second is what an inactive GameObject looks like - and a ContextMenu still works on
+            // an inactive object, so the report happily printed "all done" for a component that had
+            // never executed a single line.
+            //
+            // The giveaway was there all along and was not being pointed out: a step listed as
+            // "waiting" in the list above, and "all done" on this line, cannot both be true. The
+            // list is evaluated fresh when you right-click; this line was a cached value from a
+            // LateUpdate that never happened.
+            msg += "\n    ---- active step: " +
+                   (!hasRun
+                       ? "NEVER RAN. LateUpdate has not executed once, so nothing above has been " +
+                         "acted on. This GameObject is inactive in the Hierarchy, or the component " +
+                         "itself is unticked - Awake and Start have not run either, which is why " +
+                         "there is no setup line from this component in the Console. Tick it on."
+                       : activeIndex < 0
+                           ? "none, every step is done"
+                           : activeIndex.ToString()) +
                    (suppressed ? "   (SUPPRESSED - something called Suppress and never called Resume)" : "");
             msg += DriveStateLine();
             Debug.LogWarning(msg, this);

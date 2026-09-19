@@ -162,6 +162,13 @@ namespace CSSSimulation.Networking
                  "- first-person arms on their own rig, a held tool, a name tag, an aiming reticle.")]
         public GameObject[] alsoHideInStage;
 
+        [Tooltip("Hides the 'Press E' prompt and the on-screen Interact / Pickup buttons while the " +
+                 "stage is open. PlayerInteractor switches those on and off itself every frame, so " +
+                 "they cannot be hidden by listing them in Also Hide In Stage - this asks " +
+                 "PlayerInteractor to keep them off instead, and it lets go the moment the stage " +
+                 "closes. Stays on unless you want the prompt visible inside the station.")]
+        public bool hideInteractionPrompt = true;
+
         [Header("Mobile")]
         public GameObject[] mobileControlsToHide;
         public GameObject[] mobileStageControls;
@@ -207,6 +214,12 @@ namespace CSSSimulation.Networking
 
         void Update()
         {
+            // Asked every frame the stage is open, and PlayerInteractor forgets the request each
+            // frame, so nothing needs undoing on exit. Update runs before PlayerInteractor's
+            // LateUpdate, so the prompt never shows for a frame as the view opens.
+            if (InStageView && hideInteractionPrompt)
+                CSSSimulation.Interaction.PlayerInteractor.SuppressPromptThisFrame();
+
             if (!InStageView)
             {
                 if (testEnterKey != KeyCode.None && Input.GetKeyDown(testEnterKey)) EnterForTesting();

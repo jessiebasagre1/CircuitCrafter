@@ -332,6 +332,18 @@ namespace CSSSimulation.Networking
                     savedCursorVisible = Cursor.visible;
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
+
+                    // TELL CursorKeeper, OR IT WILL TAKE THE CURSOR STRAIGHT BACK.
+                    //
+                    // CursorKeeper re-locks the cursor every frame that the learner is in
+                    // first-person control and nothing has claimed it. Freeing it here without
+                    // claiming it means the keeper undoes this line on the very next frame, and the
+                    // command prompt cannot be typed into.
+                    //
+                    // Inside a shell this whole block is skipped - managedByShell - because the
+                    // desktop station already claimed it. That is the nesting the counted Claim
+                    // exists for, and skipping here keeps the count balanced either way.
+                    CursorKeeper.Claim();
                 }
                 if (freezeTime) { savedTimeScale = Time.timeScale; Time.timeScale = 0f; }
             }
@@ -386,7 +398,12 @@ namespace CSSSimulation.Networking
             foreach (GameObject go in hideWhileOpen) if (go != null) go.SetActive(true);
             foreach (MonoBehaviour m in disableWhileOpen) if (m != null) m.enabled = true;
 
-            if (releaseCursor) { Cursor.lockState = savedLock; Cursor.visible = savedCursorVisible; }
+            if (releaseCursor)
+            {
+                CursorKeeper.Release();      // paired with the Claim in Open()
+                Cursor.lockState = savedLock;
+                Cursor.visible = savedCursorVisible;
+            }
             if (freezeTime) Time.timeScale = savedTimeScale;
         }
 

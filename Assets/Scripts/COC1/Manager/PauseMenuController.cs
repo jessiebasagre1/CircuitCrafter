@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 /// mobile support) or the Escape key on desktop. Offers Resume and
 /// Main Menu.
 ///
-/// Main Menu always checkpoints first — this is a deliberate, infrequent
+/// Main Menu always checkpoints first ï¿½ this is a deliberate, infrequent
 /// player action (unlike per-part drags), so it's worth the extra save even
 /// though regular gameplay only autosaves on task completion. This guarantees
 /// nobody loses progress just by backing out mid-task.
@@ -25,7 +25,7 @@ public class PauseMenuController : MonoBehaviour
     [SerializeField] private Button mainMenuButton;
 
     [Header("Other Panels (for Escape back-stack)")]
-    [Tooltip("Optional — if assigned, Escape closes the Camera Settings panel first (if it's open) instead of opening the pause menu on top of it. Settings itself is still opened via its own dedicated gameplay button, unchanged.")]
+    [Tooltip("Optional ï¿½ if assigned, Escape closes the Camera Settings panel first (if it's open) instead of opening the pause menu on top of it. Settings itself is still opened via its own dedicated gameplay button, unchanged.")]
     [SerializeField] private CameraSettingsUI cameraSettingsUI;
 
     [Header("Scene")]
@@ -39,7 +39,7 @@ public class PauseMenuController : MonoBehaviour
 
     // Whatever the cursor's lock/visibility state was right before we opened
     // the pause panel (Locked+hidden while walking via MouseLook/
-    // StationCameraSwitch, or None+visible at the assembly station) — restored
+    // StationCameraSwitch, or None+visible at the assembly station) ï¿½ restored
     // exactly on Resume so we don't clobber whichever mode the player was in.
     private CursorLockMode previousLockState;
     private bool previousCursorVisible;
@@ -53,10 +53,30 @@ public class PauseMenuController : MonoBehaviour
         if (pausePanel != null) pausePanel.SetActive(false);
     }
 
-    private void Update()
+    /// <summary>
+    /// LateUpdate, not Update - and that single word is the fix for "the cursor unlocks when I exit
+    /// a station".
+    ///
+    /// Escape is not exclusively ours. COC3StationController's Exit Key is Escape too, and
+    /// Input.GetKeyDown returns true for every script that asks on the same frame, so one press used
+    /// to both stand the learner up AND open this menu. Unity does not define the Update order of
+    /// two scripts at execution order 0, and the bad ordering does real damage: this menu snapshots
+    /// the cursor as it finds it - unlocked and visible, because the learner is in a step view - the
+    /// station then locks the cursor, and the next Escape restores the snapshot and leaves the
+    /// learner walking around with a free cursor and no mouse look.
+    ///
+    /// LateUpdate always runs after every Update, and GetKeyDown is still true there, so this now
+    /// reliably asks LAST and steps aside for whatever already handled the key. No execution order
+    /// attributes, which change Awake and Start ordering too and break things at a distance.
+    /// </summary>
+    private void LateUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-            HandleEscape();
+        if (!Input.GetKeyDown(KeyCode.Escape)) return;
+
+        // Something with an Update - a station closing its step view - already answered this press.
+        if (EscapeKeyClaim.AlreadyClaimed) return;
+
+        HandleEscape();
     }
 
     private void HandleEscape()
@@ -64,7 +84,7 @@ public class PauseMenuController : MonoBehaviour
         // Back-stack: if Settings is open, Escape closes that first instead
         // of opening the pause menu on top of it. Settings is still only
         // ever opened via its own dedicated gameplay button (openButton on
-        // CameraSettingsUI) — Escape here only ever closes it.
+        // CameraSettingsUI) ï¿½ Escape here only ever closes it.
         if (cameraSettingsUI != null && cameraSettingsUI.settingsPanel != null
             && cameraSettingsUI.settingsPanel.activeSelf)
         {
@@ -112,7 +132,7 @@ public class PauseMenuController : MonoBehaviour
         // FIX: previously this jumped straight to SaveCheckpoint()+LoadScene()
         // without ever closing the pause panel or clearing IsPaused/timeScale/
         // cursor state first. If this GameObject ever survives the scene load
-        // (e.g. it's sitting on a DontDestroyOnLoad "Managers" root — see the
+        // (e.g. it's sitting on a DontDestroyOnLoad "Managers" root ï¿½ see the
         // TaskManager/HotbarManager/DialogManager note below), an active,
         // input-frozen pausePanel would be left sitting on top of whatever
         // loads next, eating every click. Closing it properly first makes

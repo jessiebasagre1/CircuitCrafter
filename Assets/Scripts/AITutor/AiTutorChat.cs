@@ -474,6 +474,13 @@ namespace CSSSimulation.Tutor
                     savedCursorVisible = Cursor.visible;
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
+
+                    // CursorKeeper re-locks the cursor every frame the learner is in first-person
+                    // control and nothing has claimed it. Without this Claim it would undo the two
+                    // lines above on the next frame, and the tutor's text box could not be clicked
+                    // into. Paired with the Release below; counted, so opening the tutor on top of a
+                    // station panel cannot hand the cursor back while that panel still wants it.
+                    CursorKeeper.Claim();
                 }
                 return;
             }
@@ -489,6 +496,7 @@ namespace CSSSimulation.Tutor
 
             if (releaseCursor)
             {
+                CursorKeeper.Release();      // paired with the Claim above
                 Cursor.lockState = savedLock;
                 Cursor.visible = savedCursorVisible;
             }
