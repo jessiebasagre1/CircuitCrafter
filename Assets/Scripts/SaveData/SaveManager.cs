@@ -341,6 +341,55 @@ public class SaveManager : MonoBehaviour
         TicketSessionState.ResetForActiveProfile();
     }
 
+    /// <summary>
+    /// What the Reset Progress buttons run: DeleteSave() - story progress, COC unlocks, COC4
+    /// tickets - PLUS the competency record, so the competency screen goes back to Not Attempted
+    /// and the written-test (quiz) results are cleared with it.
+    ///
+    /// NOT folded into DeleteSave(), on purpose. New Game also calls DeleteSave(), and starting a
+    /// fresh story run is no reason to erase what a learner earned in ASSESSMENT mode. Two methods
+    /// with names that say which is which - the same reasoning as ClearProgressKeepingUnlocks.
+    ///
+    /// Only the active learner's record is touched. The saved result files (the evidence behind
+    /// each assessment) stay on disk: they are the audit trail, not progress.
+    /// </summary>
+    public void ResetAllProgress()
+    {
+        DeleteSave();
+        ResetCompetencyRecord();
+    }
+
+    private static void ResetCompetencyRecord()
+    {
+        // Quizzes answered earlier this session must not count toward the next graded run either.
+        CircuitCrafter.Assessment.KnowledgeCheck.Begin("");
+
+        var ledger = CircuitCrafter.Assessment.CompetencyLedger.Instance;
+        if (ledger != null)
+        {
+            // Clears the copy in memory, writes the file, and tells the competency screen and
+            // badges to redraw - all in one call.
+            ledger.ResetActiveLedger();
+            return;
+        }
+
+        // No ledger in this scene. Delete the learner's ledger file instead, so the next scene
+        // that loads one starts empty.
+        string profileId = CircuitCrafter.Assessment.ProfileManager.Instance != null
+            ? CircuitCrafter.Assessment.ProfileManager.Instance.ActiveProfileId
+            : "default";
+
+        try
+        {
+            string path = CircuitCrafter.Assessment.CompetencyLedger.LedgerPathFor(profileId);
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SaveManager] Couldn't clear the competency record: {e.Message}");
+        }
+    }
+
     // ---------------------------------------------------------------
     // Save
     // ---------------------------------------------------------------

@@ -31,6 +31,18 @@ public class MainMenuController : MonoBehaviour
     [Header("Optional")]
     [SerializeField] private Button resetProgressButton;
 
+    [Header("Reset Progress confirmation")]
+    [Tooltip("A small 'Are you sure?' pop-up shown when Reset Progress is pressed. Give it a dimmed " +
+             "full-screen background so nothing behind it can be clicked. Leave EMPTY to reset on " +
+             "the first click - only sensible while testing.")]
+    [SerializeField] private GameObject resetConfirmPanel;
+
+    [Tooltip("The Yes / Reset button on the pop-up. Its OnClick is wired automatically - leave the list empty.")]
+    [SerializeField] private Button resetConfirmYesButton;
+
+    [Tooltip("The No / Cancel button on the pop-up. Its OnClick is wired automatically - leave the list empty.")]
+    [SerializeField] private Button resetConfirmNoButton;
+
     [Header("Testing")]
     [Tooltip("TESTING ONLY. Makes every COC button clickable without finishing the one before it, " +
              "so you can jump straight into COC3 or COC4 to work on them.\n\n" +
@@ -79,6 +91,14 @@ public class MainMenuController : MonoBehaviour
 
         if (resetProgressButton != null)
             resetProgressButton.onClick.AddListener(OnResetProgressClicked);
+
+        if (resetConfirmYesButton != null)
+            resetConfirmYesButton.onClick.AddListener(OnResetConfirmYes);
+
+        if (resetConfirmNoButton != null)
+            resetConfirmNoButton.onClick.AddListener(HideResetConfirm);
+
+        HideResetConfirm();
 
         if (TestingUnlockActive)
             Debug.LogWarning("[MainMenuController] Unlock All For Testing is ON - every COC is " +
@@ -194,9 +214,41 @@ public class MainMenuController : MonoBehaviour
         SaveManager.Instance.SelectMode(mode.modeId, mode.sceneName);
     }
 
+    /// <summary>Reset Progress was pressed. Asks first if a confirm panel is assigned; otherwise resets at once.</summary>
     private void OnResetProgressClicked()
     {
-        SaveManager.Instance.DeleteSave();
+        if (resetConfirmPanel != null)
+        {
+            resetConfirmPanel.SetActive(true);
+            return;
+        }
+
+        DoResetProgress();
+    }
+
+    private void OnResetConfirmYes()
+    {
+        HideResetConfirm();
+        DoResetProgress();
+    }
+
+    private void HideResetConfirm()
+    {
+        if (resetConfirmPanel != null) resetConfirmPanel.SetActive(false);
+    }
+
+    // If the screen is switched away while the question is open, the question goes with it -
+    // otherwise it would still be sitting there the next time this screen is opened.
+    private void OnDisable()
+    {
+        HideResetConfirm();
+    }
+
+    // The reset itself. ResetAllProgress = DeleteSave() plus the competency record, so the
+    // competency screen clears too.
+    private void DoResetProgress()
+    {
+        SaveManager.Instance.ResetAllProgress();
         RefreshButtons();
     }
 

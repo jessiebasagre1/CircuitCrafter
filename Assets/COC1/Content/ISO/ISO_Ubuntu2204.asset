@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28d85c4cba3d10d4b9127dcd93e1c23e, type: 3}
   m_Name: ISO_Ubuntu2204
   m_EditorClassIdentifier: Assembly-CSharp::ISOImageData
-  displayName: Ubuntu 22.04.4 LTS Desktop (64-bit)
+  displayName: Windows 10 Pro 22H2 32-bit (x86)
   fileSizeLabel: 4.7 GB
   icon: {fileID: 0}
   installStages: []

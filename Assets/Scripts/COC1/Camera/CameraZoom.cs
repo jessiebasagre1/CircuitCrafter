@@ -185,7 +185,12 @@ public class CameraZoom : MonoBehaviour
     void HandlePan()
     {
         // A part drag (world or hotbar) owns input right now - never pan while it's active.
-        if (DragController.Instance != null && DragController.Instance.IsDragging)
+        // Two separate systems can own a drag: a PC part (CPU, RAM, the PSU body) goes through
+        // DragController, but a cable's plug drags itself via CableConnector - see the note on
+        // CableConnector.IsAnyDragging. Missing the second one is exactly why dragging a cable
+        // used to pan the camera at the same time: nothing here knew the cable was moving.
+        if ((DragController.Instance != null && DragController.Instance.IsDragging) ||
+            CableConnector.IsAnyDragging)
         {
             trackingPointer = false;
             isPanning = false;
@@ -221,12 +226,30 @@ public class CameraZoom : MonoBehaviour
             lastPointerPos = pointerPos;
 
             isPanning = true;
-            if (cam != null)
+
+            // Whether this press landed on something grabbable decides the whole gesture, so it
+            // needs to agree with what actually grabs things - PartClickDetector, which tries a
+            // pixel-precise raycast and then falls back to a forgiving 0.15m SphereCast so a part
+            // that is small on screen (zoomed OUT - the far end of the zoom range, not the close-up
+            // end) can still be clicked precisely. This check used to run its own bare
+            // Physics.Raycast with no forgiveness at all - so at the same zoom level and the same
+            // click, PartClickDetector could grab the part while this one missed it and decided the
+            // gesture was a pan instead. Reusing PartClickDetector's own test removes that gap
+            // outright, and it doubles as covering RAM/CPU locks and cable plugs too, not just
+            // PCPartItem, with no separate layer mask to keep in sync.
+            if (PartClickDetector.Instance != null)
             {
+                if (PartClickDetector.Instance.IsOverInteractable(pointerPos))
+                    isPanning = false; // a part, lock, or cable owns this gesture instead
+            }
+            else if (cam != null)
+            {
+                // Fallback for a station rig with no PartClickDetector in the scene (nothing to
+                // click on this camera at all, or it lives on a different object here).
                 Ray ray = cam.ScreenPointToRay(pointerPos);
                 if (Physics.Raycast(ray, out _, 500f, partLayerMask))
                 {
-                    isPanning = false; // a part owns this gesture instead
+                    isPanning = false;
                 }
             }
             return;

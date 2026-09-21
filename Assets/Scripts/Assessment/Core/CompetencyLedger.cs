@@ -645,11 +645,17 @@ namespace CircuitCrafter.Assessment
             }
         }
 
-        /// <summary>Wipes the active profile's ledger. For an instructor reset
+        /// <summary>Wipes the active profile's ledger: every outcome AND the written-test (quiz)
+        /// results, so the competency screen goes fully back to Not Attempted. For a reset
         /// button - confirm before calling, there is no undo.</summary>
         public void ResetActiveLedger()
         {
             ledger.records.Clear();
+
+            // The Knowledge line on each module header reads from here. Clearing only the outcomes
+            // would leave "Knowledge: 80% - met" showing on a module that says Not Attempted.
+            ledger.knowledge.Clear();
+
             Save();
             OnLedgerChanged?.Invoke();
         }

@@ -107,7 +107,7 @@ namespace CircuitCrafter.Repair
             if (progressText != null) progressText.text = COC4AssessmentRun.Progress;
 
             if (scoreText != null)
-                scoreText.text = $"Score: {COC4AssessmentRun.Score} / {COC4AssessmentRun.MaxScore}";
+                scoreText.text = $"Score: {COC4AssessmentRun.Score}";
 
             if (timeText == null) return;
 

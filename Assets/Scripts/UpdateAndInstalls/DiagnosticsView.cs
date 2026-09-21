@@ -23,6 +23,20 @@ public class DiagnosticsView : MonoBehaviour
     private readonly Dictionary<DiagnosticTestData, DiagnosticTestRowView> _rows =
         new Dictionary<DiagnosticTestData, DiagnosticTestRowView>();
 
+    private bool _populated;
+
+    // Same reason as ChecklistToolView: Start() runs once, but OnDisable unsubscribes on every
+    // close, so after the window was closed once the progress bars stopped moving. Subscribing in
+    // OnEnable keeps the two paired.
+    private void OnEnable()
+    {
+        Subscribe();
+
+        // The first open is handled by Start(). Every later open catches up on anything that
+        // happened while the window was closed.
+        if (_populated) RefreshRows();
+    }
+
     private void Start()
     {
         if (DiagnosticsTestManager.Instance == null)
@@ -32,24 +46,81 @@ public class DiagnosticsView : MonoBehaviour
             return;
         }
 
-        DiagnosticsTestManager.Instance.OnTestStarted += HandleTestStarted;
-        DiagnosticsTestManager.Instance.OnTestProgress += HandleTestProgress;
-        DiagnosticsTestManager.Instance.OnTestResult += HandleTestResult;
-        DiagnosticsTestManager.Instance.OnAllTestsFinished += HandleAllFinished;
+        Subscribe();   // does nothing new if OnEnable already did
 
         if (runButton != null)
             runButton.onClick.AddListener(HandleRunClicked);
 
         Populate();
+        _populated = true;
     }
 
     private void OnDisable()
     {
-        if (DiagnosticsTestManager.Instance == null) return;
-        DiagnosticsTestManager.Instance.OnTestStarted -= HandleTestStarted;
-        DiagnosticsTestManager.Instance.OnTestProgress -= HandleTestProgress;
-        DiagnosticsTestManager.Instance.OnTestResult -= HandleTestResult;
-        DiagnosticsTestManager.Instance.OnAllTestsFinished -= HandleAllFinished;
+        Unsubscribe();
+    }
+
+    private void Subscribe()
+    {
+        var manager = DiagnosticsTestManager.Instance;
+        if (manager == null) return;
+
+        // Unsubscribe first so calling this twice can never double up the handlers.
+        Unsubscribe();
+        manager.OnTestStarted += HandleTestStarted;
+        manager.OnTestProgress += HandleTestProgress;
+        manager.OnTestResult += HandleTestResult;
+        manager.OnAllTestsFinished += HandleAllFinished;
+    }
+
+    private void Unsubscribe()
+    {
+        var manager = DiagnosticsTestManager.Instance;
+        if (manager == null) return;
+
+        manager.OnTestStarted -= HandleTestStarted;
+        manager.OnTestProgress -= HandleTestProgress;
+        manager.OnTestResult -= HandleTestResult;
+        manager.OnAllTestsFinished -= HandleAllFinished;
+    }
+
+    /// <summary>Brings the rows, the Run button and the overall message back in line with the
+    /// manager after the window has been closed and reopened.</summary>
+    private void RefreshRows()
+    {
+        var manager = DiagnosticsTestManager.Instance;
+        if (manager == null) return;
+
+        bool anyResult = false;
+        foreach (var pair in _rows)
+        {
+            if (pair.Value == null) continue;
+
+            bool? last = manager.GetLastResult(pair.Key);
+            if (last.HasValue)
+            {
+                pair.Value.SetResult(last.Value);
+                anyResult = true;
+            }
+            else
+            {
+                pair.Value.SetPending();
+            }
+        }
+
+        // The Run button is switched off when a run starts and back on by HandleAllFinished. If
+        // that finished while this window was closed, nothing would ever switch it back on.
+        if (runButton != null) runButton.interactable = !manager.IsRunning;
+
+        if (overallResultText == null) return;
+
+        if (manager.IsRunning)
+            overallResultText.text = "Running diagnostics...";
+        else if (anyResult)
+            overallResultText.text = manager.AllTestsPassed
+                ? "All tests passed."
+                : "Some tests failed - fix the issue above and run diagnostics again.";
+        // Never run: leave the "Not tested yet." text that is already on the panel.
     }
 
     private void Populate()

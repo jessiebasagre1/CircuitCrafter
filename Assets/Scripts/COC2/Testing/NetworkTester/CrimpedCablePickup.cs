@@ -1,4 +1,5 @@
 // CrimpedCablePickup.cs
+using System.Collections;
 using UnityEngine;
 using CSSSimulation.Interaction;
 
@@ -25,6 +26,8 @@ namespace CSSSimulation.Networking
     ///   3. Drag the cable model into `cableVisual`.
     ///   4. Set promptText to something like "Press E to pick up cable".
     ///   5. Leave BOTH objects active in the scene - this script hides the visual itself on Awake.
+    ///   6. Optional: assign Available Dialog to tell the player, the moment crimping finishes, to pick
+    ///      the cable up and take it to the tester.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class CrimpedCablePickup : Interactable
@@ -43,11 +46,24 @@ namespace CSSSimulation.Networking
                  "useful while you're testing this stage on its own.")]
         public bool requireCrimpingFinished = true;
 
+        [Header("Dialog (optional)")]
+        [Tooltip("Shown when the finished cable appears on the table: tells the player to pick it up and " +
+                 "take it to the tester. Leave empty for no dialog. Like every tutorial dialog, it is " +
+                 "skipped in Assessment mode while the assessment manager's Suppress Tutorial " +
+                 "Dialogs is ticked.")]
+        public DialogSequence availableDialog;
+
+        [Tooltip("On: show it for the first cable only. Off: show it for every cable, including one " +
+                 "re-crimped after a failed test.")]
+        public bool showDialogOnlyOnce = true;
+
         /// <summary>True once the cable is on the table and can be picked up.</summary>
         public bool IsAvailable { get; private set; }
 
         Collider trigger;
         bool subscribed;
+        bool dialogShown;
+        Coroutine dialogRoutine;
 
         void Awake()
         {
@@ -93,6 +109,43 @@ namespace CSSSimulation.Networking
         {
             SetAvailable(true);
             Debug.Log("[CrimpedCablePickup] Crimped cable is now on the table.", this);
+
+            ShowAvailableDialog();
+        }
+
+        void ShowAvailableDialog()
+        {
+            if (availableDialog == null) return;
+            if (showDialogOnlyOnce && dialogShown) return;
+            dialogShown = true;
+
+            // Finishing the crimp can raise other messages in the same moment. This never stacks on
+            // top of one - it waits for it to close - but not forever, so a stuck dialog cannot
+            // hold this back for good.
+            if (isActiveAndEnabled)
+            {
+                if (dialogRoutine != null) StopCoroutine(dialogRoutine);
+                dialogRoutine = StartCoroutine(ShowWhenFree());
+            }
+            else if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
+            {
+                // A coroutine cannot start on an inactive object. Nothing is talking, so just say it.
+                DialogManager.Instance.ShowDialog(availableDialog);
+            }
+        }
+
+        IEnumerator ShowWhenFree()
+        {
+            float giveUpAt = Time.unscaledTime + 10f;
+
+            while (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen &&
+                   Time.unscaledTime < giveUpAt)
+                yield return null;
+
+            if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
+                DialogManager.Instance.ShowDialog(availableDialog);
+
+            dialogRoutine = null;
         }
 
         void SetAvailable(bool available)

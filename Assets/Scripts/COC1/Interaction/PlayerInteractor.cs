@@ -347,6 +347,20 @@ public class PlayerInteractor : MonoBehaviour
             nearbyDrive.SetHighlighted(false);
             nearbyDrive = null;
         }
+
+        // Same reason, for the prompt. This component's own Update() is what normally blanks
+        // promptText/promptUI once there is nothing left to say - but Update() does not run while
+        // this GameObject is inactive, so whatever the prompt last said stays frozen on screen.
+        //
+        // That is exactly what StationCameraSwitch triggers: entering a station switches the
+        // walking camera off mid-frame, often on the very E press that was showing "Press E to
+        // Enter [Station]" - so without this, that line (or "Press G to pick up", whatever was up
+        // last) would sit on screen for as long as the player stays inside. Clearing it here, in
+        // OnDisable, covers every way this camera can be switched off, not just this one station
+        // path - and the mirror image on the station camera's own PlayerInteractor (if it has one)
+        // clears its own leftover prompt the same way on the way back out.
+        if (promptText != null) promptText.text = "";
+        if (promptUI != null && promptUI.activeSelf) promptUI.SetActive(false);
     }
 
 #if UNITY_EDITOR

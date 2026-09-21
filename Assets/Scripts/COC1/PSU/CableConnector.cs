@@ -80,6 +80,20 @@ public class CableConnector : MonoBehaviour
     public bool logDragDiagnostics = false;
 
     private bool isDragging;
+
+    /// <summary>
+    /// True while ANY CableConnector in the scene is being dragged - a single shared flag rather
+    /// than one per connector, since only one cable can be under the mouse at a time.
+    ///
+    /// Cable dragging runs entirely inside THIS script (isDragging above), completely separate
+    /// from DragController - a PC part (CPU, RAM, the whole PSU body) drags through
+    /// DragController.BeginDragFromWorld, but a cable's plug drags through BeginDrag() below via
+    /// the legacy OnMouseDown. CameraZoom's pan-while-dragging guard only ever checked
+    /// DragController.Instance.IsDragging, so it had no way to know a cable drag was happening -
+    /// which is why panning the camera and dragging a cable plug used to fight over the same
+    /// mouse movement. This flag is what CameraZoom checks now, alongside DragController's.
+    /// </summary>
+    public static bool IsAnyDragging { get; private set; }
     private Vector3 dragOffset;
     private PortSocket highlightedSocket;
 
@@ -127,6 +141,7 @@ public class CableConnector : MonoBehaviour
             Unplug();
         }
         isDragging = true;
+        IsAnyDragging = true;
         dragOffset = transform.position - RayHitOnDragPlane();
 
         if (logDragDiagnostics) ReportDragSetup();
@@ -137,8 +152,21 @@ public class CableConnector : MonoBehaviour
         if (!isDragging) return;
 
         isDragging = false;
+        IsAnyDragging = false;
         ClearHighlight();
         TryAutoPlug();
+    }
+
+    void OnDisable()
+    {
+        // Belt and braces: if this connector is switched off or the scene changes mid-drag (a
+        // station exit, an assessment ending) with isDragging never reaching EndDrag(), the static
+        // flag would otherwise stay stuck true and leave the camera unable to pan again all scene.
+        if (isDragging)
+        {
+            isDragging = false;
+            IsAnyDragging = false;
+        }
     }
 
     void Update()

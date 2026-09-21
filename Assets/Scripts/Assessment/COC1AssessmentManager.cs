@@ -119,6 +119,13 @@ public class COC1AssessmentManager : MonoBehaviour
     public bool IsRunning { get; private set; }
     public bool IsFinished { get; private set; }
 
+    /// <summary>True when the run ended because the time limit was reached, not because the
+    /// learner finished or pressed Finish. Read by the report.</summary>
+    public bool TimedOut { get; private set; }
+
+    // True while THIS manager is holding the player still, so it can give the lock back.
+    private bool inputLocked;
+
     private readonly List<string> log = new List<string>();
 
     // ==================================================================
@@ -153,6 +160,9 @@ public class COC1AssessmentManager : MonoBehaviour
         // Never leave the flag set for whatever scene loads next.
         DialogManager.SuppressTutorials = false;
 
+        // A lock still held here would follow the learner into the next scene.
+        ReleaseInput();
+
         if (Instance == this) Instance = null;
     }
 
@@ -171,6 +181,7 @@ public class COC1AssessmentManager : MonoBehaviour
         Mistakes = 0;
         ElapsedSeconds = 0f;
         IsFinished = false;
+        TimedOut = false;
         IsRunning = true;
         log.Clear();
 
@@ -200,6 +211,7 @@ public class COC1AssessmentManager : MonoBehaviour
             ElapsedSeconds = timeLimitSeconds;
             if (endOnTimeUp)
             {
+                TimedOut = true;
                 log.Add("TIME LIMIT REACHED");
                 Finish();
                 return;
@@ -299,6 +311,10 @@ public class COC1AssessmentManager : MonoBehaviour
         IsRunning = false;
         IsFinished = true;
 
+        // The run is over. Hold the player still and give them the mouse, so the report can be
+        // read and Back to Menu clicked - and nothing they do from here can change the result.
+        LockInput();
+
         bool perfect = Mistakes == 0;
         if (perfect && perfectRunBonus > 0)
         {
@@ -316,6 +332,23 @@ public class COC1AssessmentManager : MonoBehaviour
                   $"time {FormatTime(ElapsedSeconds)}.");
     }
 
+    private void LockInput()
+    {
+        if (inputLocked) return;
+
+        inputLocked = true;
+        PlayerInputLock.Acquire();   // PlayerMovement and MouseLook stop reading input
+        CursorControl.Free();        // the report's buttons need a visible, usable cursor
+    }
+
+    private void ReleaseInput()
+    {
+        if (!inputLocked) return;
+
+        inputLocked = false;
+        PlayerInputLock.Release();
+    }
+
     private string BuildReport()
     {
         int completed = 0;
@@ -324,6 +357,13 @@ public class COC1AssessmentManager : MonoBehaviour
         var sb = new StringBuilder();
         sb.AppendLine("=== COC 1 Assessment Report ===");
         sb.AppendLine();
+        if (TimedOut)
+        {
+            sb.AppendLine("*** TIME'S UP ***");
+            sb.AppendLine($"The assessment ended because the time limit of {FormatTime(timeLimitSeconds)} was reached.");
+            sb.AppendLine("Stages that were not finished by then are marked incomplete.");
+            sb.AppendLine();
+        }
         sb.AppendLine($"Time taken:      {FormatTime(ElapsedSeconds)}");
         sb.AppendLine($"Final score:     {Score}");
         sb.AppendLine($"Mistakes:        {Mistakes}");
@@ -339,6 +379,11 @@ public class COC1AssessmentManager : MonoBehaviour
     /// <summary>Wire the report panel's "Back to Menu" button here.</summary>
     public void ReturnToMenu()
     {
+        // Tearing the scene down: zero the counter rather than release one, because a station the
+        // learner was standing in may hold a lock of its own.
+        inputLocked = false;
+        PlayerInputLock.ReleaseAll();
+
         AssessmentMode.End();
         DialogManager.SuppressTutorials = false;
 

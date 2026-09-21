@@ -66,6 +66,29 @@ public class StationCameraSwitch : MonoBehaviour
         {
             HandleInteractPressed();
         }
+
+        UpdatePrompt();
+    }
+
+    /// <summary>
+    /// Asks PlayerInteractor for "Press E to Enter [Station Name]" while the player is standing
+    /// near this station and not already inside it.
+    ///
+    /// Nothing to assign in the Inspector - PlayerInteractor.RequestPrompt() is the same
+    /// per-frame hook the USB drive/port prompts already use (see PlayerInteractor.cs), so this
+    /// reuses whatever promptText/promptUI is already set up there instead of needing a second
+    /// prompt panel per station.
+    ///
+    /// Skipped once IsGatedTaskComplete() - at that point E does nothing but print a log line, so
+    /// a prompt promising something E no longer does would be misleading. A LOCKED station (entry
+    /// gate not yet unlocked) still gets the prompt: pressing E there shows the gate's own locked
+    /// message, which is useful feedback rather than nothing.
+    /// </summary>
+    private void UpdatePrompt()
+    {
+        if (!playerNearby || usingStationCamera || IsGatedTaskComplete()) return;
+
+        PlayerInteractor.RequestPrompt($"Press E to Enter {displayName}");
     }
 
     /// <summary>

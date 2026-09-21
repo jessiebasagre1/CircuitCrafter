@@ -23,6 +23,20 @@ public class ServiceReportView : MonoBehaviour
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private GameObject submittedBanner;
 
+    private bool _submitted;
+
+    // Same reason as ChecklistToolView: Start() runs once, but OnDisable unsubscribes on every
+    // close. Reopening the report after going back to fix something used to call Refresh() with
+    // nobody listening, so the checklist kept showing the crosses from the first time it was opened.
+    private void OnEnable()
+    {
+        Subscribe();
+
+        // Panel may be re-opened after the player goes back and fixes
+        // something -- refresh every time it's shown, not just on Start().
+        if (report != null) report.Refresh();
+    }
+
     private void Start()
     {
         if (report == null)
@@ -31,8 +45,7 @@ public class ServiceReportView : MonoBehaviour
             return;
         }
 
-        report.OnChecklistRefreshed += HandleChecklistRefreshed;
-        report.OnReportSubmitted += HandleReportSubmitted;
+        Subscribe();   // does nothing new if OnEnable already did
 
         if (submitButton != null)
             submitButton.onClick.AddListener(HandleSubmitClicked);
@@ -42,16 +55,24 @@ public class ServiceReportView : MonoBehaviour
 
     private void OnDisable()
     {
+        Unsubscribe();
+    }
+
+    private void Subscribe()
+    {
+        if (report == null) return;
+
+        // Unsubscribe first so calling this twice can never double up the handlers.
+        Unsubscribe();
+        report.OnChecklistRefreshed += HandleChecklistRefreshed;
+        report.OnReportSubmitted += HandleReportSubmitted;
+    }
+
+    private void Unsubscribe()
+    {
         if (report == null) return;
         report.OnChecklistRefreshed -= HandleChecklistRefreshed;
         report.OnReportSubmitted -= HandleReportSubmitted;
-    }
-
-    private void OnEnable()
-    {
-        // Panel may be re-opened after the player goes back and fixes
-        // something -- refresh every time it's shown, not just on Start().
-        if (report != null) report.Refresh();
     }
 
     private void HandleChecklistRefreshed(IReadOnlyList<(string label, bool complete)> checklist)
@@ -66,12 +87,14 @@ public class ServiceReportView : MonoBehaviour
         }
 
         if (submitButton != null)
-            submitButton.interactable = report.IsReadyToSubmit;
+            submitButton.interactable = report.IsReadyToSubmit && !_submitted;
 
         if (statusText != null)
-            statusText.text = report.IsReadyToSubmit
-                ? "Everything checks out - ready to submit."
-                : "Finish the items above before submitting.";
+            statusText.text = _submitted
+                ? "Report submitted."
+                : report.IsReadyToSubmit
+                    ? "Everything checks out - ready to submit."
+                    : "Finish the items above before submitting.";
     }
 
     private void HandleSubmitClicked()
@@ -81,6 +104,7 @@ public class ServiceReportView : MonoBehaviour
 
     private void HandleReportSubmitted()
     {
+        _submitted = true;
         if (submittedBanner != null) submittedBanner.SetActive(true);
         if (submitButton != null) submitButton.interactable = false;
         if (statusText != null) statusText.text = "Report submitted.";

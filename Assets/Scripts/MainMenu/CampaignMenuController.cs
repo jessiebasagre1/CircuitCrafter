@@ -65,6 +65,18 @@ public class CampaignMenuController : MonoBehaviour
     [Tooltip("Deletes the save AND refreshes both this panel's Continue/New Game state and MainMenuController's mode lock/status state. Separate from New Game -- this is a destructive 'wipe everything' control, New Game just starts a fresh run.")]
     [SerializeField] private Button resetProgressButton;
 
+    [Header("Reset Progress confirmation")]
+    [Tooltip("A small 'Are you sure?' pop-up shown when Reset Progress is pressed. Give it a dimmed " +
+             "full-screen background so nothing behind it can be clicked. Leave EMPTY to reset on " +
+             "the first click - only sensible while testing.")]
+    [SerializeField] private GameObject resetConfirmPanel;
+
+    [Tooltip("The Yes / Reset button on the pop-up. Its OnClick is wired automatically - leave the list empty.")]
+    [SerializeField] private Button resetConfirmYesButton;
+
+    [Tooltip("The No / Cancel button on the pop-up. Its OnClick is wired automatically - leave the list empty.")]
+    [SerializeField] private Button resetConfirmNoButton;
+
     [Header("References")]
     [SerializeField] private MainMenuController mainMenuController;
 
@@ -78,6 +90,14 @@ public class CampaignMenuController : MonoBehaviour
 
         if (resetProgressButton != null)
             resetProgressButton.onClick.AddListener(OnResetProgressClicked);
+
+        if (resetConfirmYesButton != null)
+            resetConfirmYesButton.onClick.AddListener(OnResetConfirmYes);
+
+        if (resetConfirmNoButton != null)
+            resetConfirmNoButton.onClick.AddListener(HideResetConfirm);
+
+        HideResetConfirm();
 
         // Popup starts closed -- campaignPanel starts however MenuNavigator/Unity leaves it.
         if (modeSelectPanel != null) modeSelectPanel.SetActive(false);
@@ -180,7 +200,39 @@ public class CampaignMenuController : MonoBehaviour
         RefreshCampaignButtons();
     }
 
+    /// <summary>Reset Progress was pressed. Asks first if a confirm panel is assigned; otherwise resets at once.</summary>
     private void OnResetProgressClicked()
+    {
+        if (resetConfirmPanel != null)
+        {
+            resetConfirmPanel.SetActive(true);
+            return;
+        }
+
+        DoResetProgress();
+    }
+
+    private void OnResetConfirmYes()
+    {
+        HideResetConfirm();
+        DoResetProgress();
+    }
+
+    private void HideResetConfirm()
+    {
+        if (resetConfirmPanel != null) resetConfirmPanel.SetActive(false);
+    }
+
+    // If the screen is switched away while the question is open, the question goes with it -
+    // otherwise it would still be sitting there the next time this screen is opened.
+    private void OnDisable()
+    {
+        HideResetConfirm();
+    }
+
+    // The reset itself. ResetAllProgress = DeleteSave() plus the competency record, so the
+    // competency screen clears too.
+    private void DoResetProgress()
     {
         if (SaveManager.Instance == null)
         {
@@ -189,7 +241,7 @@ public class CampaignMenuController : MonoBehaviour
             return;
         }
 
-        SaveManager.Instance.DeleteSave();
+        SaveManager.Instance.ResetAllProgress();
 
         // Re-check HasSaveFile() so Continue/New Game reflect the wipe
         // right away.
