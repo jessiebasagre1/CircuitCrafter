@@ -4121,7 +4121,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 123, y: 0}
+  m_AnchoredPosition: {x: 15, y: -151}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &175344362
@@ -5424,6 +5424,8 @@ MonoBehaviour:
   - {fileID: 1775740651154383901}
   - {fileID: 1450677033}
   - {fileID: 506808878}
+  - {fileID: 1098398746}
+  - {fileID: 7100094669113772082}
   freezeUntilStart:
   - {fileID: 5255766220423958008}
   - {fileID: 2966701706709408951}
@@ -8939,6 +8941,7 @@ MonoBehaviour:
   - {fileID: 1451752633}
   - {fileID: 911797982}
   - {fileID: 1775740651154383901}
+  - {fileID: 1154487906}
   entryGate:
     requiredTaskIds: []
     requireOSInstallComplete: 0
@@ -9422,6 +9425,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 493523106008668892, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
+      propertyPath: requireKnowledgeEvidence
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5188200057248498465, guid: a71d546d0e2c68a4986b4c0a3d6fd6f9, type: 3}
       propertyPath: m_Name
       value: AssessmentManagers
@@ -26047,6 +26054,7 @@ MonoBehaviour:
   quizSets:
   - {fileID: 11400000, guid: aa10467e4e9d4f44c8484baa4fb69cb0, type: 2}
   - {fileID: 11400000, guid: 5607790083f26d242b5b6466f98e2670, type: 2}
+  - {fileID: 11400000, guid: 43118b1c0853e4f4a8e858f557c14065, type: 2}
   quizView: {fileID: 568654478}
   addPointsToModuleScore: 0
   onBeforeQuiz:
@@ -27586,6 +27594,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1097663407}
   m_CullTransparentMesh: 1
+--- !u!1 &1098398746 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5024899614668245291, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
+  m_PrefabInstance: {fileID: 22743572}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1099859177
 GameObject:
   m_ObjectHideFlags: 0
@@ -29368,6 +29381,7 @@ MonoBehaviour:
   - {fileID: 1775740651154383901}
   - {fileID: 1770677852}
   - {fileID: 1450677033}
+  - {fileID: 1154487906}
   entryGate:
     requiredTaskIds:
     - assemble_pc
@@ -54468,7 +54482,7 @@ PrefabInstance:
       objectReference: {fileID: 1197558239}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.size
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[3].port
@@ -54535,6 +54549,10 @@ PrefabInstance:
       value: Install Windows
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: steps.Array.data[8].label
+      value: Windows Configuration
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[0].target
       value: 
       objectReference: {fileID: 301048446}
@@ -54595,6 +54613,14 @@ PrefabInstance:
       value: install_os
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: steps.Array.data[8].target
+      value: 
+      objectReference: {fileID: 2016665524}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: steps.Array.data[8].taskId
+      value: install_drivers
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[0].doneWhen
       value: 0
       objectReference: {fileID: 0}
@@ -54627,6 +54653,10 @@ PrefabInstance:
       value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: steps.Array.data[8].doneWhen
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[2].latchWhenDone
       value: 1
       objectReference: {fileID: 0}
@@ -54644,6 +54674,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[7].latchWhenDone
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: steps.Array.data[8].latchWhenDone
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
@@ -57106,7 +57140,7 @@ Transform:
   m_GameObject: {fileID: 237800590756194574}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9989455, z: -0, w: 0.045913447}
-  m_LocalPosition: {x: 0.22, y: 0, z: 6.75}
+  m_LocalPosition: {x: -0.565, y: 0, z: 7.937}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -64110,11 +64144,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5806694943025902146, guid: 7d4af6cc38553e84fb3752a208661821, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 168
+      value: 671
       objectReference: {fileID: 0}
     - target: {fileID: 5806694943025902146, guid: 7d4af6cc38553e84fb3752a208661821, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -111
+      value: -19
       objectReference: {fileID: 0}
     - target: {fileID: 5806694943025902146, guid: 7d4af6cc38553e84fb3752a208661821, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -65107,10 +65141,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: AiTutorCanvas
       objectReference: {fileID: 0}
-    - target: {fileID: 1917031837419383146, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -12.9001465
-      objectReference: {fileID: 0}
     - target: {fileID: 3498476320407376790, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
       propertyPath: 'freezeWhileOpen.Array.data[0]'
       value: 
@@ -65199,15 +65229,24 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8616435630458230765, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -12.9001465
+    - target: {fileID: 6682285511703486232, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9062218085824327537, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 32
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+--- !u!1 &7100094669113772082 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1305320797232078571, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+  m_PrefabInstance: {fileID: 7100094669113772081}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7115110805418562148
 Transform:
   m_ObjectHideFlags: 0

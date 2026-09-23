@@ -69,6 +69,10 @@ namespace CircuitCrafter.Assessment.UI
 
         [SerializeField] private Button refreshButton;
 
+        [Header("History popup (optional)")]
+        [Tooltip("Opened when a module header's History button is clicked. Leave empty on a build that doesn't want a history popup.")]
+        [SerializeField] private CompetencyHistoryView historyView;
+
         private readonly List<GameObject> spawnedRows = new List<GameObject>();
 
         // ==================================================================
@@ -151,6 +155,12 @@ namespace CircuitCrafter.Assessment.UI
                 {
                     var header = Instantiate(moduleHeaderPrefab, rowContainer);
                     header.Setup(definition, competent, total);
+
+                    // Fresh instance every Refresh (rows are destroyed and rebuilt wholesale, see
+                    // ClearRows), so there's nothing to unsubscribe from - the old subscription
+                    // dies with the old row.
+                    header.HistoryRequested += OpenHistory;
+
                     spawnedRows.Add(header.gameObject);
                 }
 
@@ -183,6 +193,14 @@ namespace CircuitCrafter.Assessment.UI
                 overallBar.maxValue = Mathf.Max(1, totalOutcomes);
                 overallBar.value = totalCompetent;
             }
+        }
+
+        /// <summary>Forwards a module header's History click to this screen's popup. A no-op if
+        /// no popup is assigned, so a build that doesn't want the feature can simply leave the
+        /// field empty rather than needing a special build configuration.</summary>
+        private void OpenHistory(string moduleId, string moduleTitle)
+        {
+            if (historyView != null) historyView.Open(moduleId, moduleTitle);
         }
 
         private static OutcomeRecord FindRecord(CompetencyLedger ledger, string moduleId, string code)

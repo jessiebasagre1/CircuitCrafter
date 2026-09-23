@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
-  m_Name: QuizSet_BootableF
+  m_Name: QuizSet_DisassemblePC.
   m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
-  taskId: create_bootable_usb
+  taskId: assemble_pc
   questionPool:
-  - {fileID: 11400000, guid: f546c10b53b2178498f0dc0f333db24a, type: 2}
-  - {fileID: 11400000, guid: 021a7e98dd08cb346b9816b52aa2bec7, type: 2}
-  - {fileID: 11400000, guid: 680f48db0557fb448a50c7b06d90a779, type: 2}
-  - {fileID: 11400000, guid: b3669481fce16924da13bac4f46aeae9, type: 2}
-  - {fileID: 11400000, guid: cfe159fd26a9f424c93c8eef97805699, type: 2}
-  questionsToAsk: 5
+  - {fileID: 11400000, guid: 57ad2dfb2aea8a64395f26c1d882a621, type: 2}
+  - {fileID: 11400000, guid: 204ee353ece0fe641895b2cc2d942d5b, type: 2}
+  - {fileID: 11400000, guid: 68917f33996310444aa37a958f63183c, type: 2}
+  - {fileID: 11400000, guid: 5f9458751a34282499ade58c8ea2d90f, type: 2}
+  - {fileID: 11400000, guid: ced31561417410a4f8228d1163480d60, type: 2}
+  questionsToAsk: 3
   randomizeSelection: 1

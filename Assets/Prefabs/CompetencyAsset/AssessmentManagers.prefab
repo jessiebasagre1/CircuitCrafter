@@ -64,3 +64,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b20e2be86d5962d4186f23bde1f3c4bb, type: 2}
   - {fileID: 11400000, guid: 42803946bb34aff4e9d92ac7250dfe8c, type: 2}
   passThresholdPercent: 80
+  requireKnowledgeEvidence: 0
+  knowledgeThresholdPercent: 75

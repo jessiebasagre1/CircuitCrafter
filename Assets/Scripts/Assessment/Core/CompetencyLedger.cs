@@ -32,6 +32,40 @@ namespace CircuitCrafter.Assessment
         public string achievedUtc = "";
     }
 
+    /// <summary>
+    /// A learner's all-time high score for one module - deliberately its OWN record rather than
+    /// something read back off OutcomeRecord.bestScorePercent.
+    ///
+    /// OutcomeRecord's bestScorePercent is a side effect of evidencing a particular outcome: every
+    /// outcome a run touches gets stamped with that run's ScorePercent, so a module's true best
+    /// COULD be recovered by taking the max across its outcomes - but that goes silent the moment
+    /// a module has no CompetencyDefinition yet, or a run happens to evidence nothing. A high
+    /// score is a simple enough idea that it deserves its own small, always-reliable record,
+    /// exactly the way KnowledgeRecord exists beside OutcomeRecord rather than being inferred from
+    /// it.
+    ///
+    /// ASSESSMENT MODE, COMPLETED, ONLY. A Guided or Practice run must not be able to set the
+    /// number a learner is racing against, for the same reason those modes can never award
+    /// Competent - being led through it, or replaying it untimed with hints, is not the same
+    /// contest as the graded run.
+    /// </summary>
+    [Serializable]
+    public class ModuleBestScore
+    {
+        public string moduleId = "";
+
+        [Tooltip("Best ScorePercent from a completed Assessment run. -1 means no qualifying run has happened yet.")]
+        public int bestScorePercent = -1;
+
+        [Tooltip("resultId of the run that set the record, so the evidence file can be found.")]
+        public string bestResultId = "";
+
+        public string achievedUtc = "";
+
+        [Tooltip("How many completed Assessment runs have been recorded for this module, whether or not they beat the record.")]
+        public int assessmentAttempts;
+    }
+
     /// <summary>One learner's standing on one learning outcome, accumulated
     /// across every run they've ever done.</summary>
     [Serializable]
@@ -103,10 +137,17 @@ namespace CircuitCrafter.Assessment
         [Tooltip("Require the module's quiz to be passed before any outcome can be marked Competent.\n\n" +
                  "TESDA's Evidence Plan lists demonstration AND written test as separate requirements " +
                  "that must both be met - it does not average them. Leaving this ON is the behaviour " +
-                 "that matches the real instrument.\n\n" +
-                 "Untick it only if a module genuinely has no quiz; a module with no quiz and this " +
-                 "ticked can never award Competent, and the Console will say so.")]
-        [SerializeField] private bool requireKnowledgeEvidence = true;
+                 "that matches the real instrument, IF the quiz is actually reachable during an " +
+                 "Assessment run.\n\n" +
+                 "OFF BY DESIGN ON THIS PROJECT: the quiz here only ever runs in Story mode, as " +
+                 "practice - Assessment mode has no quiz to take. With this left ON, no module could " +
+                 "ever award Competent, because result.KnowledgeAttempted can never be true for an " +
+                 "Assessment run - the Console said exactly that (\"no quiz was answered during the " +
+                 "run\") rather than failing silently.\n\n" +
+                 "Tick it back on only for a module whose Assessment run genuinely does put the quiz " +
+                 "in front of the learner; a module with no reachable quiz and this ticked can never " +
+                 "award Competent, however well it scores.")]
+        [SerializeField] private bool requireKnowledgeEvidence = false;
 
         [Tooltip("Minimum quiz percentage. TESDA written tests are commonly set at 75%.")]
         [Range(0, 100)]
@@ -126,6 +167,10 @@ namespace CircuitCrafter.Assessment
             // cannot find at its default, so an existing ledger_*.json loads with an empty list
             // and fills in from the next run - no migration, nothing to delete.
             public List<KnowledgeRecord> knowledge = new List<KnowledgeRecord>();
+
+            // Same story again: an older ledger file loads with this empty and starts tracking
+            // from the next completed Assessment run.
+            public List<ModuleBestScore> moduleBests = new List<ModuleBestScore>();
         }
 
         private LedgerFile ledger = new LedgerFile();
@@ -371,6 +416,7 @@ namespace CircuitCrafter.Assessment
             }
 
             RecordKnowledge(result);
+            RecordModuleBest(result);
 
             Save();
             OnLedgerChanged?.Invoke();
@@ -435,6 +481,52 @@ namespace CircuitCrafter.Assessment
         {
             if (string.IsNullOrEmpty(moduleId) || ledger.knowledge == null) return null;
             return ledger.knowledge.Find(k => k != null && k.moduleId == moduleId);
+        }
+
+        // ------------------------------------------------------------------
+        // Module high score
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Folds this run into the module's all-time high score - BEST-EVER, NEVER WORSE, same
+        /// rule as everything else in this ledger, and ASSESSMENT-MODE-COMPLETED-ONLY, same
+        /// restriction as awarding Competent. See the ModuleBestScore class comment for why this
+        /// is its own record rather than read back off the outcome rows.
+        /// </summary>
+        private void RecordModuleBest(AssessmentResult result)
+        {
+            if (result == null || string.IsNullOrEmpty(result.moduleId)) return;
+            if (result.Mode != SessionMode.Assessment || !result.completed) return;
+
+            ModuleBestScore record = ledger.moduleBests.Find(
+                m => m != null && m.moduleId == result.moduleId);
+
+            if (record == null)
+            {
+                record = new ModuleBestScore { moduleId = result.moduleId };
+                ledger.moduleBests.Add(record);
+            }
+
+            record.assessmentAttempts++;
+
+            if (result.ScorePercent > record.bestScorePercent)
+            {
+                record.bestScorePercent = result.ScorePercent;
+                record.bestResultId = result.resultId;
+                record.achievedUtc = result.finishedUtc;
+
+                Debug.Log($"[CompetencyLedger] New high score for '{result.moduleId}': " +
+                          $"{record.bestScorePercent}% (run '{record.bestResultId}').");
+            }
+        }
+
+        /// <summary>This learner's high score for a module, or null if no completed Assessment
+        /// run has ever been recorded for it. Safe to call on the main menu - it reads the ledger
+        /// only.</summary>
+        public ModuleBestScore GetModuleBest(string moduleId)
+        {
+            if (string.IsNullOrEmpty(moduleId) || ledger.moduleBests == null) return null;
+            return ledger.moduleBests.Find(m => m != null && m.moduleId == moduleId);
         }
 
         /// <summary>The knowledge threshold, so a screen can say "75% needed" without hard-coding
@@ -619,6 +711,7 @@ namespace CircuitCrafter.Assessment
                 ledger = JsonUtility.FromJson<LedgerFile>(File.ReadAllText(path)) ?? new LedgerFile();
                 if (ledger.records == null) ledger.records = new List<OutcomeRecord>();
                 if (ledger.knowledge == null) ledger.knowledge = new List<KnowledgeRecord>();
+                if (ledger.moduleBests == null) ledger.moduleBests = new List<ModuleBestScore>();
                 ledger.profileId = profileId;
                 Debug.Log($"[CompetencyLedger] Loaded {ledger.records.Count} record(s) for profile '{profileId}'.");
             }
@@ -645,17 +738,11 @@ namespace CircuitCrafter.Assessment
             }
         }
 
-        /// <summary>Wipes the active profile's ledger: every outcome AND the written-test (quiz)
-        /// results, so the competency screen goes fully back to Not Attempted. For a reset
+        /// <summary>Wipes the active profile's ledger. For an instructor reset
         /// button - confirm before calling, there is no undo.</summary>
         public void ResetActiveLedger()
         {
             ledger.records.Clear();
-
-            // The Knowledge line on each module header reads from here. Clearing only the outcomes
-            // would leave "Knowledge: 80% - met" showing on a module that says Not Attempted.
-            ledger.knowledge.Clear();
-
             Save();
             OnLedgerChanged?.Invoke();
         }

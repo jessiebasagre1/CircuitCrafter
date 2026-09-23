@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q7_OSInstall
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: During Windows installation, which option is generally associated
+    with installing Windows as a fresh installation?
+  choices:
+  - Sleep
+  - Restart
+  - 'Custom: Install Windows only'
+  - Lock
+  correctChoiceIndex: 2
+  points: 10
+  explanation: The Custom installation option is used when performing a fresh installation
+    and allows the user to select or manage the target partition. Care must be taken
+    because formatting or deleting partitions can cause data loss.

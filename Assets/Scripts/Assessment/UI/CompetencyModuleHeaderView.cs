@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -54,14 +55,48 @@ namespace CircuitCrafter.Assessment.UI
                  "done is not a failure.")]
         [SerializeField] private Color notMetColour = new Color32(0x6B, 0x72, 0x80, 0xFF);
 
+        [Header("History (optional)")]
+        [Tooltip("\"Best: 92%\" - this module's Assessment-mode high score. Optional.")]
+        [SerializeField] private TMP_Text bestScoreText;
+
+        [Tooltip("Gold, matching the palette this project reserves for anything earned.")]
+        [SerializeField] private Color bestScoreColour = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
+
+        [Tooltip("Opens CompetencyHistoryView for this module. Optional - leave empty on a build that doesn't want a history popup.")]
+        [SerializeField] private Button historyButton;
+
+        /// <summary>Fired when History Button is clicked, with this row's module id and title.
+        /// CompetencyProfileView subscribes to this on every row it spawns and forwards it to its
+        /// own CompetencyHistoryView.</summary>
+        public event Action<string, string> HistoryRequested;
+
+        private string currentModuleId;
+        private string currentModuleTitle;
+
+        private void Awake()
+        {
+            // Registered once, in Awake, against the FIELDS below rather than against whatever
+            // definition happened to be passed to Setup at the time - Setup can be, and is,
+            // called again later (a Refresh recreates every row from scratch, so in practice this
+            // never fires twice on the same instance, but reading the fields rather than closing
+            // over a parameter is what makes that safe even if that ever changes).
+            if (historyButton != null)
+                historyButton.onClick.AddListener(
+                    () => HistoryRequested?.Invoke(currentModuleId, currentModuleTitle));
+        }
+
         public void Setup(CompetencyDefinition definition, int competent, int total)
         {
             if (definition == null) return;
+
+            currentModuleId = definition.moduleId;
+            currentModuleTitle = definition.unitTitle;
 
             if (moduleIdText != null) moduleIdText.text = definition.moduleId;
             if (moduleTitleText != null) moduleTitleText.text = definition.unitTitle;
 
             FillEvidenceLines(definition.moduleId, competent, total);
+            FillBestScore(definition.moduleId);
 
             if (summaryText != null)
                 summaryText.text = total > 0 ? $"{competent} of {total} competent" : "No outcomes defined";
@@ -133,6 +168,30 @@ namespace CircuitCrafter.Assessment.UI
                 ? $"Knowledge (written test): {knowledge.bestPercent}% in practice - needs a graded run"
                 : $"Knowledge (written test): {knowledge.bestPercent}%, {need}% needed";
             knowledgeEvidenceText.color = notMetColour;
+        }
+
+        /// <summary>
+        /// "Best: 92%" in gold, or a neutral "Best: -" when no Assessment run has ever completed
+        /// for this module. Deliberately silent about WHY there's no best yet - the History popup
+        /// this sits beside is where that story (or its absence) gets told in full.
+        /// </summary>
+        private void FillBestScore(string moduleId)
+        {
+            if (bestScoreText == null) return;
+
+            CompetencyLedger ledger = CompetencyLedger.Instance;
+            ModuleBestScore best = ledger != null ? ledger.GetModuleBest(moduleId) : null;
+
+            if (best != null && best.bestScorePercent >= 0)
+            {
+                bestScoreText.text = $"Best: {best.bestScorePercent}%";
+                bestScoreText.color = bestScoreColour;
+            }
+            else
+            {
+                bestScoreText.text = "Best: -";
+                bestScoreText.color = notMetColour;
+            }
         }
     }
 }

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q8_OSInstall
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What is a partition?
+  choices:
+  - A physical keyboard component
+  - A section of a storage drive managed separately
+  - A type of computer virus
+  - A network cable
+  correctChoiceIndex: 1
+  points: 10
+  explanation: A partition is a logical division of a physical storage device. An
+    SSD or HDD can contain multiple partitions, each of which can be formatted and
+    used for different purposes.

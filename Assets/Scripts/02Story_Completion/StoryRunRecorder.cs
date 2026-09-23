@@ -28,9 +28,16 @@ namespace CircuitCrafter.Assessment
     /// line on the competency screen shows "82% in practice - needs a graded run" rather than
     /// "not taken". Progress the learner can see, evidence it still is not.
     ///
-    /// IT WILL NOT DOUBLE-RECORD. It stands down entirely during an assessment run, where
-    /// LegacyAssessmentBridge or AssessmentRecorder owns the result - two components recording one
-    /// run is the documented cause of two rows per run in the results CSV.
+    /// IT WILL NOT DOUBLE-RECORD - LATCHED, NOT JUST CHECKED LIVE. Standing down only WHILE
+    /// AssessmentMode.IsActive is true is not enough: the moment a real assessment run finishes
+    /// and the player returns to the menu, AssessmentMode.End() fires and THIS component wakes up
+    /// on its very next Update - and finds its required task already complete, because that
+    /// completion is leftover state from the assessment run that just ended, not from an actual
+    /// story playthrough. Without a permanent latch, that reads as "the module just finished in
+    /// story mode" and writes a second, bogus Guided record with a fabricated 0% score right
+    /// after the real Assessment one. So once AssessmentMode is ever seen active, this component
+    /// disqualifies itself from recording for the rest of its lifetime, even after AssessmentMode
+    /// goes back to false.
     /// </summary>
     [DisallowMultipleComponent]
     public class StoryRunRecorder : MonoBehaviour
@@ -60,6 +67,11 @@ namespace CircuitCrafter.Assessment
 
         private bool recorded;
 
+        // Latched true the FIRST time AssessmentMode.IsActive is ever seen true, and never
+        // cleared back to false. See the class comment above for exactly why a live check alone
+        // isn't enough.
+        private bool assessmentRanThisSession;
+
         // ==================================================================
 
         private void Start()
@@ -80,10 +92,20 @@ namespace CircuitCrafter.Assessment
         {
             if (recorded) return;
 
-            // Assessment runs belong to LegacyAssessmentBridge / AssessmentRecorder. Checking every
-            // frame rather than once at Start because AssessmentMode is a static that a scene can
-            // enter after this component has woken.
-            if (AssessmentMode.IsActive) return;
+            // Checking every frame rather than once at Start because AssessmentMode is a static
+            // that a scene can enter after this component has woken. LATCHED rather than a plain
+            // early-return: see the class comment for the race this specifically closes.
+            if (AssessmentMode.IsActive)
+            {
+                if (!assessmentRanThisSession && logDecision)
+                    Debug.Log($"[StoryRunRecorder] Assessment mode started for '{moduleId}' - " +
+                              "standing down for the rest of this scene, even after it ends.", this);
+
+                assessmentRanThisSession = true;
+                return;
+            }
+
+            if (assessmentRanThisSession) return;
 
             if (!AllRequiredComplete()) return;
 

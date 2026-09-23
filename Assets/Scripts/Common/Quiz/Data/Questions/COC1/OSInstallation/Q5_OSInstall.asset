@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q5_OSInstall
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What should you do before performing a clean installation of an operating
+    system?
+  choices:
+  - Delete all files immediately
+  - Back up important files
+  - Disconnect the monitor
+  - Remove the CPU
+  correctChoiceIndex: 1
+  points: 10
+  explanation: A clean installation may delete existing files, applications, or partitions
+    depending on the installation choices. Important documents and other data should
+    therefore be backed up first.

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443d9bdab786dd44b91e7cc9c40dc04f, type: 3}
+  m_Name: QuizSet_OSInstallation
+  m_EditorClassIdentifier: Assembly-CSharp::QuizSetData
+  taskId: install_os
+  questionPool:
+  - {fileID: 11400000, guid: 5fac22185b7a047489ff21762d4c1035, type: 2}
+  - {fileID: 11400000, guid: 0cd59a3e3bf93ad409d2cf8d82caa1c2, type: 2}
+  - {fileID: 11400000, guid: 95f86f333c379f6479553743fbe95642, type: 2}
+  - {fileID: 11400000, guid: 32d7879af024b634692c87047a1a0e72, type: 2}
+  - {fileID: 11400000, guid: d4d2ab75d94546e4c9a669f26766e7d2, type: 2}
+  - {fileID: 11400000, guid: 41a840205f379864c9276ee83af247a2, type: 2}
+  - {fileID: 11400000, guid: c934cc8c1e5e4b84db5b96963d2dbdca, type: 2}
+  - {fileID: 11400000, guid: bf305a39a0209084c9f6815de4c47464, type: 2}
+  questionsToAsk: 3
+  randomizeSelection: 1

@@ -181,6 +181,82 @@ namespace CircuitCrafter.Assessment
             }
         }
 
+        /// <summary>
+        /// Deletes every stored result for ONE module, leaving every other module's history
+        /// untouched - what the Competency screen's Clear History button runs. Deliberately
+        /// narrower than DeleteAll: this is meant for cleaning up a module's log without wiping a
+        /// learner's whole history, so a module id is required rather than optional.
+        ///
+        /// Leaves the ledger alone. Competency status and the module's high score are the
+        /// official record; this only removes the raw run files behind them, so a learner's
+        /// earned standing survives even if their history for that module is cleared out from
+        /// under it. If a full undo - status AND history together - is ever wanted, that is
+        /// what Reset Progress (SaveManager.ResetAllProgress) is for.
+        /// </summary>
+        public static void DeleteForModule(string profileId, string moduleId)
+        {
+            if (string.IsNullOrEmpty(moduleId)) return;
+
+            string dir = RootFor(profileId);
+            if (!Directory.Exists(dir)) return;
+
+            int deleted = 0;
+            foreach (string path in Directory.GetFiles(dir, "*.json"))
+            {
+                try
+                {
+                    var result = AssessmentResult.FromJson(File.ReadAllText(path));
+                    if (result != null && result.moduleId == moduleId)
+                    {
+                        File.Delete(path);
+                        deleted++;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[ResultsRepository] Couldn't check '{path}' while clearing '{moduleId}': {e.Message}");
+                }
+            }
+
+            RemoveModuleRowsFromCsv(dir, moduleId);
+            Debug.Log($"[ResultsRepository] Cleared {deleted} stored result(s) for '{moduleId}'.");
+        }
+
+        /// <summary>Rewrites the profile's summary CSV without one module's rows, so it stays
+        /// consistent with what DeleteForModule just removed from disk rather than going on
+        /// describing runs that no longer exist.</summary>
+        private static void RemoveModuleRowsFromCsv(string dir, string moduleId)
+        {
+            string csvPath = Path.Combine(dir, SummaryCsv);
+            if (!File.Exists(csvPath)) return;
+
+            try
+            {
+                string[] lines = File.ReadAllLines(csvPath);
+                if (lines.Length <= 1) return; // header only, or empty - nothing to remove
+
+                var kept = new List<string> { lines[0] };
+
+                for (int i = 1; i < lines.Length; i++)
+                {
+                    // "module" is the THIRD column (see AppendSummaryRow's header). Unlike
+                    // learner/section further along, nothing before it is ever comma- or
+                    // quote-escaped (result_id is a GUID fragment, finished_utc a plain ISO
+                    // timestamp) - so a naive split lands index 2 on the right value without
+                    // needing a full CSV parser here.
+                    string[] cells = lines[i].Split(',');
+                    if (cells.Length > 2 && cells[2] == moduleId) continue;
+                    kept.Add(lines[i]);
+                }
+
+                File.WriteAllLines(csvPath, kept);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ResultsRepository] Couldn't rewrite '{csvPath}' after clearing '{moduleId}': {e.Message}");
+            }
+        }
+
         // ------------------------------------------------------------------
         // Export
         // ------------------------------------------------------------------

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace CircuitCrafter.Assessment
@@ -135,6 +136,22 @@ namespace CircuitCrafter.Assessment
         {
             int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
             return $"{total / 60:00}:{total % 60:00}";
+        }
+
+        /// <summary>Parses a stored UTC timestamp (written as DateTime.UtcNow.ToString("o"),
+        /// everywhere this project stamps a result) into a short LOCAL-time string for display -
+        /// a history row or a "Best: 92% (Sep 3)" line. Falls back to printing the raw stored
+        /// value rather than nothing, so a malformed timestamp is visible instead of silently
+        /// blank.</summary>
+        public static string FormatWhen(string utcIso, string pattern = "MMM d, yyyy")
+        {
+            if (string.IsNullOrEmpty(utcIso)) return "n/a";
+
+            if (DateTime.TryParse(utcIso, CultureInfo.InvariantCulture,
+                                  DateTimeStyles.RoundtripKind, out DateTime dt))
+                return dt.ToLocalTime().ToString(pattern, CultureInfo.InvariantCulture);
+
+            return utcIso;
         }
 
         public string ToJson() => JsonUtility.ToJson(this, prettyPrint: true);

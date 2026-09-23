@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e4b5683c1ea36345958694d590b6436, type: 3}
+  m_Name: Q6_OSInstall
+  m_EditorClassIdentifier: Assembly-CSharp::QuizQuestionData
+  questionText: What key or menu is commonly used to select the device from which
+    a computer will boot?
+  choices:
+  - Boot Menu
+  - Calculator
+  - Task Manager
+  - File Explorer
+  correctChoiceIndex: 0
+  points: 10
+  explanation: The Boot Menu allows the user to select a boot device, such as a USB
+    flash drive, SSD, or HDD. The exact key used to open it depends on the computer
+    or motherboard manufacturer.

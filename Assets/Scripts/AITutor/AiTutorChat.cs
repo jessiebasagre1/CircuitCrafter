@@ -164,6 +164,78 @@ namespace CSSSimulation.Tutor
         [Tooltip("What the button says. {key} becomes the open key, and is dropped on touch.")]
         public string openButtonText = "AI  {key}";
 
+        [Header("Mobile keyboard")]
+        [Tooltip("On a touch device, keeps the Input Field (and the Send button beside it) visible " +
+                 "and usable while the on-screen keyboard is up.\n\n" +
+                 "This does NOT slide the whole chat window. For a window that is nearly as tall " +
+                 "as the screen - which this one usually is, docked with the message log filling " +
+                 "most of it - there simply is not enough room above it to lift the whole thing " +
+                 "clear of a keyboard that can cover half the screen; a translate-based approach " +
+                 "either barely moves (safety-clamped so the title bar cannot be pushed off the " +
+                 "top) or, if it did move far enough, would push the header off-screen instead. " +
+                 "Instead, the row holding the Input Field and Send button is pulled OUT of the " +
+                 "window and floated as its own bar directly above the keyboard - full width by " +
+                 "default - so it is always reachable regardless of how tall the chat window is " +
+                 "or how much of the screen the keyboard takes.\n\n" +
+                 "Does nothing on PC.")]
+        public bool avoidTouchKeyboard = true;
+
+        [Tooltip("The row that holds the Input Field and the Send button next to it. While the " +
+                 "keyboard is open this is reparented out of the chat window and floated above " +
+                 "the keyboard; the moment the keyboard closes it is put back exactly where and " +
+                 "how it was - same parent, same sibling index, same anchors and size.\n\n" +
+                 "Leave empty and the Input Field's own parent is used automatically - correct as " +
+                 "long as the Send button lives in that same immediate parent. If your Send " +
+                 "button sits somewhere else in the hierarchy, drag the shared row here by hand " +
+                 "so both move together.")]
+        public RectTransform inputRowRect;
+
+        [Tooltip("The message log - typically the ScrollRect's own RectTransform, or its Viewport " +
+                 "- that should shrink to make room when the Input Row floats up above the " +
+                 "keyboard, so the log is not left running on underneath it.\n\n" +
+                 "Optional. Leave empty and the Input Row still floats correctly above the " +
+                 "keyboard; the message log simply will not resize out of its way (it may sit " +
+                 "partly behind the floating bar instead of visibly shrinking).\n\n" +
+                 "If this rect's parent has a Layout Group on it, that Layout Group is left to do " +
+                 "the resizing itself - removing the Input Row from its children is normally " +
+                 "enough to make it reflow on its own, and fighting a Layout Group's own rebuild " +
+                 "with a second, manual resize every frame produces flicker rather than help.")]
+        public RectTransform messageAreaRect;
+
+        [Tooltip("Stretch the floating Input Row to the full width of the screen while the " +
+                 "keyboard is open, rather than keeping the chat window's normal (docked, " +
+                 "narrower) width. On, this also insets the row from Screen.safeArea so it clears " +
+                 "a notch or rounded corner in landscape. Off keeps the row at its original " +
+                 "width, simply re-centred while floating.")]
+        public bool stretchInputRowFullWidthOnKeyboard = true;
+
+        [Tooltip("Extra breathing room kept on either side of the floating Input Row when " +
+                 "stretched full width, and between the message log and the row when Message " +
+                 "Area Rect is assigned - in the canvas's own local RectTransform units. Added " +
+                 "on top of, not instead of, the device's safe-area inset.")]
+        public float inputRowHorizontalPadding = 16f;
+
+        [Tooltip("Extra breathing room kept between the top of the keyboard and the bottom of the " +
+                 "floating Input Row, in the canvas's own local RectTransform units.")]
+        public float keyboardClearance = 20f;
+
+        [Tooltip("How quickly the Input Row slides to a new height/position when the keyboard's " +
+                 "reported area changes. Higher is snappier; this is animated rather than snapped " +
+                 "so the move does not look like a layout glitch.")]
+        public float keyboardMoveSpeed = 10f;
+
+        [Tooltip("How tall to assume the keyboard is, as a fraction of the screen, whenever " +
+                 "TouchScreenKeyboard.area cannot be trusted. Used whenever the reported area " +
+                 "comes back as a degenerate rect - zero height, or covering almost the whole " +
+                 "screen - which is common on Android: many devices and OS versions (API 30+ " +
+                 "especially, where the soft keyboard no longer resizes the window by default) " +
+                 "simply never report a real area. Without this fallback the Input Row would not " +
+                 "lift at all while the keyboard is genuinely covering the screen. Check the " +
+                 "Console after opening the chat on device - a line logs whether the real area or " +
+                 "this fallback was used.")]
+        [Range(0.2f, 0.8f)]
+        public float fallbackKeyboardHeightFraction = 0.42f;
+
         [Header("Diagnostics")]
         public bool logSetup = true;
 
@@ -190,6 +262,21 @@ namespace CSSSimulation.Tutor
         float readyAt;
         int openedOnFrame = -10;
 
+        // ---- mobile keyboard avoidance ----
+        RectTransform canvasRect;
+        Canvas rootCanvas;
+
+        RectState inputRowRest;
+        RectState messageAreaRest;
+        bool inputRowIsLifted;
+        bool loggedKeyboardMetricsThisOpen;
+        bool loggedNonOverlayWarning;
+
+        // TMP_InputField does not expose a public getter for the native keyboard it opens
+        // (m_SoftKeyboard is protected) - only this event. So this is tracked by hand rather
+        // than read off the field directly.
+        TouchScreenKeyboard.Status keyboardStatus = TouchScreenKeyboard.Status.Done;
+
         void Awake()
         {
             client = GetComponent<GeminiClient>();
@@ -206,6 +293,7 @@ namespace CSSSimulation.Tutor
             {
                 inputField.characterLimit = Mathf.Max(40, maxQuestionLength);
                 inputField.onSubmit.AddListener(OnSubmitted);
+                inputField.onTouchScreenKeyboardStatusChanged.AddListener(OnKeyboardStatusChanged);
             }
 
             if (panel != null) panel.SetActive(false);
@@ -216,7 +304,11 @@ namespace CSSSimulation.Tutor
 
         void Start() { ValidateSetup(); }
 
-        void OnDestroy() { if (IsOpen) IsOpen = false; }
+        void OnDestroy()
+        {
+            if (IsOpen) IsOpen = false;
+            LowerInputRowIfLifted();
+        }
 
         void Update()
         {
@@ -249,6 +341,8 @@ namespace CSSSimulation.Tutor
 
             if (watcher != null && !InternetWatcher.IsOnline && !waiting)
                 SetStatus("Offline - " + watcher.LastReason);
+
+            UpdateKeyboardAvoidance();
         }
 
         void LateUpdate()
@@ -433,9 +527,301 @@ namespace CSSSimulation.Tutor
             IsOpen = false;
 
             if (inputField != null) inputField.DeactivateInputField();
+
+            // Put the Input Row (and the message area, if it was shrunk to make room) back
+            // exactly where they were before the panel disappears - not merely stopped, but
+            // actively restored, so a chat opened again later never inherits an offset left over
+            // from this one.
+            LowerInputRowIfLifted();
+
             if (panel != null) panel.SetActive(false);
 
             HoldPlayer(false);
+        }
+
+        // ---------------------------------------------------------------- mobile keyboard avoidance
+
+        /// <summary>
+        /// A snapshot of everything about a RectTransform's placement that Restore needs to put it
+        /// back EXACTLY where it was - not an approximation, because "close" leaves a visible
+        /// offset once the keyboard has opened and closed a few times. Captured once, at startup;
+        /// every frame the keyboard is up reads from this same snapshot rather than the rect's own
+        /// (already-adjusted) numbers, so repeated edits within one keyboard session never
+        /// compound into drift.
+        /// </summary>
+        struct RectState
+        {
+            public Transform parent;
+            public int siblingIndex;
+            public Vector2 anchorMin, anchorMax, pivot, sizeDelta, anchoredPosition, offsetMin;
+            public float width, height;
+
+            public static RectState Capture(RectTransform r)
+            {
+                RectState s;
+                s.parent = r.parent;
+                s.siblingIndex = r.GetSiblingIndex();
+                s.anchorMin = r.anchorMin;
+                s.anchorMax = r.anchorMax;
+                s.pivot = r.pivot;
+                s.sizeDelta = r.sizeDelta;
+                s.anchoredPosition = r.anchoredPosition;
+                s.offsetMin = r.offsetMin;
+                s.width = r.rect.width;
+                s.height = r.rect.height;
+                return s;
+            }
+
+            public void Restore(RectTransform r)
+            {
+                r.SetParent(parent, false);
+                r.SetSiblingIndex(siblingIndex);
+                r.anchorMin = anchorMin;
+                r.anchorMax = anchorMax;
+                r.pivot = pivot;
+                r.sizeDelta = sizeDelta;
+                r.anchoredPosition = anchoredPosition;
+            }
+        }
+
+        void OnKeyboardStatusChanged(TouchScreenKeyboard.Status status)
+        {
+            keyboardStatus = status;
+        }
+
+        /// <summary>
+        /// Finds the Input Row and the parent Canvas, and remembers exactly how the Input Row (and
+        /// the message area, if one was assigned) sit when nothing is being avoided.
+        ///
+        /// Called once from ValidateSetup rather than Awake, for the same reason
+        /// AdoptKeyboardEatersIfEmpty is: by Start, every other component's own Awake has already
+        /// run, so an Input Row Rect or Message Area Rect wired up by another script has had a
+        /// chance to exist before this reads it.
+        /// </summary>
+        void ResolveKeyboardAvoidanceTargets()
+        {
+            if (!avoidTouchKeyboard) return;
+
+            Transform searchFrom = inputField != null ? inputField.transform
+                                  : (panel != null ? panel.transform : transform);
+            Canvas found = searchFrom.GetComponentInParent<Canvas>();
+            if (found != null)
+            {
+                rootCanvas = found.rootCanvas;
+                canvasRect = rootCanvas.transform as RectTransform;
+            }
+
+            if (inputRowRect == null && inputField != null)
+                inputRowRect = inputField.transform.parent as RectTransform;
+
+            if (inputRowRect != null) inputRowRest = RectState.Capture(inputRowRect);
+            if (messageAreaRect != null) messageAreaRest = RectState.Capture(messageAreaRect);
+
+            if (!logSetup) return;
+
+            if (inputRowRect == null)
+                Debug.LogWarning("[AiTutorChat] Avoid Touch Keyboard is on, but no Input Row could " +
+                                 "be found - the Input Field has no parent RectTransform to fall " +
+                                 "back to, and Input Row Rect was not assigned by hand. The field " +
+                                 "will stay put and can be covered by the on-screen keyboard.", this);
+            else if (canvasRect == null)
+                Debug.LogWarning("[AiTutorChat] Avoid Touch Keyboard is on, but no Canvas was found " +
+                                 "above the Input Field, so the Input Row has nowhere to float to. " +
+                                 "Keyboard avoidance is effectively disabled.", this);
+        }
+
+        /// <summary>Screen pixels one canvas-local unit is worth, for a Screen Space - Overlay canvas.</summary>
+        float CanvasScaleFactor()
+        {
+            if (rootCanvas == null) return 1f;
+
+            if (rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay && rootCanvas.scaleFactor > 0f)
+                return rootCanvas.scaleFactor;
+
+            if (!loggedNonOverlayWarning && logSetup)
+            {
+                loggedNonOverlayWarning = true;
+                Debug.LogWarning("[AiTutorChat] The Canvas above the chat is not Screen Space - " +
+                                 "Overlay, so the keyboard math (which assumes Canvas.scaleFactor " +
+                                 "converts screen pixels to the canvas's local units) will be off. " +
+                                 "Switch Avoid Touch Keyboard off, or use a Screen Space - Overlay " +
+                                 "canvas.", this);
+            }
+            return 1f;
+        }
+
+        /// <summary>
+        /// True while the on-screen keyboard is genuinely up, with the height it covers (in screen
+        /// pixels) written to <paramref name="pixels"/>.
+        ///
+        /// TMP_InputField keeps its own TouchScreenKeyboard reference private (m_SoftKeyboard is a
+        /// protected field, not a public property), so its status is tracked by hand instead, via
+        /// the onTouchScreenKeyboardStatusChanged event wired up in Awake. The static
+        /// TouchScreenKeyboard.visible is kept alongside it as a safety net.
+        /// </summary>
+        bool TryGetKeyboardHeightPixels(out float pixels)
+        {
+            pixels = 0f;
+
+            bool keyboardUp = keyboardStatus == TouchScreenKeyboard.Status.Visible ||
+                               TouchScreenKeyboard.visible;
+            if (!keyboardUp) return false;
+
+            // Android in particular is known to hand back a degenerate rect for this - zero
+            // height, or one that covers almost the whole screen - especially on API 30+, where
+            // the soft keyboard no longer resizes the window by default and Unity has nothing
+            // real left to measure. Trusting a number like that gives zero lift while the
+            // keyboard is genuinely covering the field, which is worse than a guess.
+            float reportedHeight = TouchScreenKeyboard.area.height;
+            bool areaLooksReal = reportedHeight > 1f && reportedHeight < Screen.height * 0.9f;
+            pixels = areaLooksReal ? reportedHeight : Screen.height * fallbackKeyboardHeightFraction;
+
+            if (logSetup && !loggedKeyboardMetricsThisOpen)
+            {
+                loggedKeyboardMetricsThisOpen = true;
+                Debug.Log("[AiTutorChat] Keyboard now visible. TouchScreenKeyboard.area=" +
+                          TouchScreenKeyboard.area + " on a " + Screen.width + "x" + Screen.height +
+                          " screen -> " + (areaLooksReal
+                              ? "the reported area looks real, using it."
+                              : "the reported area looks degenerate, using the " +
+                                fallbackKeyboardHeightFraction + " fallback fraction instead."),
+                          this);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Pulls the Input Row out of the chat window and floats it, full width by default,
+        /// directly above the keyboard - reparented under the root Canvas so neither the window's
+        /// own (usually narrower) width nor anything it clips to can hide it.
+        ///
+        /// Called every frame the keyboard is up; the expensive reparent-and-restyle only happens
+        /// once, the first frame it is needed, and every later call just slides it to the new
+        /// target position (the keyboard's reported height can change a little as it finishes
+        /// animating in).
+        /// </summary>
+        void LiftInputRow(float keyboardHeightPixels)
+        {
+            float scale = CanvasScaleFactor();
+            float bottomOffset = keyboardHeightPixels / scale + keyboardClearance;
+
+            Rect safe = Screen.safeArea;
+            float padLeft = inputRowHorizontalPadding + safe.xMin / scale;
+            float padRight = inputRowHorizontalPadding + (Screen.width - safe.xMax) / scale;
+
+            Vector2 targetSize;
+            Vector2 targetPos;
+
+            if (stretchInputRowFullWidthOnKeyboard)
+            {
+                targetSize = new Vector2(-(padLeft + padRight), inputRowRest.height);
+                targetPos = new Vector2((padLeft - padRight) / 2f, bottomOffset);
+            }
+            else
+            {
+                // Simplification: re-centred under the canvas rather than restored to its exact
+                // old X position, which would need converting between two different parents'
+                // local spaces for a case that is off by default.
+                targetSize = new Vector2(inputRowRest.width, inputRowRest.height);
+                targetPos = new Vector2(0f, bottomOffset);
+            }
+
+            if (!inputRowIsLifted)
+            {
+                inputRowIsLifted = true;
+
+                inputRowRect.SetParent(canvasRect, false);
+                inputRowRect.SetAsLastSibling(); // always on top of the panel and message log
+
+                inputRowRect.pivot = new Vector2(0.5f, 0f);
+                inputRowRect.anchorMin = stretchInputRowFullWidthOnKeyboard
+                    ? new Vector2(0f, 0f) : new Vector2(0.5f, 0f);
+                inputRowRect.anchorMax = stretchInputRowFullWidthOnKeyboard
+                    ? new Vector2(1f, 0f) : new Vector2(0.5f, 0f);
+                inputRowRect.sizeDelta = targetSize;
+                // Snap on the very first frame rather than lerping in from wherever SetParent
+                // happened to leave it - that would look like a glitch, not a slide.
+                inputRowRect.anchoredPosition = targetPos;
+
+                if (logSetup)
+                    Debug.Log("[AiTutorChat] Touch keyboard opened - Input Row floated above it.",
+                              this);
+            }
+            else
+            {
+                inputRowRect.sizeDelta = targetSize;
+                inputRowRect.anchoredPosition = Vector2.Lerp(inputRowRect.anchoredPosition, targetPos,
+                    1f - Mathf.Exp(-keyboardMoveSpeed * Time.unscaledDeltaTime));
+            }
+
+            if (messageAreaRect != null) ShrinkMessageAreaFor(bottomOffset + inputRowRest.height);
+        }
+
+        /// <summary>
+        /// Pulls the message area's bottom edge up so it stops exactly where the floating Input
+        /// Row begins, instead of running on underneath it. Always computed from the captured REST
+        /// state, never from the rect's own current (already-shrunk) numbers, so this is safe to
+        /// call every frame without the edge creeping further up each time.
+        ///
+        /// Skipped entirely when the message area's parent has its own Layout Group: removing the
+        /// Input Row from that Layout Group's children (it typically lives alongside the message
+        /// area, under the same parent) is normally enough to make the group reflow on its own,
+        /// and fighting a Layout Group's own rebuild with a second, manual resize every frame
+        /// produces flicker rather than help.
+        /// </summary>
+        void ShrinkMessageAreaFor(float reserveAtBottom)
+        {
+            LayoutGroup lg = messageAreaRect.parent != null
+                ? messageAreaRect.parent.GetComponent<LayoutGroup>() : null;
+            if (lg != null) return;
+
+            reserveAtBottom += keyboardClearance; // a little daylight between log and Input Row
+
+            bool verticallyStretched =
+                Mathf.Abs(messageAreaRect.anchorMin.y - messageAreaRect.anchorMax.y) > 0.0001f;
+
+            if (verticallyStretched)
+            {
+                // The bottom edge here is offsetMin.y - push it up, leave the top edge alone.
+                Vector2 om = messageAreaRect.offsetMin;
+                om.y = messageAreaRest.offsetMin.y + reserveAtBottom;
+                messageAreaRect.offsetMin = om;
+            }
+            else
+            {
+                // A fixed-size rect: shrink the height and, unless it happens to be pivoted at
+                // its own bottom edge, nudge anchoredPosition too so the TOP edge - the message
+                // log's title/scroll start - stays exactly where it was.
+                float pivotY = messageAreaRect.pivot.y;
+                messageAreaRect.sizeDelta = new Vector2(messageAreaRect.sizeDelta.x,
+                    Mathf.Max(0f, messageAreaRest.height - reserveAtBottom));
+                messageAreaRect.anchoredPosition = new Vector2(messageAreaRect.anchoredPosition.x,
+                    messageAreaRest.anchoredPosition.y + reserveAtBottom * (1f - pivotY));
+            }
+        }
+
+        /// <summary>Puts the Input Row (and the message area, if shrunk) back exactly as captured.</summary>
+        void LowerInputRowIfLifted()
+        {
+            if (!inputRowIsLifted) return;
+            inputRowIsLifted = false;
+            loggedKeyboardMetricsThisOpen = false;
+
+            if (inputRowRect != null) inputRowRest.Restore(inputRowRect);
+            if (messageAreaRect != null) messageAreaRest.Restore(messageAreaRect);
+
+            if (logSetup)
+                Debug.Log("[AiTutorChat] Touch keyboard closed - Input Row and message area " +
+                          "restored to normal.", this);
+        }
+
+        /// <summary>Called every frame the chat is open; does nothing at all on PC.</summary>
+        void UpdateKeyboardAvoidance()
+        {
+            if (!avoidTouchKeyboard || inputRowRect == null || canvasRect == null) return;
+
+            if (TryGetKeyboardHeightPixels(out float px)) LiftInputRow(px);
+            else LowerInputRowIfLifted();
         }
 
         /// <summary>Wire to a button that should toggle rather than only open.</summary>
@@ -703,6 +1089,7 @@ namespace CSSSimulation.Tutor
         void ValidateSetup()
         {
             AdoptKeyboardEatersIfEmpty();
+            ResolveKeyboardAvoidanceTargets();
 
             List<string> problems = new List<string>();
 
@@ -736,6 +1123,11 @@ namespace CSSSimulation.Tutor
             if (systemPrompt != null && !systemPrompt.Contains("{context}"))
                 problems.Add("System Prompt has no {context} marker, so the tutor is never told " +
                              "which step the player is on and 'what do I do next' cannot be answered.");
+
+            if (avoidTouchKeyboard && inputRowRect == null)
+                problems.Add("Avoid Touch Keyboard is on, but no Input Row could be resolved. " +
+                             "Assign Input Row Rect by hand, or make sure Input Field sits inside " +
+                             "a parent RectTransform shared with the Send button.");
 
             if (problems.Count == 0)
             {

@@ -6762,6 +6762,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+--- !u!1 &243415672 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1305320797232078571, guid: 023da32fbe2dbd140b2d09b56991a357, type: 3}
+  m_PrefabInstance: {fileID: 243415671}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &249231783
 GameObject:
   m_ObjectHideFlags: 0
@@ -21131,6 +21136,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
+--- !u!1 &630337390 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5024899614668245291, guid: d3b25dba2a0724a459dedd37c158eecd, type: 3}
+  m_PrefabInstance: {fileID: 630337389}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &630711476
 GameObject:
   m_ObjectHideFlags: 0
@@ -33820,6 +33830,8 @@ MonoBehaviour:
   - {fileID: 421944314025134795}
   - {fileID: 4087547483398783067}
   - {fileID: 1814123310}
+  - {fileID: 630337390}
+  - {fileID: 243415672}
   freezeUntilStart:
   - {fileID: 1743967174304883108}
   - {fileID: 8784337162738462955}
@@ -34139,7 +34151,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 988095418}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f68900cf34c4054f9f61a4c6675b25a, type: 3}
   m_Name: 
@@ -79811,7 +79823,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 180, y: -102}
+  m_AnchoredPosition: {x: 625, y: -12}
   m_SizeDelta: {x: 420, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!33 &5135296166759233678

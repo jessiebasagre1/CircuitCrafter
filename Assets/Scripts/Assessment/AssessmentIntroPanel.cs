@@ -170,7 +170,20 @@ public class AssessmentIntroPanel : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
-        if (!IsShowing || !manageCursor) return;
+        if (!IsShowing) return;
+
+        // The world "Press E to ..." prompt belongs to PlayerInteractor, which keeps running every
+        // frame regardless of this panel - Freeze Until Start stops the player from WALKING away,
+        // but it does not stop the prompt for whatever they were already standing next to from
+        // showing on top of (or behind) the briefing. This is the same per-frame request
+        // StationPromptHider and every station-view controller already use, so it costs nothing to
+        // ask again here and there is nothing to undo when the briefing closes.
+        //
+        // Fully qualified on purpose - this project has two classes named PlayerInteractor, and an
+        // unqualified reference resolves to the wrong one (COC1's, which has no such method).
+        CSSSimulation.Interaction.PlayerInteractor.SuppressPromptThisFrame();
+
+        if (!manageCursor) return;
 
         if (Cursor.lockState != CursorLockMode.None || !Cursor.visible)
             CursorControl.Free();

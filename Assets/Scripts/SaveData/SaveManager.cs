@@ -344,19 +344,41 @@ public class SaveManager : MonoBehaviour
     /// <summary>
     /// What the Reset Progress buttons run: DeleteSave() - story progress, COC unlocks, COC4
     /// tickets - PLUS the competency record, so the competency screen goes back to Not Attempted
-    /// and the written-test (quiz) results are cleared with it.
+    /// and the written-test (quiz) results are cleared with it - PLUS every stored run result for
+    /// this learner, so History and the exported CSVs don't go on describing runs the competency
+    /// screen no longer has any record of.
     ///
     /// NOT folded into DeleteSave(), on purpose. New Game also calls DeleteSave(), and starting a
     /// fresh story run is no reason to erase what a learner earned in ASSESSMENT mode. Two methods
     /// with names that say which is which - the same reasoning as ClearProgressKeepingUnlocks.
     ///
-    /// Only the active learner's record is touched. The saved result files (the evidence behind
-    /// each assessment) stay on disk: they are the audit trail, not progress.
+    /// REVERSES THE ORIGINAL DESIGN HERE ON PURPOSE. This used to leave the stored result
+    /// JSON/CSV alone, treating them as an audit trail separate from "progress" - which is the
+    /// right call for a permanent record you never want a stray reset to destroy, but wrong for
+    /// a training game where "Reset Progress" is explicitly meant to hand the next student (or
+    /// the same one, starting over) a genuinely clean slate. If this project ever needs BOTH - a
+    /// reset that clears standing but keeps the evidence, for record-keeping - that's a reason
+    /// for a second, differently-named method, not for reverting this one.
     /// </summary>
     public void ResetAllProgress()
     {
         DeleteSave();
         ResetCompetencyRecord();
+        ResetCompetencyHistory();
+    }
+
+    /// <summary>
+    /// Deletes every stored run result (JSON evidence + CSV rows) for the active profile, across
+    /// all four modules. Separate from ResetCompetencyRecord() rather than folded into it, so
+    /// that method's own comment - about what IT touches - stays accurate on its own.
+    /// </summary>
+    private static void ResetCompetencyHistory()
+    {
+        string profileId = CircuitCrafter.Assessment.ProfileManager.Instance != null
+            ? CircuitCrafter.Assessment.ProfileManager.Instance.ActiveProfileId
+            : "default";
+
+        CircuitCrafter.Assessment.ResultsRepository.DeleteAll(profileId);
     }
 
     private static void ResetCompetencyRecord()

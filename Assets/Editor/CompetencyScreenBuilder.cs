@@ -180,6 +180,20 @@ namespace CircuitCrafter.Assessment.EditorTools
             CompetencyModuleHeaderView headerPrefab = BuildModuleHeaderPrefab();
             CompetencyOutcomeRowView rowPrefab = BuildOutcomeRowPrefab();
 
+            // Built last and parented alongside Column, not inside it - Column's own
+            // VerticalLayoutGroup only governs its direct children, so a sibling overlay sits on
+            // top of the whole screen (later siblings draw in front) without being squeezed into
+            // the header/badges/list/footer stack itself.
+            CompetencyHistoryView historyView = BuildHistoryPopup(screen);
+
+            // Built after the history popup, so it stacks ON TOP of it (later siblings draw in
+            // front) - a row's View button opens this while the history popup is still open
+            // behind it.
+            CompetencyRunDetailView detailView = BuildRunDetailPopup(screen);
+            var historySo = new SerializedObject(historyView);
+            SetRef(historySo, "detailView", detailView);
+            historySo.ApplyModifiedPropertiesWithoutUndo();
+
             var so = new SerializedObject(view);
             SetRef(so, "learnerText", learnerText);
             SetRef(so, "overallText", overallText);
@@ -192,6 +206,7 @@ namespace CircuitCrafter.Assessment.EditorTools
             SetRef(so, "exportButton", exportButton);
             SetRef(so, "exportStatusText", exportStatus);
             SetRef(so, "refreshButton", refreshButton);
+            SetRef(so, "historyView", historyView);
             so.ApplyModifiedPropertiesWithoutUndo();
 
             // Off, so it cannot land on top of the menu the user is already looking at.
@@ -558,12 +573,18 @@ namespace CircuitCrafter.Assessment.EditorTools
             LayoutElement tle = unitTitle.gameObject.AddComponent<LayoutElement>();
             tle.flexibleWidth = 1f;
 
+            TMP_Text best = AddText(pad, "BestScore", "Best: -", SizeBody, Gold, FontStyles.Bold);
+            Width(best.rectTransform, 130f);
+            best.alignment = TextAlignmentOptions.MidlineRight;
+
             TMP_Text summary = AddText(pad, "Summary", "0 of 0 competent", SizeBody, TextSecondary);
             Width(summary.rectTransform, 230f);
             summary.alignment = TextAlignmentOptions.MidlineRight;
 
             Slider bar = MakeBar(pad, "ProgressBar", AccentBar);
             Width(bar.GetComponent<RectTransform>(), 220f);
+
+            Button history = MakeButton(pad, "HistoryButton", "History", 130f);
 
             RectTransform done = NewRect("CompleteBadge", pad);
             Width(done, 130f);
@@ -580,6 +601,8 @@ namespace CircuitCrafter.Assessment.EditorTools
             SetRef(so, "summaryText", summary);
             SetRef(so, "progressBar", bar);
             SetRef(so, "completeBadge", done.gameObject);
+            SetRef(so, "bestScoreText", best);
+            SetRef(so, "historyButton", history);
             so.ApplyModifiedPropertiesWithoutUndo();
 
             return SaveAsPrefab(root.gameObject).GetComponent<CompetencyModuleHeaderView>();
@@ -643,6 +666,331 @@ namespace CircuitCrafter.Assessment.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             return SaveAsPrefab(root.gameObject).GetComponent<CompetencyOutcomeRowView>();
+        }
+
+        // ==================================================================
+        // History popup
+        // ==================================================================
+
+        /// <summary>
+        /// The "History" popup: a dim full-screen scrim behind a centred card, with a title,
+        /// the module's Assessment high score, a count line and a scrolling list of past runs.
+        /// Starts switched off; CompetencyHistoryView.Open() turns it on.
+        /// </summary>
+        private static CompetencyHistoryView BuildHistoryPopup(RectTransform screen)
+        {
+            RectTransform popup = NewRect("HistoryPopup", screen);
+            Stretch(popup);
+
+            // raycastTarget TRUE and no Button on it - this is what stops a click reaching the
+            // competency list behind the popup while it's open, without needing a "click outside
+            // to close" handler that could just as easily fire from a click on a label INSIDE the
+            // card (most of this card's own text has raycastTarget off, so a click on it would
+            // otherwise fall through to whatever sits behind - the Close button is the one and
+            // only way out on purpose).
+            AddImage(popup, new Color(0f, 0f, 0f, 0.55f), raycastTarget: true);
+
+            RectTransform card = NewRect("Card", popup);
+            Centre(card, 1100f, 760f);
+            AddImage(card, CardBg);
+            AddTopEdge(card, 5f);
+
+            RectTransform pad = NewRect("Pad", card);
+            Stretch(pad, 24f);
+            VerticalLayoutGroup v = pad.gameObject.AddComponent<VerticalLayoutGroup>();
+            v.spacing = 12f;
+            v.childControlWidth = true;
+            v.childControlHeight = true;
+            v.childForceExpandWidth = true;
+            v.childForceExpandHeight = false;
+
+            // ---- title row --------------------------------------------------
+            RectTransform titleRow = NewRect("TitleRow", pad);
+            Fixed(titleRow, 46f);
+            HorizontalLayoutGroup th = titleRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            th.spacing = 14f;
+            th.childControlWidth = true;
+            th.childControlHeight = true;
+            th.childForceExpandWidth = false;
+            th.childForceExpandHeight = true;
+            th.childAlignment = TextAnchor.MiddleLeft;
+
+            TMP_Text title = AddText(titleRow, "Title", "Module - History", SizeSection,
+                                     TextPrimary, FontStyles.Bold);
+            LayoutElement titleLe = title.gameObject.AddComponent<LayoutElement>();
+            titleLe.flexibleWidth = 1f;
+
+            Button clearHistory = MakeButton(titleRow, "ClearHistoryButton", "Clear History", 210f);
+            Button close = MakeButton(titleRow, "CloseButton", "Close", 160f);
+
+            // ---- clear-history confirm strip -------------------------------
+            // Hidden until Clear History is pressed. A dark red-tinted plate rather than the
+            // card's usual blue is the only cue this needs - it should read as "careful" at a
+            // glance, before anyone reads the words on it.
+            RectTransform confirmRow = NewRect("ClearConfirm", pad);
+            Fixed(confirmRow, 58f);
+            AddImage(confirmRow, new Color32(0x47, 0x1E, 0x1E, 0xFF));
+
+            HorizontalLayoutGroup ch = confirmRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            ch.padding = new RectOffset(16, 16, 8, 8);
+            ch.spacing = 14f;
+            ch.childControlWidth = true;
+            ch.childControlHeight = true;
+            ch.childForceExpandWidth = false;
+            ch.childForceExpandHeight = true;
+            ch.childAlignment = TextAnchor.MiddleLeft;
+
+            TMP_Text confirmLabel = AddText(confirmRow, "Label",
+                "Clear this module's history? Competency status and high score are not affected. This cannot be undone.",
+                SizeCaption, TextPrimary);
+            LayoutElement confirmLabelLe = confirmLabel.gameObject.AddComponent<LayoutElement>();
+            confirmLabelLe.flexibleWidth = 1f;
+            confirmLabel.enableWordWrapping = true;
+
+            Button confirmYes = MakeButton(confirmRow, "YesButton", "Yes, clear", 160f);
+            Button confirmNo = MakeButton(confirmRow, "NoButton", "Cancel", 130f);
+
+            confirmRow.gameObject.SetActive(false);
+
+            // ---- best score + count -----------------------------------------
+            TMP_Text best = AddText(pad, "BestScoreText", "Personal best: -", SizeBody, Gold,
+                                    FontStyles.Bold);
+            Fixed(best.rectTransform, 32f);
+
+            TMP_Text count = AddText(pad, "CountText", "", SizeCaption, TextSecondary);
+            Fixed(count.rectTransform, 26f);
+
+            // ---- list ---------------------------------------------------------
+            RectTransform listArea = NewRect("ListArea", pad);
+            AddImage(listArea, RailBg);
+            LayoutElement listLe = listArea.gameObject.AddComponent<LayoutElement>();
+            listLe.flexibleHeight = 1f;
+            listLe.minHeight = 380f;
+
+            RectTransform viewport = NewRect("Viewport", listArea);
+            Stretch(viewport, 10f);
+            AddImage(viewport, new Color(1f, 1f, 1f, 0.004f), raycastTarget: true);
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            RectTransform content = NewRect("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero;
+            content.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup lv = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            lv.padding = new RectOffset(10, 24, 10, 10);
+            lv.spacing = 6f;
+            lv.childControlWidth = true;
+            lv.childControlHeight = true;
+            lv.childForceExpandWidth = true;
+            lv.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            ScrollRect scroll = listArea.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 36f;
+            scroll.verticalScrollbar = BuildScrollbar(listArea);
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+            // ---- empty state --------------------------------------------------
+            GameObject emptyPanel;
+            TMP_Text emptyText;
+            BuildEmptyState(pad, out emptyPanel, out emptyText);
+
+            // ---- wiring ---------------------------------------------------------
+            CompetencyHistoryRowView rowPrefab = BuildHistoryRowPrefab();
+
+            CompetencyHistoryView view = popup.gameObject.AddComponent<CompetencyHistoryView>();
+            var so = new SerializedObject(view);
+            SetRef(so, "titleText", title);
+            SetRef(so, "bestScoreText", best);
+            SetRef(so, "countText", count);
+            SetRef(so, "rowContainer", content);
+            SetRef(so, "rowPrefab", rowPrefab);
+            SetRef(so, "emptyStatePanel", emptyPanel);
+            SetRef(so, "emptyStateText", emptyText);
+            SetRef(so, "closeButton", close);
+            SetRef(so, "clearHistoryButton", clearHistory);
+            SetRef(so, "clearConfirmPanel", confirmRow.gameObject);
+            SetRef(so, "clearConfirmYesButton", confirmYes);
+            SetRef(so, "clearConfirmNoButton", confirmNo);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            popup.gameObject.SetActive(false);
+            return view;
+        }
+
+        private static CompetencyHistoryRowView BuildHistoryRowPrefab()
+        {
+            RectTransform root = NewRect("CompetencyHistoryRow", null);
+            AddImage(root, new Color32(0x2B, 0x3A, 0xA8, 0xFF));
+            Fixed(root, 64f);
+
+            RectTransform pad = NewRect("Pad", root);
+            Stretch(pad);
+            HorizontalLayoutGroup h = pad.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.padding = new RectOffset(16, 16, 8, 8);
+            h.spacing = 14f;
+            h.childControlWidth = true;
+            h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = true;
+            h.childAlignment = TextAnchor.MiddleLeft;
+
+            RectTransform pill = NewRect("ModePill", pad);
+            Width(pill, 10f);
+            Image pillImage = AddImage(pill, TextSecondary);
+
+            TMP_Text date = AddText(pad, "Date", "Jan 1, 2026  00:00", SizeCaption, TextSecondary);
+            Width(date.rectTransform, 220f);
+
+            TMP_Text mode = AddText(pad, "Mode", "ASSESSMENT", SizeCaption, TextSecondary,
+                                    FontStyles.Bold);
+            Width(mode.rectTransform, 130f);
+
+            TMP_Text score = AddText(pad, "Score", "0%  (0/0)", SizeBody, TextPrimary,
+                                     FontStyles.Bold);
+            Width(score.rectTransform, 170f);
+
+            TMP_Text status = AddText(pad, "Status", "Completed", SizeCaption, TextSecondary);
+            Width(status.rectTransform, 150f);
+
+            TMP_Text detail = AddText(pad, "Detail", "0 mistakes", SizeCaption, TextSecondary);
+            LayoutElement dle = detail.gameObject.AddComponent<LayoutElement>();
+            dle.flexibleWidth = 1f;
+            detail.alignment = TextAlignmentOptions.MidlineRight;
+
+            Button viewButton = MakeButton(pad, "ViewButton", "View", 90f);
+
+            CompetencyHistoryRowView view = root.gameObject.AddComponent<CompetencyHistoryRowView>();
+            var so = new SerializedObject(view);
+            SetRef(so, "dateText", date);
+            SetRef(so, "modeText", mode);
+            SetRef(so, "scoreText", score);
+            SetRef(so, "statusText", status);
+            SetRef(so, "detailText", detail);
+            SetRef(so, "modePill", pillImage);
+            SetRef(so, "viewButton", viewButton);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            return SaveAsPrefab(root.gameObject).GetComponent<CompetencyHistoryRowView>();
+        }
+
+        /// <summary>
+        /// The full-detail popup opened from a history row's View button: one scrollable
+        /// rich-text report (stages, mistakes, learning outcomes) for a single run. Starts
+        /// switched off; CompetencyRunDetailView.Open() turns it on.
+        /// </summary>
+        private static CompetencyRunDetailView BuildRunDetailPopup(RectTransform screen)
+        {
+            RectTransform popup = NewRect("RunDetailPopup", screen);
+            Stretch(popup);
+            AddImage(popup, new Color(0f, 0f, 0f, 0.65f), raycastTarget: true);  // see BuildHistoryPopup for why this has no Button on it
+
+            RectTransform card = NewRect("Card", popup);
+            Centre(card, 1100f, 780f);
+            AddImage(card, CardBg);
+            AddTopEdge(card, 5f);
+
+            RectTransform pad = NewRect("Pad", card);
+            Stretch(pad, 24f);
+            VerticalLayoutGroup v = pad.gameObject.AddComponent<VerticalLayoutGroup>();
+            v.spacing = 12f;
+            v.childControlWidth = true;
+            v.childControlHeight = true;
+            v.childForceExpandWidth = true;
+            v.childForceExpandHeight = false;
+
+            // ---- title row --------------------------------------------------
+            RectTransform titleRow = NewRect("TitleRow", pad);
+            Fixed(titleRow, 46f);
+            HorizontalLayoutGroup th = titleRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            th.spacing = 14f;
+            th.childControlWidth = true;
+            th.childControlHeight = true;
+            th.childForceExpandWidth = false;
+            th.childForceExpandHeight = true;
+            th.childAlignment = TextAnchor.MiddleLeft;
+
+            TMP_Text title = AddText(titleRow, "Title", "Run detail", SizeSection,
+                                     TextPrimary, FontStyles.Bold);
+            LayoutElement titleLe = title.gameObject.AddComponent<LayoutElement>();
+            titleLe.flexibleWidth = 1f;
+
+            Button close = MakeButton(titleRow, "CloseButton", "Close", 160f);
+
+            // ---- body -----------------------------------------------------
+            RectTransform bodyArea = NewRect("BodyArea", pad);
+            AddImage(bodyArea, RailBg);
+            LayoutElement bodyAreaLe = bodyArea.gameObject.AddComponent<LayoutElement>();
+            bodyAreaLe.flexibleHeight = 1f;
+            bodyAreaLe.minHeight = 500f;
+
+            RectTransform viewport = NewRect("Viewport", bodyArea);
+            Stretch(viewport, 10f);
+            AddImage(viewport, new Color(1f, 1f, 1f, 0.004f), raycastTarget: true);
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            RectTransform content = NewRect("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero;
+            content.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup lv = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            lv.padding = new RectOffset(16, 24, 12, 12);
+            lv.childControlWidth = true;
+            lv.childControlHeight = true;
+            lv.childForceExpandWidth = true;
+            lv.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            ScrollRect scroll = bodyArea.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 36f;
+            scroll.verticalScrollbar = BuildScrollbar(bodyArea);
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+            // One rich-text block, not a row prefab per stage/mistake - see the class comment on
+            // CompetencyRunDetailView for why.
+            TMP_Text body = AddText(content, "BodyText", "", SizeBody, TextPrimary);
+            body.alignment = TextAlignmentOptions.TopLeft;
+            body.enableWordWrapping = true;
+            body.richText = true;
+            body.overflowMode = TextOverflowModes.Overflow;  // the ScrollRect handles overflow, not mid-line clipping
+
+            // AddText fixes every label's height to one line by default, which is right for
+            // everything else it builds but wrong here - this block grows with however much a
+            // given run recorded, so its height has to come from its own wrapped content rather
+            // than a size fixed for one line.
+            LayoutElement oneLineHeight = body.gameObject.GetComponent<LayoutElement>();
+            if (oneLineHeight != null) Object.DestroyImmediate(oneLineHeight);
+
+            // ---- wiring ---------------------------------------------------------
+            CompetencyRunDetailView view = popup.gameObject.AddComponent<CompetencyRunDetailView>();
+            var so = new SerializedObject(view);
+            SetRef(so, "titleText", title);
+            SetRef(so, "bodyText", body);
+            SetRef(so, "closeButton", close);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            popup.gameObject.SetActive(false);
+            return view;
         }
 
         private static GameObject SaveAsPrefab(GameObject temp)
