@@ -147,6 +147,11 @@ namespace CircuitCrafter.Settings.EditorTools
             Button reset = Btn(panel, "ResetButton", "Reset to defaults", Vector2.zero, new Vector2(SidebarWidth, 48));
             PinToCorner(reset.GetComponent<RectTransform>(), 0f, new Vector2(Margin, Margin));
 
+            // Stacked directly above Reset, same bottom-left corner - a quiet, secondary
+            // link rather than a fifth sidebar tab, since it isn't a page of controls.
+            Button legal = Btn(panel, "LegalButton", "Privacy & Terms", Vector2.zero, new Vector2(SidebarWidth, 44));
+            PinToCorner(legal.GetComponent<RectTransform>(), 0f, new Vector2(Margin, Margin + 48f + 8f));
+
             Button close = Btn(panel, "CloseButton", "Close", Vector2.zero, new Vector2(180, 48));
             PinToCorner(close.GetComponent<RectTransform>(), 1f, new Vector2(-Margin, Margin));
 
@@ -157,6 +162,12 @@ namespace CircuitCrafter.Settings.EditorTools
             RectTransform bubble = BuildBubble(panel, out TMP_Text helpTitle, out TMP_Text helpBody,
                                                out Button helpClose);
 
+            // ---- the Privacy Policy / Terms popup ----
+            // Parented to the CANVAS, not the settings panel, and built after the panel so
+            // it draws on top of it (and of the help bubble) - it is meant to be readable
+            // even if something ever closes the settings panel out from under it.
+            LegalDocumentView legalView = BuildLegalPopup(canvas.transform);
+
             // ---- component ----
             var component = panel.gameObject.AddComponent<SettingsPanel>();
             var so = new SerializedObject(component);
@@ -164,6 +175,8 @@ namespace CircuitCrafter.Settings.EditorTools
             Assign(so, "panelRoot", panel.gameObject);
             Assign(so, "closeButton", close);
             Assign(so, "resetButton", reset);
+            Assign(so, "legalButton", legal);
+            Assign(so, "legalView", legalView);
             Assign(so, "helpBubble", bubble);
             Assign(so, "helpTitle", helpTitle);
             Assign(so, "helpBody", helpBody);
@@ -205,7 +218,8 @@ namespace CircuitCrafter.Settings.EditorTools
             EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
 
             Debug.Log("[SettingsPanelBuilder] Built SettingsPanel: 4 categories, 6 slider(s), 5 toggle(s), " +
-                      "11 help button(s)" + (madeApplier ? ", plus a SettingsApplier." : ".") + "\n\n" +
+                      "11 help button(s), plus a Privacy Policy & Terms popup" +
+                      (madeApplier ? ", plus a SettingsApplier." : ".") + "\n\n" +
                       "STILL TO DO BY HAND:\n" +
                       "  1. Wire whatever opens this - your pause menu's Settings button, or a\n" +
                       "     main-menu button - to SettingsPanel.Open().\n" +
@@ -215,7 +229,11 @@ namespace CircuitCrafter.Settings.EditorTools
                       "     now, and two things writing the same fields will fight.\n" +
                       "  4. Help text lives in SettingsHelp.cs, not on the buttons. Edit it there.\n" +
                       "     The bubble sizes and positions itself - do not anchor it by hand.\n" +
-                      "  5. Restyle freely - moving and recolouring breaks none of the wiring.");
+                      "  5. Restyle freely - moving and recolouring breaks none of the wiring.\n" +
+                      "  6. Privacy Policy / Terms text lives in LegalDocumentView.cs, not on the\n" +
+                      "     scene object - edit PrivacyPolicyText and TermsText there. It is\n" +
+                      "     template wording, not reviewed legal text - have someone qualified\n" +
+                      "     check it, especially the AI Tutor section, before treating it as final.");
         }
 
         // ==================================================================
@@ -285,6 +303,109 @@ namespace CircuitCrafter.Settings.EditorTools
 
             bubble.gameObject.SetActive(false);
             return bubble;
+        }
+
+        // ==================================================================
+        // Privacy Policy / Terms and Conditions popup
+        // ==================================================================
+
+        /// <summary>
+        /// A dim scrim over the whole screen with a centred, scrollable card - the same
+        /// "click Close, not click-outside-to-dismiss" shape as the rest of this project's
+        /// popups, for the same reason: a click on non-interactive body text would otherwise
+        /// fall through to the scrim and close the whole thing by accident.
+        /// </summary>
+        private static LegalDocumentView BuildLegalPopup(Transform canvasRoot)
+        {
+            RectTransform popup = Stretch(canvasRoot, "LegalPopup", typeof(CanvasRenderer), typeof(Image));
+            Image scrim = popup.GetComponent<Image>();
+            scrim.color = new Color(0f, 0f, 0f, 0.65f);
+            scrim.raycastTarget = true; // blocks clicks reaching whatever is behind, on purpose
+            popup.SetAsLastSibling();
+
+            RectTransform card = Place(popup, "Card", Vector2.zero, new Vector2(900f, 700f),
+                                       typeof(CanvasRenderer), typeof(Image));
+            card.anchorMin = new Vector2(0.5f, 0.5f);
+            card.anchorMax = new Vector2(0.5f, 0.5f);
+            card.pivot = new Vector2(0.5f, 0.5f);
+            card.anchoredPosition = Vector2.zero;
+            card.GetComponent<Image>().color = PanelBg;
+
+            TMP_Text title = Label(card, "Title", "Privacy Policy & Terms and Conditions",
+                                   new Vector2(24, 20), new Vector2(700, 30), 20, TextMain);
+
+            Button close = Btn(card, "CloseButton", "Close", Vector2.zero, new Vector2(140, 40));
+            RectTransform closeRect = close.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.anchoredPosition = new Vector2(-20f, -16f);
+
+            // ---- scrollable body --------------------------------------------------
+            RectTransform bodyArea = Place(card, "BodyArea", new Vector2(24, 70), new Vector2(852, 606),
+                                           typeof(CanvasRenderer), typeof(Image));
+            bodyArea.GetComponent<Image>().color = PaneBg;
+
+            RectTransform viewport = Stretch(bodyArea, "Viewport", typeof(CanvasRenderer), typeof(Image));
+            viewport.offsetMin = new Vector2(10f, 10f);
+            viewport.offsetMax = new Vector2(-10f, -10f);
+            Image viewportImage = viewport.GetComponent<Image>();
+            viewportImage.color = new Color(1f, 1f, 1f, 0.004f);
+            viewportImage.raycastTarget = true;
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            var contentGo = new GameObject("Content", typeof(RectTransform));
+            RectTransform content = contentGo.GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero;
+            content.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup vlg = contentGo.AddComponent<VerticalLayoutGroup>();
+            vlg.padding = new RectOffset(14, 24, 10, 10);
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = true;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = contentGo.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            ScrollRect scroll = bodyArea.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 30f;
+            // No scrollbar built here to keep this popup simple - mouse wheel / touch drag
+            // scroll it fine. Add a Scrollbar and assign it to Vertical Scrollbar if you
+            // want a visible one.
+
+            // One rich-text block for the whole document rather than a row per paragraph -
+            // this is read-only reference text, not something that needs per-line structure.
+            var bodyGo = new GameObject("BodyText", typeof(RectTransform));
+            bodyGo.transform.SetParent(content, false);
+            TMP_Text body = bodyGo.AddComponent<TextMeshProUGUI>();
+            body.text = "";
+            body.fontSize = 15;
+            body.color = TextMain;
+            body.alignment = TextAlignmentOptions.TopLeft;
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.raycastTarget = false;
+
+            // ---- wiring -------------------------------------------------------------
+            LegalDocumentView view = popup.gameObject.AddComponent<LegalDocumentView>();
+            var so = new SerializedObject(view);
+            Assign(so, "titleText", title);
+            Assign(so, "bodyText", body);
+            Assign(so, "closeButton", close);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            popup.gameObject.SetActive(false);
+            return view;
         }
 
         // ==================================================================

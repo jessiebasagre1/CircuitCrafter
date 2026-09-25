@@ -62,6 +62,13 @@ namespace CircuitCrafter.Settings
         [SerializeField] private Button closeButton;
         [SerializeField] private Button resetButton;
 
+        [Header("Legal")]
+        [Tooltip("The 'Privacy & Terms' button, pinned to the bottom-left of the sidebar.")]
+        [SerializeField] private Button legalButton;
+
+        [Tooltip("The Privacy Policy / Terms and Conditions popup this button opens.")]
+        [SerializeField] private LegalDocumentView legalView;
+
         [Header("Categories")]
         [SerializeField] private List<Category> categories = new List<Category>();
 
@@ -156,6 +163,8 @@ namespace CircuitCrafter.Settings
             if (resetButton != null) resetButton.onClick.AddListener(ResetAll);
             if (helpCloseButton != null) helpCloseButton.onClick.AddListener(ClearHelp);
 
+            if (legalButton != null && legalView != null) legalButton.onClick.AddListener(legalView.Open);
+
             for (int i = 0; i < categories.Count; i++)
             {
                 // Captured into a local - a loop variable used directly inside the
@@ -243,6 +252,10 @@ namespace CircuitCrafter.Settings
         public void Close()
         {
             if (panelRoot != null) panelRoot.SetActive(false);
+
+            // Nothing should linger on screen once Settings closes - see it through even
+            // though this popup is otherwise independent of the panel that opened it.
+            if (legalView != null) legalView.Close();
         }
 
         /// <summary>

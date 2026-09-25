@@ -13,12 +13,11 @@ MonoBehaviour:
   m_Name: Step_02_ComputerName
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_02_ComputerName
-  instructionText: 'LO2.1 - A server must be identifiable on the network before anything
-    else.
-
-
-    Open System Properties > Computer Name > Change, and type the host
-    name given in the job order.'
+  instructionText: "LO2.1 - A server must be identifiable on the network before anything
+    else.\n\nOpen System Properties \u2014 either \"This PC\" on the desktop or \"System\"
+    on the Start menu will get you there. Go to the Computer Name tab and click Change\u2026.
+    Type the host name given on the job order, then click OK twice and restart when
+    prompted."
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

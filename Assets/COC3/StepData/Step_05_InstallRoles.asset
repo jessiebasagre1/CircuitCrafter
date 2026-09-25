@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: Step_05_InstallRoles
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_05_InstallRoles
-  instructionText: 'LO2.3 - Install the modules the job order requires.
-
-
-    In
-    Server Manager > Add roles and features, tick all three: <b>Active Directory
-    Domain Services</b>, <b>DNS Server</b> and <b>DHCP Server</b>, then complete
-    the wizard.'
+  instructionText: "LO2.3 - Install the modules the job order requires.\n\nOpen Server
+    Manager \u2014 Start menu or desktop. Click Manage \u25BE (or the numbered tile
+    \"2 Add roles and features\") and step through the wizard to the Server Roles
+    page.\n\nTick all five roles the job order asks for:\n\nActive Directory Domain
+    Services\nDHCP Server\nDNS Server\nFile and Storage Services\nPrint and Document
+    Services\n\nClick Next through the remaining pages, then Install."
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 
