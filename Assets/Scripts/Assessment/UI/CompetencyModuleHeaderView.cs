@@ -28,8 +28,18 @@ namespace CircuitCrafter.Assessment.UI
         [Tooltip("Shows e.g. \"2 of 5 competent\". Optional.")]
         [SerializeField] private TMP_Text summaryText;
 
-        [Tooltip("Optional 0-1 bar of competent outcomes over total outcomes.")]
+        [Tooltip("The BLUE bar: competent outcomes over total outcomes. Optional.")]
         [SerializeField] private Slider progressBar;
+
+        [Tooltip("OPTIONAL. The YELLOW bar behind the blue one: outcomes at Practised OR BETTER - " +
+                 "everything the learner has worked through, in story mode or assessment.\n\n" +
+                 "Give it the SAME RectTransform as the blue bar, put it EARLIER in the hierarchy so " +
+                 "it draws behind, and switch its Background image off: an opaque track on the front " +
+                 "bar hides it completely. Leave this empty and the header shows only the blue bar, " +
+                 "exactly as before.\n\n" +
+                 "It counts Competent outcomes too, so it can never be shorter than the blue bar. " +
+                 "Yellow is \"been through it\", blue is the part of that which is proven.")]
+        [SerializeField] private Slider storyBar;
 
         [Tooltip("Optional - switched on only when every outcome in the module is Competent.")]
         [SerializeField] private GameObject completeBadge;
@@ -107,6 +117,26 @@ namespace CircuitCrafter.Assessment.UI
                 // empty bar rather than dividing by zero and rendering full.
                 progressBar.maxValue = Mathf.Max(1, total);
                 progressBar.value = competent;
+            }
+
+            // THE PRACTISED COUNT IS READ HERE RATHER THAN PASSED IN, so Setup keeps its three
+            // arguments and every existing caller - CompetencyProfileView, anything else - keeps
+            // working untouched. The ledger is the one place that counts either standing; see the
+            // four-out overload of GetModuleProgress.
+            if (storyBar != null)
+            {
+                int practised = 0;
+                CompetencyLedger ledger = CompetencyLedger.Instance;
+
+                if (ledger != null)
+                    // competent and total are already known from the arguments; only the practised
+                    // figure is new, and it comes from the ledger so the rule lives in one place.
+                    ledger.GetModuleProgress(definition.moduleId,
+                                             out int ignoredCompetent, out practised,
+                                             out int ignoredTotal);
+
+                storyBar.maxValue = Mathf.Max(1, total);
+                storyBar.value = practised;
             }
 
             if (completeBadge != null)

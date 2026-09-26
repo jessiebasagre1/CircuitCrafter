@@ -20,28 +20,17 @@ MonoBehaviour:
     title: Plan and prepare for maintenance
     criteria: 
     evidenceTaskIds:
-    - coc4_ticket_1
-    - coc4_ticket_2
-    - coc4_ticket_3
-    - coc4_ticket_4
-    - coc4_ticket_5
-    requiredEvidenceCount: 5
-  - code: LO2
-    title: Diagnose faults in computer systems
-    criteria: 
-    evidenceTaskIds:
     - coc4_identify
     requiredEvidenceCount: 0
-  - code: LO3
-    title: Repair and replace defective parts
+  - code: LO2
+    title: Maintain and repair computer systems
     criteria: 
     evidenceTaskIds:
     - coc4_repair
     requiredEvidenceCount: 0
-  - code: LO4
-    title: Test and verify the repair
+  - code: LO3
+    title: Inspect and test the repaired system
     criteria: 
     evidenceTaskIds:
     - coc4_verify
-    - coc4_all_resolved
-    requiredEvidenceCount: 2
+    requiredEvidenceCount: 0

@@ -94,6 +94,16 @@ namespace CSSSimulation.WindowsSim
                 return;
             }
 
+            // The other machine's window. Refused OUT LOUD rather than silently: a launch button
+            // that does nothing is indistinguishable from a broken one, and this project has
+            // already spent an evening on exactly that.
+            if (WinMachineFilter.Instance != null && !WinMachineFilter.Instance.Allows(w))
+            {
+                Debug.Log($"[WinDesktop] '{windowId}' belongs to the other machine - you are at " +
+                          $"{WinMachineFilter.Instance.Current}. Walk to the other computer.", this);
+                return;
+            }
+
             CloseStartMenu();
             w.Open();
         }

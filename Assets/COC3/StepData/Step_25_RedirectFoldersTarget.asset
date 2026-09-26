@@ -13,12 +13,20 @@ MonoBehaviour:
   m_Name: Step_25_RedirectFoldersTarget
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_25_RedirectFoldersTarget
-  instructionText: 'Set where the redirected Documents folder should live.
+  instructionText: 'LO1.2 - Point the redirection policy at the folder you made in
+    step 23.
 
+    
 
-    Choose
-    ''Basic - Redirect everyone''s folder to the same location'' and type the Root
-    Path.'
+    If the Documents Properties window is not already open:
+    Start > Group Policy Management, then under User Configuration > Policies > Windows
+    Settings > Folder Redirection, select Documents and press Properties.
+
+    
+
+    Set
+    Setting to Basic, type the Root Path, then OK. It must be a network path - the
+    client cannot reach the server''s C: drive.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

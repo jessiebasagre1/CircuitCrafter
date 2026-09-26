@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: Step_24_RedirectionPolicy
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_24_RedirectionPolicy
-  instructionText: 'LO1.2 - Redirection is applied through Group Policy, not per
-    machine - which is only possible because CLIENT01 joined the domain in step 11.
+  instructionText: 'LO1.2 - Folder redirection is a USER policy, not a computer one.
 
 
-    In
-    Group Policy Management Editor > User Configuration > Policies > Windows Settings
-    > Folder Redirection, right-click ''Documents'' and choose Properties.'
+    Start
+    > Group Policy Management. Under User Configuration > Policies > Windows Settings
+    > Folder Redirection, select Documents and press Properties.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

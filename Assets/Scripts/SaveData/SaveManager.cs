@@ -44,6 +44,8 @@ public class SaveManager : MonoBehaviour
 
     private List<string> completedModes = new List<string>();
 
+    private bool subscribedToProfiles;
+
     private bool pendingLoadExisting;
     private bool pendingNewGame;
 
@@ -63,7 +65,43 @@ public class SaveManager : MonoBehaviour
     /// brief "Progress Saved" confirmation to the player.</summary>
     public event Action OnProgressSaved;
 
-    private string SavePath => Path.Combine(Application.persistentDataPath, "savegame.json");
+    [Header("Profiles")]
+    [Tooltip("Moves an old single-profile savegame.json into whichever profile is active the " +
+             "first time this build runs, then deletes it, so existing progress is not lost when " +
+             "saves become per-profile. Untick only if you want the old file left alone.")]
+    [SerializeField] private bool migrateLegacySave = true;
+
+    /// <summary>
+    /// Where this profile's save lives.
+    ///
+    /// THIS IS THE FIX FOR "EVERY PROFILE SHARES ONE STORY PROGRESS".
+    /// It used to be a single savegame.json in persistentDataPath, for the whole device. Every
+    /// other piece of learner state in this project is already per profile - the competency ledger
+    /// (CompetencyLedger.LedgerPathFor), the run results (ResultsRepository), COC4's tickets
+    /// (TicketSessionState) - but the save file, which is what holds completedModes and therefore
+    /// every story-mode unlock, was not. So finishing COC1 on one profile unlocked COC2 for
+    /// everyone on the device, including a learner who had never played.
+    ///
+    /// The naming scheme comes from ProfileManager.SaveFileNameFor rather than a string literal,
+    /// because that method already existed for exactly this purpose and two definitions of a file
+    /// name is how the two halves quietly stop agreeing.
+    ///
+    /// No ProfileManager in the scene falls back to the old path, so a build without the profile
+    /// system behaves exactly as it did before.
+    /// </summary>
+    private string SavePath
+    {
+        get
+        {
+            var profiles = CircuitCrafter.Assessment.ProfileManager.Instance;
+            if (profiles == null) return LegacySavePath;
+
+            return Path.Combine(Application.persistentDataPath,
+                                CircuitCrafter.Assessment.ProfileManager.SaveFileNameFor(profiles.ActiveProfileId));
+        }
+    }
+
+    private string LegacySavePath => Path.Combine(Application.persistentDataPath, "savegame.json");
 
     private void Awake()
     {
@@ -92,18 +130,119 @@ public class SaveManager : MonoBehaviour
         // Continue logs "no saved game mode found" even though a checkpoint
         // clearly just got written. Seeding CurrentGameMode from disk here
         // prevents that overwrite.
-        if (File.Exists(SavePath))
+        MigrateLegacySaveIfNeeded();
+        ReloadFromDisk();
+
+        // A profile switch has to be treated exactly like starting the game as that learner: the
+        // cached completedModes below is what every unlock check reads, and without this it would
+        // still hold the PREVIOUS profile's unlocks for the rest of the session - the menu would
+        // show COC2 unlocked for someone who has never played COC1, which is the bug this whole
+        // change is about, just moved from disk into memory.
+        TrySubscribeToProfiles();
+    }
+
+    private void Start()
+    {
+        // AGAIN IN Start, AND THIS IS NOT BELT AND BRACES.
+        // Awake order between two DontDestroyOnLoad managers is not defined, so ProfileManager's
+        // own Awake may not have run when ours did - Instance would still be null, the subscription
+        // would never happen, and switching profiles would silently keep the previous learner's
+        // unlocks for the whole session. By Start every Awake has run, so this is the first moment
+        // the subscription can be relied on. ReloadFromDisk again for the same reason: the active
+        // profile may only have been resolved after our Awake read the wrong file.
+        if (TrySubscribeToProfiles()) ReloadFromDisk();
+    }
+
+    private bool TrySubscribeToProfiles()
+    {
+        if (subscribedToProfiles) return false;
+
+        var profiles = CircuitCrafter.Assessment.ProfileManager.Instance;
+        if (profiles == null) return false;
+
+        profiles.OnActiveProfileChanged += HandleProfileChanged;
+        subscribedToProfiles = true;
+        return true;
+    }
+
+    private void OnDestroy()
+    {
+        if (!subscribedToProfiles) return;
+
+        var profiles = CircuitCrafter.Assessment.ProfileManager.Instance;
+        if (profiles != null) profiles.OnActiveProfileChanged -= HandleProfileChanged;
+
+        subscribedToProfiles = false;
+    }
+
+    private void HandleProfileChanged(CircuitCrafter.Assessment.LearnerProfile profile)
+    {
+        ReloadFromDisk();
+
+        Debug.Log($"[SaveManager] Profile changed to '{(profile != null ? profile.Label : "none")}' - " +
+                  $"reloaded their own save. {completedModes.Count} completed mode(s), " +
+                  $"game mode '{(string.IsNullOrEmpty(CurrentGameMode) ? "none" : CurrentGameMode)}'.");
+    }
+
+    /// <summary>
+    /// Re-reads the cached fields for whichever profile is active now.
+    ///
+    /// CLEARS FIRST, ALWAYS. Reading into the existing values would leave the previous profile's
+    /// unlocks in place whenever the new profile has no save file yet - which is precisely the
+    /// case that matters, a learner who has not played.
+    /// </summary>
+    private void ReloadFromDisk()
+    {
+        completedModes = new List<string>();
+        CurrentGameMode = null;
+
+        string path = SavePath;
+        if (!File.Exists(path)) return;
+
+        try
         {
-            try
-            {
-                var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
-                if (data?.completedModes != null) completedModes = data.completedModes;
-                if (!string.IsNullOrEmpty(data?.gameMode)) CurrentGameMode = data.gameMode;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[SaveManager] Couldn't pre-read save data: {e.Message}");
-            }
+            var data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(path));
+            if (data?.completedModes != null) completedModes = data.completedModes;
+            if (!string.IsNullOrEmpty(data?.gameMode)) CurrentGameMode = data.gameMode;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SaveManager] Couldn't pre-read save data: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Moves a pre-profile savegame.json into the active profile, once.
+    ///
+    /// IT DELETES THE OLD FILE, AND THAT IS WHAT KEEPS IT HONEST. If the legacy file survived, the
+    /// next profile to start without a save of its own would inherit the same progress and the
+    /// original bug would be back in a new disguise. Moving it means exactly one profile can ever
+    /// receive it - the one active on first run, which is the last profile used before the update
+    /// and so the most likely owner.
+    /// </summary>
+    private void MigrateLegacySaveIfNeeded()
+    {
+        if (!migrateLegacySave) return;
+
+        string legacy = LegacySavePath;
+        string target = SavePath;
+
+        if (target == legacy) return;              // no ProfileManager - nothing to move
+        if (!File.Exists(legacy)) return;
+        if (File.Exists(target)) return;           // this profile already has its own save
+
+        try
+        {
+            File.Move(legacy, target);
+
+            Debug.Log($"[SaveManager] Moved the old shared save into this profile: " +
+                      $"{Path.GetFileName(target)}. Saves are per profile from now on, so other " +
+                      "profiles start with no story progress, as they should.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[SaveManager] Couldn't move the old save file: {e.Message}. " +
+                             "Story progress stays where it was; nothing is lost.");
         }
     }
 
@@ -831,10 +970,5 @@ public class SaveManager : MonoBehaviour
                 saveablesByKey.Add(saveable.SaveKey, saveable);
         }
 
-        foreach (var entry in data.genericEntries)
-        {
-            if (saveablesByKey.TryGetValue(entry.key, out var saveable))
-                saveable.RestoreState(entry.json);
-        }
     }
 }

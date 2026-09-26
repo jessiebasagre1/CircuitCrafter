@@ -17,8 +17,12 @@ MonoBehaviour:
     share.
 
 
-    Open Security > Advanced on SharedDocs and review the permission
-    entries. Disable inheritance if Everyone still appears.'
+    Same window, the PERMISSIONS tab. Read where each entry came from.
+
+
+    An
+    entry inherited from the parent folder cannot be removed while inheritance is
+    on - it comes straight back. Disable inheritance first.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

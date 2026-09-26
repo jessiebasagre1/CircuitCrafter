@@ -16,8 +16,12 @@ MonoBehaviour:
   instructionText: 'LO1.2 - Control who is allowed to print.
 
 
-    On the printer''s
-    Security tab, grant the STUDENTS group the ''Print'' permission and remove Everyone.'
+    Same property
+    sheet, the SECURITY tab.
+
+
+    Remove Everyone first, then grant the group the
+    Print permission. A permission granted underneath a broader one changes nothing.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

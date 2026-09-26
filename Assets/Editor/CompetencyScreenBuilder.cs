@@ -59,6 +59,18 @@ namespace CircuitCrafter.Assessment.EditorTools
         private static readonly Color Gold = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
         private static readonly Color GoldInk = new Color32(0x3A, 0x26, 0x00, 0xFF);
         private static readonly Color AccentBar = new Color32(0x46, 0xC8, 0xF5, 0xFF);
+
+        /// <summary>
+        /// The YELLOW story fill, drawn behind the blue assessment fill.
+        ///
+        /// Told apart from the blue by LIGHTNESS as much as by hue - a warm bright yellow against a
+        /// mid cyan-blue - because roughly one male student in twelve has some colour vision
+        /// deficiency, and two fills of similar lightness are one indistinct bar to them. The
+        /// caption printing both numbers is the other half of that: colour is the quick read, not
+        /// the only one.
+        /// </summary>
+        private static readonly Color StoryFill = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
+
         private static readonly Color BarTrack = new Color32(0x12, 0x1D, 0x5E, 0xFF);
         private static readonly Color ButtonBg = new Color32(0x3B, 0x4C, 0xCB, 0xFF);
 
@@ -98,7 +110,17 @@ namespace CircuitCrafter.Assessment.EditorTools
                 "(the badge artwork itself).\n" +
                 "  3. Set each badge's Module Id if yours are not COC1-COC4.\n\n" +
                 "Every reference on CompetencyProfileView and on the four CompetencyBadgeViews is " +
-                "already wired. The two row prefabs were written to " + PrefabFolder + ".",
+                "already wired. The two row prefabs were written to " + PrefabFolder + ".\n\n" +
+                "TWO FILLS ON THE MODULE ROWS AND THE BADGES: BarStack/StoryBar is the YELLOW one " +
+                "(outcomes practised or better) drawn behind the BLUE one (outcomes competent). The " +
+                "front bar deliberately has no Background of its own; an opaque track would hide " +
+                "the yellow completely.\n\n" +
+                "THE OUTCOME ROWS HAVE ONE BAR, AND IT IS THE SCORE - bestScorePercent out of 100, " +
+                "so it agrees with the 'Best 80%' beside it rather than measuring evidence.\n\n" +
+                "THE OVERALL BAR IN THE HEADER IS BLUE ONLY, on purpose: the headline number is what " +
+                "has been PROVEN, and a nearly-full bar at the top of the screen for a learner who " +
+                "has proven nothing is the one misreading worth designing out. Header/Pad/BarLegend " +
+                "is the key.",
                 screen);
         }
 
@@ -273,7 +295,10 @@ namespace CircuitCrafter.Assessment.EditorTools
             RectTransform header = NewRect("Header", parent);
             AddImage(header, HeaderBg);         // <- header plate sprite goes here
             AddTopEdge(header, 5f);
-            Fixed(header, 104f);
+
+            // 130, not 104: the legend row under the overall bar needs 22px plus its 6px gap.
+            // Counted out, not eyeballed - 12 + 42 + 6 + 28 + 6 + 22 + 12.
+            Fixed(header, 130f);
 
             RectTransform pad = NewRect("Pad", header);
             Stretch(pad);
@@ -320,9 +345,29 @@ namespace CircuitCrafter.Assessment.EditorTools
             overallText = AddText(row, "OverallText", "0 of 0 outcomes competent", SizeBody, TextPrimary);
             Width(overallText.rectTransform, 400f);
 
+            // ONE FILL ONLY UP HERE, and that is a deliberate difference from the bars below.
+            //
+            // This is the screen's headline number. A learner glancing at the top of the page should
+            // read one thing - how much of the qualification they have PROVEN - and the yellow story
+            // fill belongs where it can be compared against something: beside a module's own
+            // outcomes, and on that module's badge. Put it here as well and the top of the screen
+            // shows a bar that is nearly full for a learner who has proven nothing, which is the
+            // single most flattering misreading this screen could offer.
             overallBar = MakeBar(row, "OverallBar", AccentBar);
             LayoutElement be = overallBar.GetComponent<LayoutElement>();
             be.flexibleWidth = 1f;
+
+            // THE KEY, and it is not optional decoration. Two coloured fills with no legend is a
+            // guessing game, and the wrong guess here - reading yellow as "done" - is the one
+            // misreading this whole screen exists to prevent. Static text, so there is nothing to
+            // wire and nothing that can come unwired.
+            TMP_Text legend = AddText(pad, "BarLegend",
+                                      "<color=#46C8F5>Blue</color>: proven in assessment    " +
+                                      "<color=#FFC93C>Yellow</color>: worked through in story mode " +
+                                      "(shown on each module and badge)",
+                                      SizeCaption, TextSecondary);
+            legend.richText = true;
+            Fixed(legend.rectTransform, 22f);
         }
 
         private static void BuildBadgeStrip(RectTransform parent)
@@ -402,7 +447,8 @@ namespace CircuitCrafter.Assessment.EditorTools
 
             TMP_Text status = AddText(textCol, "Status", "0 of 0 outcomes", SizeCaption, TextSecondary);
 
-            Slider bar = MakeBar(textCol, "ProgressBar", AccentBar);
+            Slider bar, storyBar;
+            MakeBarPair(textCol, out storyBar, out bar);
 
             // The unit title lives on the module header row in the list below, where there is room
             // for it. Kept as an empty object so CompetencyBadgeView's Subtitle reference is still
@@ -422,6 +468,7 @@ namespace CircuitCrafter.Assessment.EditorTools
             SetRef(so, "subtitleText", subtitle);
             SetRef(so, "statusText", status);
             SetRef(so, "progressBar", bar);
+            SetRef(so, "storyBar", storyBar);
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -573,16 +620,20 @@ namespace CircuitCrafter.Assessment.EditorTools
             LayoutElement tle = unitTitle.gameObject.AddComponent<LayoutElement>();
             tle.flexibleWidth = 1f;
 
+            // 168, not 130: "Best: 100%" in bold was clipping to "Best: 10..." - the one string
+            // this label has to fit is also its longest, and an ellipsis on a score reads as a
+            // different number rather than as truncation.
             TMP_Text best = AddText(pad, "BestScore", "Best: -", SizeBody, Gold, FontStyles.Bold);
-            Width(best.rectTransform, 130f);
+            Width(best.rectTransform, 168f);
             best.alignment = TextAlignmentOptions.MidlineRight;
 
             TMP_Text summary = AddText(pad, "Summary", "0 of 0 competent", SizeBody, TextSecondary);
             Width(summary.rectTransform, 230f);
             summary.alignment = TextAlignmentOptions.MidlineRight;
 
-            Slider bar = MakeBar(pad, "ProgressBar", AccentBar);
-            Width(bar.GetComponent<RectTransform>(), 220f);
+            Slider bar, storyBar;
+            RectTransform barStack = MakeBarPair(pad, out storyBar, out bar);
+            Width(barStack, 220f);
 
             Button history = MakeButton(pad, "HistoryButton", "History", 130f);
 
@@ -600,6 +651,7 @@ namespace CircuitCrafter.Assessment.EditorTools
             SetRef(so, "moduleTitleText", unitTitle);
             SetRef(so, "summaryText", summary);
             SetRef(so, "progressBar", bar);
+            SetRef(so, "storyBar", storyBar);
             SetRef(so, "completeBadge", done.gameObject);
             SetRef(so, "bestScoreText", best);
             SetRef(so, "historyButton", history);
@@ -647,7 +699,12 @@ namespace CircuitCrafter.Assessment.EditorTools
             Width(evidence.rectTransform, 210f);
             evidence.alignment = TextAlignmentOptions.MidlineRight;
 
-            Slider bar = MakeBar(pad, "EvidenceBar", AccentBar);
+            // ONE FILL, and it is the SCORE - CompetencyOutcomeRowView draws bestScorePercent out
+            // of 100 here so the bar agrees with the "Best 80%" printed beside it. No yellow
+            // counterpart exists because a story run is never marked: there is no story score to
+            // draw behind an assessment one. The story/assessment pair lives on the module row and
+            // the badge, where it compares two counts of the same thing.
+            Slider bar = MakeBar(pad, "ScoreBar", AccentBar);
             Width(bar.GetComponent<RectTransform>(), 150f);
 
             TMP_Text best = AddText(pad, "BestScore", "", SizeCaption, TextSecondary);
@@ -662,7 +719,7 @@ namespace CircuitCrafter.Assessment.EditorTools
             SetRef(so, "statusText", status);
             SetRef(so, "bestScoreText", best);
             SetRef(so, "statusPill", pillImage);
-            SetRef(so, "evidenceBar", bar);
+            SetRef(so, "scoreBar", bar);
             so.ApplyModifiedPropertiesWithoutUndo();
 
             return SaveAsPrefab(root.gameObject).GetComponent<CompetencyOutcomeRowView>();
@@ -1088,14 +1145,52 @@ namespace CircuitCrafter.Assessment.EditorTools
         /// CompetencyProfileView, CompetencyModuleHeaderView and CompetencyOutcomeRowView all expect
         /// a Slider - matching their fields matters more here than the handful of components saved.
         /// </summary>
-        private static Slider MakeBar(RectTransform parent, string name, Color fillColor)
+        /// <summary>
+        /// The two-fill bar: yellow story progress behind, blue proven progress in front, both in
+        /// the same rect.
+        ///
+        /// THE FRONT BAR HAS NO TRACK, and that is the part that is easy to get wrong. A Slider's
+        /// Background is an opaque image stretched across the whole width - put one on the front bar
+        /// and it covers the yellow fill completely, so the overlay looks like it simply is not
+        /// working. Only the back bar draws the track.
+        ///
+        /// THE CONTAINER EXISTS BECAUSE OF THE LAYOUT GROUPS. Both bars cannot be siblings in a
+        /// column with a VerticalLayoutGroup - it would stack them one above the other. A container
+        /// the layout group can see, holding two Stretch()ed bars it cannot, is what puts them on
+        /// top of each other. Returned so the caller can size it the way that site needs: flexible
+        /// width in the header row, a fixed 220 in the module header, full width in a badge.
+        ///
+        /// StoryBar is created FIRST so it draws BEHIND - in uGUI the later sibling draws in front.
+        /// Practised always counts Competent too (see CompetencyLedger.GetModuleProgress), so the
+        /// back fill can never be overtaken by the front one and the overlay cannot render nonsense.
+        /// </summary>
+        private static RectTransform MakeBarPair(RectTransform parent, out Slider story, out Slider proven,
+                                                 string frontName = "ProgressBar")
+        {
+            RectTransform stack = NewRect("BarStack", parent);
+            Fixed(stack, 14f);
+
+            story = MakeBar(stack, "StoryBar", StoryFill);
+            Stretch(story.GetComponent<RectTransform>());
+
+            proven = MakeBar(stack, frontName, AccentBar, withTrack: false);
+            Stretch(proven.GetComponent<RectTransform>());
+
+            return stack;
+        }
+
+        private static Slider MakeBar(RectTransform parent, string name, Color fillColor,
+                                      bool withTrack = true)
         {
             RectTransform rect = NewRect(name, parent);
             Fixed(rect, 14f);
 
-            RectTransform bg = NewRect("Background", rect);
-            Stretch(bg);
-            AddImage(bg, BarTrack);
+            if (withTrack)
+            {
+                RectTransform bg = NewRect("Background", rect);
+                Stretch(bg);
+                AddImage(bg, BarTrack);
+            }
 
             RectTransform fillArea = NewRect("Fill Area", rect);
             Stretch(fillArea);

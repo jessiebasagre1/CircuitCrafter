@@ -1163,6 +1163,7 @@ GameObject:
   - component: {fileID: 468928333}
   - component: {fileID: 468928336}
   - component: {fileID: 468928335}
+  - component: {fileID: 468928337}
   - component: {fileID: 468928334}
   m_Layer: 0
   m_Name: TicketHubScreen
@@ -1246,6 +1247,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 468928332}
   m_CullTransparentMesh: 1
+--- !u!114 &468928337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 468928332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3112caa4b1a2f534a9ef923bb6d2e066, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::COC4StoryTicketRecorder
+  moduleId: COC4
+  manager: {fileID: 1427787053}
+  pointsForResolved: 100
+  pointsForDiagnosisOnly: 40
+  mistakePenalty: 10
+  backfillAlreadyResolved: 1
+  verbose: 1
 --- !u!1 &522662111
 GameObject:
   m_ObjectHideFlags: 0

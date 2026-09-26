@@ -16,10 +16,13 @@ MonoBehaviour:
   instructionText: 'LO1.3 - Prove the restrictions actually hold.
 
 
-    Open Event
-    Viewer > Windows Logs > Security and filter for Audit Failure entries. Any failed
-    access attempt from an account outside STUDENTS is evidence the permissions are
-    doing their job.'
+    Start > Event
+    Viewer. Under Windows Logs select Security, then Filter Current Log.
+
+
+    Filter
+    for Audit Failure. A refused attempt is evidence the permissions are working;
+    the successes are thousands of entries and no finding.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

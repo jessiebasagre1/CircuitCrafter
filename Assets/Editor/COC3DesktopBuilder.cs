@@ -136,7 +136,8 @@ public class COC3DesktopBuilder : EditorWindow
             // The wallpaper STRETCHES, so it covers the whole area whatever shape the canvas is
             // and there are no bars down the sides.
             var wallpaper = Stretch(root, "Wallpaper");
-            wallpaper.gameObject.AddComponent<Image>().color = Hex(0x1E3A5F);
+            var wallpaperImage = wallpaper.gameObject.AddComponent<Image>();
+            wallpaperImage.color = Hex(0x1E3A5F);
 
             // Everything else lives inside a fixed 1600 x 900 area that is SCALED to fit, not
             // stretched. Windows dialogs are laid out in absolute pixels - stretching the
@@ -170,7 +171,10 @@ public class COC3DesktopBuilder : EditorWindow
             if (dnsGate != null) Opens(dnsGate, zoneWiz, "NewZoneWizard", dns);
 
             var clientSys = BuildClientSystemProperties(windows, t);
-            BuildClientDomainJoin(windows, t, clientSys, error);
+            var clientJoin = BuildClientDomainJoin(windows, t, clientSys, error);
+
+            Machine(clientSys, WinMachine.Scope.Client);
+            Machine(clientJoin, WinMachine.Scope.Client);
 
             // ---- LO1, steps 12-17 ----
             // Built in dependency order: a gate needs a real reference to the window it opens, so
@@ -199,17 +203,33 @@ public class COC3DesktopBuilder : EditorWindow
             BuildGpoEditor(windows, t, error, minPwd, redirProps);
 
             var share = BuildShareWindow(windows, t);
-            BuildRunDialog(windows, t, error, share);
+            var run = BuildRunDialog(windows, t, error, share);
 
             var session = BuildRdpSession(windows, t);
-            BuildRemoteDesktop(windows, t, error, session);
+            var rdp = BuildRemoteDesktop(windows, t, error, session);
+
+            Machine(share, WinMachine.Scope.Client);
+            Machine(run, WinMachine.Scope.Client);
+            Machine(session, WinMachine.Scope.Client);
+            Machine(rdp, WinMachine.Scope.Client);
 
             // ---- verification: steps 22, 26, 31 and 34 ----
             var testPage = BuildTestPageSent(windows, t);
             var printerProps = BuildPrinterProperties(windows, t, error, testPage);
-            BuildDevicesAndPrinters(windows, t, error, printerProps);
+            var printers = BuildDevicesAndPrinters(windows, t, error, printerProps);
 
-            BuildDocumentsProperties(windows, t, error);
+            // The printer sheet is genuinely used on BOTH: published from the server at steps 20
+            // and 21, tested from the client at step 22. Its gates are step-scoped already.
+            Machine(printers, WinMachine.Scope.Both);
+            Machine(printerProps, WinMachine.Scope.Both);
+            Machine(testPage, WinMachine.Scope.Both);
+
+            var docs = BuildDocumentsProperties(windows, t, error);
+            Machine(docs, WinMachine.Scope.Client);
+
+            var cmd = BuildCommandPrompt(windows, t, error);
+            Machine(cmd, WinMachine.Scope.Client);
+
             BuildAdvancedSecurity(windows, t, error);
             BuildFirewallConsole(windows, t, error);
 
@@ -220,7 +240,7 @@ public class COC3DesktopBuilder : EditorWindow
             var ethGate = ethProps.GetComponentInChildren<WinTaskGate>(true);
             if (ethGate != null) Opens(ethGate, tcpip, "TcpIpv4", ethProps);
 
-            BuildShell(design, t, desktop);
+            BuildShell(design, t, desktop, wallpaperImage);
 
             // LAST child of DesignRoot, so it draws in front of the windows. Everything on it has
             // Raycast Target off, so it covers nothing you can click.
@@ -228,6 +248,15 @@ public class COC3DesktopBuilder : EditorWindow
 
             desktop.windows = new System.Collections.Generic.List<WinWindow>(
                 root.GetComponentsInChildren<WinWindow>(true));
+
+            // Anything not explicitly tagged Client or Both is the SERVER's.
+            //
+            // Without this only the handful of client windows carried a WinMachine, and an
+            // untagged window is unrestricted - so all twenty-nine of the server's could be opened
+            // while sitting at the client, and none of them was closed on the way over.
+            foreach (var w in desktop.windows)
+                if (w != null && w.GetComponent<WinMachine>() == null)
+                    Machine(w, WinMachine.Scope.Server);
 
             foreach (var w in desktop.windows)
                 w.gameObject.SetActive(false);
@@ -249,7 +278,7 @@ public class COC3DesktopBuilder : EditorWindow
                      "    test_unc_path, create_redirection_folder,\n" +
                      "    set_redirection_target, rdp_connect,\n" +
                      "    print_test_page, verify_redirection,\n" +
-                     "    allow_rdp_rule, filter_audit_failure,\n" +
+                     "    allow_rdp_rule, filter_audit_failure, run_ping,\n" +
                      "    enable_rdp, add_rdp_user, share_printer,\n" +
                      "    set_printer_permissions, view_effective_access,\n" +
                      "    disable_inheritance\n\n" +
@@ -297,12 +326,33 @@ public class COC3DesktopBuilder : EditorWindow
         backing.color = new Color(0.04f, 0.06f, 0.09f, 0.9f);
         backing.raycastTarget = false;      // never swallow a click meant for a window
 
-        var label = Label(banner, t, "Text", 28f, 10f, DW - 56f, 76f, "");
+        // STRETCHED, not placed. The banner's height changes with the text, and a label pinned at
+        // a fixed 76 pixels would keep its old size while the panel behind it grew - or, worse,
+        // keep its size while the panel did not, and run out of the bottom. That is the overlap.
+        var label = Label(banner, t, "Text", 0f, 0f, 0f, 0f, "");
         label.color = Color.white;
         label.fontSize = 16f;
         label.raycastTarget = false;
 
-        Box(banner, "Rule", 0f, 95f, DW, 1f, new Color(1f, 1f, 1f, 0.25f)).raycastTarget = false;
+        var labelRt = label.rectTransform;
+        labelRt.anchorMin = Vector2.zero;
+        labelRt.anchorMax = Vector2.one;
+        labelRt.offsetMin = new Vector2(28f, 12f);
+        labelRt.offsetMax = new Vector2(-28f, -10f);
+
+        // Anchored to the BOTTOM edge, so the hairline follows the banner down as it grows.
+        var rule = Box(banner, "Rule", 0f, 0f, 0f, 0f, new Color(1f, 1f, 1f, 0.25f));
+        rule.raycastTarget = false;
+
+        var ruleRt = rule.rectTransform;
+        ruleRt.anchorMin = new Vector2(0f, 0f);
+        ruleRt.anchorMax = new Vector2(1f, 0f);
+        ruleRt.pivot = new Vector2(0.5f, 1f);
+        ruleRt.offsetMin = Vector2.zero;
+        ruleRt.offsetMax = new Vector2(0f, 1f);
+
+        var fit = Undo.AddComponent<WinBannerFit>(banner.gameObject);
+        fit.text = label;
 
         // Wired here rather than left for you to drag: a banner that exists and is not connected
         // looks exactly like a banner that is broken.
@@ -330,15 +380,33 @@ public class COC3DesktopBuilder : EditorWindow
     // Shell
     // ==================================================================
 
-    private static void BuildShell(RectTransform root, COC3WinTheme t, WinDesktop desktop)
+    private static void BuildShell(RectTransform root, COC3WinTheme t, WinDesktop desktop,
+                                   Image wallpaper)
     {
-        // --- desktop icons ---
+        // --- desktop icons, one set per machine ---
+        //
+        // Both sets sit at the same coordinates. WinMachineFilter shows one and hides the other,
+        // so walking to the client PC and sitting down gives you the client's desktop rather than
+        // the server's with an extra icon on it.
         var icons = Stretch(root, "Icons");
-        DesktopIcon(icons, t, "Icon_ThisPC", 40f, 40f, "This PC", "SystemProperties");
-        DesktopIcon(icons, t, "Icon_Network", 40f, 160f, "Network", "NetworkConnections");
-        DesktopIcon(icons, t, "Icon_ServerManager", 40f, 280f, "Server Manager", "ServerManager");
-        DesktopIcon(icons, t, "Icon_Explorer", 40f, 400f, "File Explorer", "FileExplorer");
-        DesktopIcon(icons, t, "Icon_Client", 40f, 520f, ClientName, "ClientSystemProperties");
+
+        Machine(DesktopIcon(icons, t, "Icon_ThisPC", 40f, 40f, "This PC", "SystemProperties"),
+                WinMachine.Scope.Server);
+        Machine(DesktopIcon(icons, t, "Icon_Network", 40f, 160f, "Network", "NetworkConnections"),
+                WinMachine.Scope.Server);
+        Machine(DesktopIcon(icons, t, "Icon_ServerManager", 40f, 280f, "Server Manager",
+                            "ServerManager"), WinMachine.Scope.Server);
+        Machine(DesktopIcon(icons, t, "Icon_Explorer", 40f, 400f, "File Explorer", "FileExplorer"),
+                WinMachine.Scope.Server);
+
+        // The CLIENT01 icon is gone on purpose. It existed only because there was no other way to
+        // reach the client; now walking to the client PC is the way.
+        Machine(DesktopIcon(icons, t, "Icon_ThisPC_Client", 40f, 40f, "This PC",
+                            "ClientSystemProperties"), WinMachine.Scope.Client);
+        Machine(DesktopIcon(icons, t, "Icon_Documents_Client", 40f, 160f, "Documents",
+                            "DocumentsProperties"), WinMachine.Scope.Client);
+        Machine(DesktopIcon(icons, t, "Icon_Printers_Client", 40f, 280f, "Devices and Printers",
+                            "DevicesAndPrinters"), WinMachine.Scope.Client);
 
         // --- taskbar ---
         var taskbar = Box(root, "Taskbar", 0f, DH - 44f, DW, 44f, Hex(0x1F1F1F));
@@ -359,12 +427,31 @@ public class COC3DesktopBuilder : EditorWindow
         clock.color = Color.white;
         clock.fontSize = 13f;
 
-        // --- start menu ---
-        // TWO COLUMNS. Thirteen entries in one column is a menu 680 pixels tall on a 900 pixel
-        // desktop, which stops reading as a Start menu and starts reading as a wall.
-        var menu = Rect(root, "StartMenu", 0f, DH - 44f - 420f, 660f, 420f);
-        var menuBg = menu.gameObject.AddComponent<Image>();
-        menuBg.color = Hex(0x2B2B2B);
+        // --- two Start menus ---
+        //
+        // Rather than one menu with the other machine's entries hidden, which leaves gaps down the
+        // column where they used to be. Two menus each sized for their own contents.
+        var serverMenu = ServerStartMenu(root, t);
+        var clientMenu = ClientStartMenu(root, t);
+
+        desktop.startMenu = serverMenu;
+        serverMenu.SetActive(false);
+        clientMenu.SetActive(false);
+
+        // --- the filter that switches all of it ---
+        var filter = Undo.AddComponent<WinMachineFilter>(root.gameObject);
+        filter.serverStartMenu = serverMenu;
+        filter.clientStartMenu = clientMenu;
+        filter.wallpaper = wallpaper;
+        filter.taskbarName = clock;
+        filter.serverName = ServerName;
+        filter.clientName = ClientName;
+    }
+
+    private static GameObject ServerStartMenu(RectTransform root, COC3WinTheme t)
+    {
+        var menu = Rect(root, "StartMenu_Server", 0f, DH - 44f - 420f, 660f, 420f);
+        menu.gameObject.AddComponent<Image>().color = Hex(0x2B2B2B);
 
         Label(menu, t, "Header", 16f, 12f, 300f, 24f, "Windows Administrative Tools",
               TextAlignmentOptions.Left).color = Hex(0x9A9A9A);
@@ -373,8 +460,10 @@ public class COC3DesktopBuilder : EditorWindow
         const float Col2 = 336f;
 
         StartEntry(menu, t, "Entry_System", 8f, 48f, "System", "SystemProperties", ColumnW);
-        StartEntry(menu, t, "Entry_Network", 8f, 92f, "Network Connections", "NetworkConnections", ColumnW);
-        StartEntry(menu, t, "Entry_ServerManager", 8f, 136f, "Server Manager", "ServerManager", ColumnW);
+        StartEntry(menu, t, "Entry_Network", 8f, 92f, "Network Connections",
+                   "NetworkConnections", ColumnW);
+        StartEntry(menu, t, "Entry_ServerManager", 8f, 136f, "Server Manager",
+                   "ServerManager", ColumnW);
         StartEntry(menu, t, "Entry_DHCP", 8f, 180f, "DHCP", "DhcpConsole", ColumnW);
         StartEntry(menu, t, "Entry_DNS", 8f, 224f, "DNS Manager", "DnsManager", ColumnW);
         StartEntry(menu, t, "Entry_Explorer", 8f, 268f, "File Explorer", "FileExplorer", ColumnW);
@@ -382,23 +471,49 @@ public class COC3DesktopBuilder : EditorWindow
                    "Active Directory Users and Computers", "AdUsersComputers", ColumnW);
         StartEntry(menu, t, "Entry_GPO", 8f, 356f, "Group Policy Management", "GpoEditor", ColumnW);
 
-        // Second column. Everything the TESTS are run from - and all of it belongs on CLIENT01.
-        StartEntry(menu, t, "Entry_Run", Col2, 48f, "Run", "RunDialog", ColumnW);
-        StartEntry(menu, t, "Entry_RDP", Col2, 92f,
-                   "Remote Desktop Connection", "RemoteDesktopConnection", ColumnW);
-        StartEntry(menu, t, "Entry_Printers", Col2, 136f,
+        StartEntry(menu, t, "Entry_Printers", Col2, 48f,
                    "Devices and Printers", "DevicesAndPrinters", ColumnW);
-        StartEntry(menu, t, "Entry_Documents", Col2, 180f, "Documents", "DocumentsProperties", ColumnW);
-        StartEntry(menu, t, "Entry_Firewall", Col2, 224f,
+        StartEntry(menu, t, "Entry_Firewall", Col2, 92f,
                    "Windows Defender Firewall", "FirewallConsole", ColumnW);
-        StartEntry(menu, t, "Entry_EventViewer", Col2, 268f, "Event Viewer", "EventViewer", ColumnW);
+        StartEntry(menu, t, "Entry_EventViewer", Col2, 136f, "Event Viewer", "EventViewer", ColumnW);
 
-        desktop.startMenu = menu.gameObject;
-        menu.gameObject.SetActive(false);
+        return menu.gameObject;
     }
 
-    private static void DesktopIcon(Transform parent, COC3WinTheme t, string name,
-                                    float x, float y, string label, string windowId)
+    /// <summary>
+    /// The client's Start menu - five entries, and every one of them is a TEST.
+    ///
+    /// That is the shape of the job: the server is built, and the client is where you prove it
+    /// works. A learner who sits down here and sees only testing tools has been told something
+    /// true about what this machine is for.
+    /// </summary>
+    private static GameObject ClientStartMenu(RectTransform root, COC3WinTheme t)
+    {
+        var menu = Rect(root, "StartMenu_Client", 0f, DH - 44f - 334f, 340f, 334f);
+        menu.gameObject.AddComponent<Image>().color = Hex(0x2B2B2B);
+
+        Label(menu, t, "Header", 16f, 12f, 300f, 24f, ClientName,
+              TextAlignmentOptions.Left).color = Hex(0x9A9A9A);
+
+        const float ColumnW = 310f;
+
+        StartEntry(menu, t, "Entry_System_Client", 8f, 48f, "System",
+                   "ClientSystemProperties", ColumnW);
+        StartEntry(menu, t, "Entry_Run_Client", 8f, 92f, "Run", "RunDialog", ColumnW);
+        StartEntry(menu, t, "Entry_RDP_Client", 8f, 136f,
+                   "Remote Desktop Connection", "RemoteDesktopConnection", ColumnW);
+        StartEntry(menu, t, "Entry_Printers_Client", 8f, 180f,
+                   "Devices and Printers", "DevicesAndPrinters", ColumnW);
+        StartEntry(menu, t, "Entry_Documents_Client", 8f, 224f, "Documents",
+                   "DocumentsProperties", ColumnW);
+        StartEntry(menu, t, "Entry_Cmd_Client", 8f, 268f, "Command Prompt", "CommandPrompt",
+                   ColumnW);
+
+        return menu.gameObject;
+    }
+
+    private static RectTransform DesktopIcon(Transform parent, COC3WinTheme t, string name,
+                                             float x, float y, string label, string windowId)
     {
         var rt = Rect(parent, name, x, y, 110f, 100f);
 
@@ -416,6 +531,8 @@ public class COC3DesktopBuilder : EditorWindow
         var a = Undo.AddComponent<WinButtonAction>(rt.gameObject);
         a.action = WinButtonAction.Kind.OpenWindow;
         a.windowId = windowId;
+
+        return rt;
     }
 
     private static void StartEntry(Transform parent, COC3WinTheme t, string name,
@@ -452,7 +569,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "SystemProperties", "System Properties",
                                          560f, 460f, out RectTransform root);
         var win = Register(root, "SystemProperties", "System Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -535,7 +652,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Windows greys this button out until they are allowed - there is no point naming who " +
             "may use a service that is switched off.";
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -545,7 +662,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "RemoteDesktopUsers", "Remote Desktop Users",
                                          540f, 420f, out RectTransform root);
         var win = Register(root, "RemoteDesktopUsers", "Remote Desktop Users");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -582,7 +699,7 @@ public class COC3DesktopBuilder : EditorWindow
             "An object named that cannot be found in " + DomainFQDN + ".\n\n" +
             "Check the {field} against the account you created.";
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -593,7 +710,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Computer Name/Domain Changes",
                                          420f, 340f, out RectTransform root);
         var win = Register(root, "ComputerNameChanges", "Computer Name/Domain Changes");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -611,7 +728,7 @@ public class COC3DesktopBuilder : EditorWindow
                                  "Workgroup:", "membership");
         workgroup.isOn = true;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), 270f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -630,7 +747,7 @@ public class COC3DesktopBuilder : EditorWindow
         gate.mustBeOn = new WinToggle[0];
         gate.mustBeOff = new WinToggle[0];
 
-        CancelButton(body, t, win, w, 270f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -639,7 +756,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NetworkConnections", "Network Connections",
                                          560f, 320f, out RectTransform root);
         var win = Register(root, "NetworkConnections", "Network Connections");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -663,7 +780,7 @@ public class COC3DesktopBuilder : EditorWindow
         Label(body, t, "Tip", 0f, 232f, w, 24f,
               "Double-click a connection to open its properties.").color = t.disabledText;
 
-        CancelButton(body, t, win, w, 258f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -673,7 +790,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "EthernetProperties", "Ethernet Properties",
                                          460f, 440f, out RectTransform root);
         var win = Register(root, "EthernetProperties", "Ethernet Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -737,7 +854,7 @@ public class COC3DesktopBuilder : EditorWindow
         gate.mustBeOn = ipv4Toggle != null ? new[] { ipv4Toggle } : new WinToggle[0];
         gate.mustBeOff = new WinToggle[0];
 
-        CancelButton(body, t, win, w, 320f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -747,7 +864,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Internet Protocol Version 4 (TCP/IPv4) Properties",
                                          470f, 520f, out RectTransform root);
         var win = Register(root, "TcpIpv4", "Internet Protocol Version 4 (TCP/IPv4) Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -777,7 +894,7 @@ public class COC3DesktopBuilder : EditorWindow
         COC3WinWidgets.Field(body, t, "DNS2", 20f, 324f, 150f, w - 180f,
                              "Alternate DNS server:", "", "", false);
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), 400f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -799,7 +916,7 @@ public class COC3DesktopBuilder : EditorWindow
             new WinTaskGate.FieldRequirement { field = dns1, expected = Dns,      displayName = "preferred DNS server" }
         };
 
-        CancelButton(body, t, win, w, 400f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -807,6 +924,9 @@ public class COC3DesktopBuilder : EditorWindow
     {
         var body = COC3WinWidgets.Window(parent, t, "ErrorDialog", "Windows",
                                          420f, 200f, out RectTransform root);
+
+        // Glyph only. The error dialog is deliberately not a WinWindow - ErrorDialogCloser owns
+        // it - so there is no window for an X to close. Its OK button is the way out.
         FixCloseGlyph(root);
 
         float w = body.rect.width;
@@ -837,7 +957,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "ServerManager", "Server Manager",
                                          760f, 460f, out RectTransform root);
         var win = Register(root, "ServerManager", "Server Manager");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -886,7 +1006,7 @@ public class COC3DesktopBuilder : EditorWindow
               "After the roles are installed, the notification flag offers to promote this server " +
               "to a domain controller.").color = t.disabledText;
 
-        CancelButton(body, t, win, w, h - 30f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -914,7 +1034,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Add Roles and Features Wizard",
                                          680f, 500f, out RectTransform root);
         var win = Register(root, "AddRolesWizard", "Add Roles and Features Wizard");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -955,7 +1075,7 @@ public class COC3DesktopBuilder : EditorWindow
               "Ticking a role may offer to add the management tools it needs. Accept them.")
             .color = t.disabledText;
 
-        var install = COC3WinWidgets.Button(body, t, "Install", PrimaryX(w, t), h - 34f,
+        var install = COC3WinWidgets.Button(body, t, "Install", PrimaryX(w, t), BottomRow(body, t),
                                             t.buttonSize.x, t.buttonSize.y, "Install", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -972,7 +1092,7 @@ public class COC3DesktopBuilder : EditorWindow
         gate.mustBeOn = required;
         gate.mustBeOff = new WinToggle[0];
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -982,7 +1102,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Active Directory Domain Services Configuration Wizard",
                                          680f, 480f, out RectTransform root);
         var win = Register(root, "AdDsWizard", "Active Directory Domain Services Configuration Wizard");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1017,7 +1137,7 @@ public class COC3DesktopBuilder : EditorWindow
               "module lives inside it, so the name chosen here is the one the client will join.")
             .color = t.disabledText;
 
-        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), h - 34f,
+        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), BottomRow(body, t),
                                          t.buttonSize.x, t.buttonSize.y, "Next", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -1039,7 +1159,7 @@ public class COC3DesktopBuilder : EditorWindow
             }
         };
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1134,7 +1254,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "DhcpConsole", "DHCP",
                                          620f, 360f, out RectTransform root);
         var win = Register(root, "DhcpConsole", "DHCP");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1160,7 +1280,7 @@ public class COC3DesktopBuilder : EditorWindow
               "Right-click IPv4 and choose New Scope to hand out addresses to the lab clients.\n" +
               "Here, clicking IPv4 opens the wizard.").color = t.disabledText;
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -1169,7 +1289,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NewScopeWizard", "New Scope Wizard",
                                          620f, 400f, out RectTransform root);
         var win = Register(root, "NewScopeWizard", "New Scope Wizard");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1194,7 +1314,7 @@ public class COC3DesktopBuilder : EditorWindow
               " holds " + ServerIP + ", so a scope that began at .10 would eventually hand a " +
               "client the server's own address.").color = t.disabledText;
 
-        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), h - 34f,
+        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), BottomRow(body, t),
                                          t.buttonSize.x, t.buttonSize.y, "Next", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -1212,7 +1332,7 @@ public class COC3DesktopBuilder : EditorWindow
             new WinTaskGate.FieldRequirement { field = router, expected = Gateway,    displayName = "router address" }
         };
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1221,7 +1341,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "DnsManager", "DNS Manager",
                                          640f, 380f, out RectTransform root);
         var win = Register(root, "DnsManager", "DNS Manager");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1262,7 +1382,7 @@ public class COC3DesktopBuilder : EditorWindow
         gate.mustBeOn = new[] { reverse };
         gate.mustBeOff = new WinToggle[0];
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -1271,7 +1391,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NewZoneWizard", "New Zone Wizard",
                                          620f, 380f, out RectTransform root);
         var win = Register(root, "NewZoneWizard", "New Zone Wizard");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1293,7 +1413,7 @@ public class COC3DesktopBuilder : EditorWindow
               "order as the address itself - the wizard reverses it for you when it names the zone.")
             .color = t.disabledText;
 
-        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), h - 34f,
+        var next = COC3WinWidgets.Button(body, t, "Next", PrimaryX(w, t), BottomRow(body, t),
                                          t.buttonSize.x, t.buttonSize.y, "Next", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -1313,7 +1433,7 @@ public class COC3DesktopBuilder : EditorWindow
             }
         };
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1330,11 +1450,14 @@ public class COC3DesktopBuilder : EditorWindow
     /// </summary>
     private static WinWindow BuildClientSystemProperties(Transform parent, COC3WinTheme t)
     {
+        // 400 tall, not 340. Change... sits at 232 and the window's own Cancel lands on the
+        // bottom row at 246 - so in a 280-tall body the two overlapped. Sixty more pixels puts a
+        // clear gap between the content and the dismiss row.
         var body = COC3WinWidgets.Window(parent, t, "ClientSystemProperties",
                                          "System Properties  -  " + ClientName,
-                                         470f, 340f, out RectTransform root);
+                                         470f, 400f, out RectTransform root);
         var win = Register(root, "ClientSystemProperties", "System Properties - " + ClientName);
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -1359,7 +1482,7 @@ public class COC3DesktopBuilder : EditorWindow
         ca.windowId = "ClientDomainJoin";
         ca.window = win;
 
-        CancelButton(body, t, win, w, 274f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1370,7 +1493,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Computer Name/Domain Changes",
                                          420f, 330f, out RectTransform root);
         var win = Register(root, "ClientDomainJoin", "Computer Name/Domain Changes");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
 
@@ -1390,7 +1513,7 @@ public class COC3DesktopBuilder : EditorWindow
                                  "Workgroup:", "client_membership");
         workgroup.isOn = true;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), 260f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Undo.AddComponent<WinTaskGate>(root.gameObject);
@@ -1413,7 +1536,7 @@ public class COC3DesktopBuilder : EditorWindow
             }
         };
 
-        CancelButton(body, t, win, w, 260f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1435,7 +1558,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "FileExplorer", "ServerData",
                                          800f, 470f, out RectTransform root);
         var win = Register(root, "FileExplorer", "File Explorer");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1501,7 +1624,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Select the folder you want to inspect first.\n\n" +
             "If " + UsersFolder + " is not listed, it has not been created yet - use New folder.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -1510,7 +1633,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NewFolderDialog", "New Folder",
                                          460f, 260f, out RectTransform root);
         var win = Register(root, "NewFolderDialog", "New Folder");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1527,7 +1650,7 @@ public class COC3DesktopBuilder : EditorWindow
               " holds the user data; " + DataRoot + @"\" + RedirectShare +
               " receives the redirected documents later on.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         // TWO GATES ON ONE OK, each scoped to its own step.
@@ -1553,7 +1676,7 @@ public class COC3DesktopBuilder : EditorWindow
         redirected.fields = new[] { Req(folderName, RedirectShare, "folder name") };
         redirected.wrongValueMessage = wrongName;
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1575,7 +1698,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Active Directory Users and Computers",
                                          800f, 460f, out RectTransform root);
         var win = Register(root, "AdUsersComputers", "Active Directory Users and Computers");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1652,7 +1775,7 @@ public class COC3DesktopBuilder : EditorWindow
         Opens(groupGate, newGroup, "NewGroupDialog", win);
         groupGate.missingOptionMessage = wrongContainer;
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -1661,7 +1784,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NewUserDialog", "New Object - User",
                                          560f, 360f, out RectTransform root);
         var win = Register(root, "NewUserDialog", "New Object - User");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1684,14 +1807,14 @@ public class COC3DesktopBuilder : EditorWindow
               "cannot be changed casually afterwards. The job order names it - use exactly that.")
             .color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_NewUser", "create_user_account", ok, error);
         gate.closeOnSuccess = win;
         gate.fields = new[] { Req(logon, SampleUser, "user logon name") };
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1701,7 +1824,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "NewGroupDialog", "New Object - Group",
                                          540f, 440f, out RectTransform root);
         var win = Register(root, "NewGroupDialog", "New Object - Group");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1730,7 +1853,7 @@ public class COC3DesktopBuilder : EditorWindow
               "list and nothing else. GLOBAL is the scope that can hold accounts from this domain " +
               "and be used anywhere in the forest.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_NewGroup", "create_group", ok, error);
@@ -1748,7 +1871,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Permissions can only be granted to a SECURITY group, and a GLOBAL group is the one " +
             "that holds accounts from this domain.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1768,7 +1891,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "GroupProperties", UserGroup + " Properties",
                                          540f, 440f, out RectTransform root);
         var win = Register(root, "GroupProperties", UserGroup + " Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1817,7 +1940,7 @@ public class COC3DesktopBuilder : EditorWindow
             "An object named that cannot be found in " + DomainFQDN + ".\n\n" +
             "Check the {field} against the account you created.";
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -1828,7 +1951,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Group Policy Management Editor",
                                          860f, 560f, out RectTransform root);
         var win = Register(root, "GpoEditor", "Group Policy Management Editor");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1915,7 +2038,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Folder Redirection is under USER Configuration, not Computer Configuration - it " +
             "follows the person, not the machine.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -1925,7 +2048,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Minimum password length Properties",
                                          480f, 360f, out RectTransform root);
         var win = Register(root, "MinPasswordDialog", "Minimum password length Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -1947,7 +2070,7 @@ public class COC3DesktopBuilder : EditorWindow
               MinPassword + " characters is the length the enterprise standard in the job order " +
               "asks for.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_MinPassword", "set_password_policy", ok, error);
@@ -1958,7 +2081,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Tick 'Define this policy setting'.\n\n" +
             "Until it is ticked the value in the box is ignored and the policy stays undefined.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -1975,7 +2098,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "FolderProperties", UsersFolder + " Properties",
                                          540f, 460f, out RectTransform root);
         var win = Register(root, "FolderProperties", UsersFolder + " Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2053,7 +2176,7 @@ public class COC3DesktopBuilder : EditorWindow
                new[] { sharedPath.gameObject }, new[] { notShared.gameObject });
         Reveal(root, "set_folder_permissions", new[] { studentsRow.gameObject }, null);
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -2062,7 +2185,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "AdvancedSharing", "Advanced Sharing",
                                          480f, 340f, out RectTransform root);
         var win = Register(root, "AdvancedSharing", "Advanced Sharing");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2081,7 +2204,7 @@ public class COC3DesktopBuilder : EditorWindow
               "Sharing publishes the folder on the network; it does not decide who may open it. " +
               "That is the Security tab.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Share", "share_folder", ok, error);
@@ -2092,7 +2215,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Tick 'Share this folder'.\n\n" +
             "Typing a share name does nothing on its own - the box is what publishes the folder.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2112,7 +2235,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Permissions for " + UsersFolder,
                                          600f, 560f, out RectTransform root);
         var win = Register(root, "SecurityPermissions", "Permissions for " + UsersFolder);
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2182,7 +2305,7 @@ public class COC3DesktopBuilder : EditorWindow
               "the group change these permissions and take ownership - which is why the standard " +
               "asks for Modify.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Permissions", "set_folder_permissions", ok, error);
@@ -2195,7 +2318,7 @@ public class COC3DesktopBuilder : EditorWindow
             "the right to change these permissions and to take ownership, which no user group " +
             "should have on a shared folder.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2216,7 +2339,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "RunDialog", "Run",
                                          540f, 260f, out RectTransform root);
         var win = Register(root, "RunDialog", "Run");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2232,7 +2355,7 @@ public class COC3DesktopBuilder : EditorWindow
               "A share is reached by its UNC path: two backslashes, the server, then the SHARE " +
               "name - not the folder name on disk.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Run", "test_unc_path", ok, error);
@@ -2244,7 +2367,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Windows cannot find that {field}. Check the spelling and try again.\n\n" +
             "A UNC path starts with two backslashes, then the server name, then the share.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2255,7 +2378,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          ShareName + " on " + ServerName,
                                          620f, 340f, out RectTransform root);
         var win = Register(root, "ShareWindow", ShareName + " on " + ServerName);
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2276,7 +2399,7 @@ public class COC3DesktopBuilder : EditorWindow
               "can reach the server by name, and the permissions let this account in. Test 1 " +
               "passed.").color = t.disabledText;
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -2295,7 +2418,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Documents Properties",
                                          640f, 440f, out RectTransform root);
         var win = Register(root, "DocumentsRedirectionProperties", "Documents Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2331,7 +2454,7 @@ public class COC3DesktopBuilder : EditorWindow
               "local path here redirects every user to a folder on their own machine - which is " +
               "the opposite of what redirection is for.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Redirection", "set_redirection_target", ok, error);
@@ -2345,7 +2468,7 @@ public class COC3DesktopBuilder : EditorWindow
             "underneath it. Advanced is for sending different groups to different servers, which " +
             "this job order does not ask for.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2356,7 +2479,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Remote Desktop Connection",
                                          560f, 320f, out RectTransform root);
         var win = Register(root, "RemoteDesktopConnection", "Remote Desktop Connection");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2376,7 +2499,7 @@ public class COC3DesktopBuilder : EditorWindow
               "an administrator would get in either way, which is why the test uses " + SampleUser +
               ".").color = t.disabledText;
 
-        var connect = COC3WinWidgets.Button(body, t, "Connect", PrimaryX(w, t), h - 34f,
+        var connect = COC3WinWidgets.Button(body, t, "Connect", PrimaryX(w, t), BottomRow(body, t),
                                             t.buttonSize.x, t.buttonSize.y, "Connect", true);
 
         var gate = Gate(root, "Gate_Rdp", "rdp_connect", connect, error);
@@ -2388,7 +2511,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Remote Desktop cannot find {field}.\n\n" +
             "Check the address against the static configuration on the server.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2398,7 +2521,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          ServerName + " - Remote Desktop Connection",
                                          640f, 360f, out RectTransform root);
         var win = Register(root, "RdpSession", ServerName + " - Remote Desktop Connection");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2413,7 +2536,7 @@ public class COC3DesktopBuilder : EditorWindow
               "Test 4 passed - the client can administer the server remotely.").color =
             new Color(0.8f, 0.86f, 0.92f, 1f);
 
-        CancelButton(body, t, win, w, h - 34f, "Disconnect");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Disconnect");
         return win;
     }
 
@@ -2427,7 +2550,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "DevicesAndPrinters", "Devices and Printers",
                                          700f, 400f, out RectTransform root);
         var win = Register(root, "DevicesAndPrinters", "Devices and Printers");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2457,7 +2580,7 @@ public class COC3DesktopBuilder : EditorWindow
             "The test is of the SHARED printer on " + ServerName + " - the local PDF printer " +
             "would print happily and tell you nothing about the server.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -2471,11 +2594,15 @@ public class COC3DesktopBuilder : EditorWindow
     private static WinWindow BuildPrinterProperties(Transform parent, COC3WinTheme t,
                                                     GameObject error, WinWindow testPage)
     {
+        // 580 tall, not 480. The Security page carries a principals list, a Remove button, a
+        // three-row permission grid, a note AND an Apply - about 400 pixels of content in a page
+        // that was 332 tall. Everything fitted on paper because each piece was placed against the
+        // window, and the page it actually lives in is 88 shorter.
         var body = COC3WinWidgets.Window(parent, t, "PrinterProperties",
                                          "HP LaserJet 1020 Properties",
-                                         620f, 480f, out RectTransform root);
+                                         620f, 580f, out RectTransform root);
         var win = Register(root, "PrinterProperties", "Printer Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2517,7 +2644,7 @@ public class COC3DesktopBuilder : EditorWindow
               "and driver.\n\nWithout that, every client is a manual setup.").color = t.disabledText;
 
         var shareApply = COC3WinWidgets.Button(panels[1], t, "ShareApply",
-                                               w - t.buttonSize.x, 252f,
+                                               w - t.buttonSize.x, BottomRow(panels[1], t),
                                                t.buttonSize.x, t.buttonSize.y, "Apply", true);
 
         var shareGate = Gate(root, "Gate_SharePrinter", "share_printer", shareApply, error);
@@ -2568,7 +2695,8 @@ public class COC3DesktopBuilder : EditorWindow
               "Print is all a user needs. Manage this printer lets them pause the queue, change " +
               "these permissions and delete the printer.").color = t.disabledText;
 
-        var secApply = COC3WinWidgets.Button(panels[2], t, "SecApply", w - t.buttonSize.x, 392f,
+        var secApply = COC3WinWidgets.Button(panels[2], t, "SecApply", w - t.buttonSize.x,
+                                             BottomRow(panels[2], t),
                                              t.buttonSize.x, t.buttonSize.y, "Apply", true);
 
         var permGate = Gate(root, "Gate_PrinterPerms", "set_printer_permissions", secApply, error);
@@ -2585,7 +2713,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Not Manage this printer - that lets the group change these permissions and delete " +
             "the printer, which no user group should be able to do.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -2612,7 +2740,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "TestPageSent", "HP LaserJet 1020",
                                          480f, 250f, out RectTransform root);
         var win = Register(root, "TestPageSent", "HP LaserJet 1020");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2625,7 +2753,7 @@ public class COC3DesktopBuilder : EditorWindow
               ", and that this account has the Print permission. Test 2 passed.")
             .color = t.disabledText;
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -2643,7 +2771,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "DocumentsProperties", "Documents Properties",
                                          580f, 450f, out RectTransform root);
         var win = Register(root, "DocumentsProperties", "Documents Properties");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2677,7 +2805,7 @@ public class COC3DesktopBuilder : EditorWindow
               "gets backed up.\n\nA path still starting C:\\Users means the policy has not " +
               "applied. Sign out and in again before assuming it failed.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Redirected", "verify_redirection", ok, error);
@@ -2689,7 +2817,7 @@ public class COC3DesktopBuilder : EditorWindow
             "General tells you what it is. The LOCATION tab tells you where it is - and that is " +
             "the only thing this test is checking.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2707,7 +2835,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Windows Defender Firewall with Advanced Security",
                                          840f, 460f, out RectTransform root);
         var win = Register(root, "FirewallConsole", "Windows Defender Firewall");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2764,7 +2892,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Remote Desktop is a connection coming IN to this machine. An outbound rule governs " +
             "what this machine may reach, which is a different question.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -2774,7 +2902,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "EventViewer", "Event Viewer",
                                          860f, 470f, out RectTransform root);
         var win = Register(root, "EventViewer", "Event Viewer");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2833,7 +2961,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Sign-in and access attempts are recorded in the SECURITY log. Application and System " +
             "record what software and Windows itself did, which is a different question.";
 
-        CancelButton(body, t, win, w, h - 34f, "Close");
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
         return win;
     }
 
@@ -2852,7 +2980,7 @@ public class COC3DesktopBuilder : EditorWindow
         var body = COC3WinWidgets.Window(parent, t, "FilterCurrentLog", "Filter Current Log",
                                          560f, 430f, out RectTransform root);
         var win = Register(root, "FilterCurrentLog", "Filter Current Log");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2874,7 +3002,7 @@ public class COC3DesktopBuilder : EditorWindow
               "Audit FAILURE is the short list worth reading: someone tried something they were " +
               "not permitted to do.").color = t.disabledText;
 
-        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), h - 34f,
+        var ok = COC3WinWidgets.Button(body, t, "OK", PrimaryX(w, t), BottomRow(body, t),
                                        t.buttonSize.x, t.buttonSize.y, "OK", true);
 
         var gate = Gate(root, "Gate_Filter", "filter_audit_failure", ok, error);
@@ -2886,7 +3014,7 @@ public class COC3DesktopBuilder : EditorWindow
             "The point of the review is the attempts that were REFUSED. Leaving the filter empty, " +
             "or ticking Audit Success, gives you the same unreadable log you started with.";
 
-        CancelButton(body, t, win, w, h - 34f);
+        CancelButton(body, t, win, w, BottomRow(body, t));
         return win;
     }
 
@@ -2905,7 +3033,7 @@ public class COC3DesktopBuilder : EditorWindow
                                          "Advanced Security Settings for " + UsersFolder,
                                          760f, 500f, out RectTransform root);
         var win = Register(root, "AdvancedSecurity", "Advanced Security Settings");
-        FixCloseGlyph(root);
+        FixCloseGlyph(root, win);
 
         float w = body.rect.width;
         float h = body.rect.height;
@@ -2997,7 +3125,7 @@ public class COC3DesktopBuilder : EditorWindow
             "Check it against the account you created. Checking the GROUP would tell you what the " +
             "group may do, not what the person ended up with.";
 
-        CancelButton(body, t, win, w, h - 34f, "OK");
+        CancelButton(body, t, win, w, BottomRow(body, t), "OK");
         return win;
     }
 
@@ -3011,9 +3139,98 @@ public class COC3DesktopBuilder : EditorWindow
         Label(row, t, "I", 360f, 0f, w - 380f, 24f, from).color = t.disabledText;
     }
 
+    /// <summary>
+    /// Command Prompt, for step 30.
+    ///
+    /// WHY THIS ONE WAS LEFT OUT
+    /// Step 30 is a PingTest, and PingTest panels already had a console with an animated reply -
+    /// so it looked finished. It was the only test in the module the learner could run without
+    /// opening anything: no Start menu, no window, just a button on a panel. Next to four other
+    /// tests that each take a route through the desktop, that reads as the simulation giving up
+    /// on the last one.
+    ///
+    /// THE COMMAND IS TYPED, not pressed. Knowing that connectivity is checked with ping, and that
+    /// ping takes an address, is the content of the step - a button labelled "Ping" hands both
+    /// over. Typing it is also what a technician does.
+    ///
+    /// WHAT IS LOST: the animated reply from PingSimulation. The replies here appear at once. If
+    /// you would rather keep the animation, leave step 30 unbound and this window simply goes
+    /// unused - nothing else depends on it.
+    /// </summary>
+    private static WinWindow BuildCommandPrompt(Transform parent, COC3WinTheme t, GameObject error)
+    {
+        var body = COC3WinWidgets.Window(parent, t, "CommandPrompt", "Command Prompt",
+                                         720f, 440f, out RectTransform root);
+        var win = Register(root, "CommandPrompt", "Command Prompt");
+        FixCloseGlyph(root, win);
+
+        float w = body.rect.width;
+        float h = body.rect.height;
+
+        var screen = Box(body, "Console", 0f, 0f, w, h - 80f, t.consoleBackground);
+
+        Label(screen.transform, t, "Banner", 10f, 8f, w - 20f, 44f,
+              "Microsoft Windows [Version 10.0.17763.1]\n" +
+              "(c) Microsoft Corporation. All rights reserved.").color = t.consoleText;
+
+        Label(screen.transform, t, "Prompt", 10f, 64f, 210f, 24f,
+              @"C:\Users\" + SampleUser + ">").color = t.consoleText;
+
+        var command = COC3WinWidgets.Field(screen.transform, t, "Command", 210f, 62f, 0f, w - 230f,
+                                           "", "", "", false);
+
+        // The replies, hidden until the command is accepted.
+        var output = Rect(screen.transform, "Output", 10f, 100f, w - 20f, h - 200f);
+
+        Label(output, t, "L1", 0f, 0f, w - 20f, 22f,
+              "Pinging " + ServerIP + " with 32 bytes of data:").color = t.consoleText;
+
+        for (int i = 0; i < 4; i++)
+            Label(output, t, "R" + i, 0f, 26f + i * 22f, w - 20f, 22f,
+                  "Reply from " + ServerIP + ": bytes=32 time<1ms TTL=128").color = t.consoleText;
+
+        Label(output, t, "Stats", 0f, 122f, w - 20f, 44f,
+              "Ping statistics for " + ServerIP + ":\n" +
+              "    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)").color = t.consoleText;
+
+        Reveal(root, "run_ping", new[] { output.gameObject }, null);
+
+        Label(body, t, "Hint", 0f, h - 74f, w - 110f, 44f,
+              "Type the command and press Enter. Connectivity is proved by a REPLY, not by the " +
+              "command being accepted.").color = t.disabledText;
+
+        var enter = COC3WinWidgets.Button(body, t, "Enter", PrimaryX(w, t),
+                                          BottomRow(body, t),
+                                          t.buttonSize.x, t.buttonSize.y, "Enter", true);
+
+        var gate = Gate(root, "Gate_Ping", "run_ping", enter, error);
+        gate.requiredStepId = "Step_30_VerifyRemoteAccess";
+        gate.fields = new[] { Req(command, "ping " + ServerIP, "command") };
+        gate.wrongValueMessage =
+            "'{field}' is not recognised as an internal or external command.\n\n" +
+            "Connectivity is checked with ping, followed by the address you want to reach.";
+
+        CancelButton(body, t, win, w, BottomRow(body, t), "Close");
+        return win;
+    }
+
     // ==================================================================
     // Small drawing helpers
     // ==================================================================
+
+    /// <summary>
+    /// Says which machine something belongs on.
+    ///
+    /// Server unless stated, because all but a handful of these windows are the server's. The
+    /// exceptions are the four test steps and the domain join, which happen at the client.
+    /// </summary>
+    private static void Machine(Component target, WinMachine.Scope scope)
+    {
+        if (target == null) return;
+
+        var tag = Undo.AddComponent<WinMachine>(target.gameObject);
+        tag.scope = scope;
+    }
 
     private static WinWindow Register(RectTransform root, string id, string title)
     {
@@ -3024,14 +3241,60 @@ public class COC3DesktopBuilder : EditorWindow
     }
 
     /// <summary>
-    /// COC3WinWidgets.Window draws its close box with "✕", which LiberationSans does not have -
-    /// it renders as a hollow square and logs a warning every time the text rebuilds. A plain
-    /// capital X exists in every font and reads the same at this size.
+    /// Makes the window's close box real, and legible.
+    ///
+    /// TWO THINGS WERE WRONG WITH IT.
+    ///
+    /// It was drawn with "✕", which LiberationSans does not have - a hollow square, and a Console
+    /// warning every time the text rebuilt. A capital X exists in every font and reads the same.
+    ///
+    /// And it was never a button. COC3WinWidgets draws it as a Label, deliberately: the comment
+    /// there says a live close on a step panel would confuse the learner. That was true when these
+    /// were step panels. They are windows on a desktop now, and a close box that does nothing is
+    /// worse than none at all - every learner tries it, and it teaches them the simulation is
+    /// broken before they have done anything wrong.
+    ///
+    /// The Label keeps raycastTarget off (a click would only land on the glyph's own pixels
+    /// anyway), so the hit area is a sibling covering the whole corner.
     /// </summary>
+    /// <summary>Glyph only, for the one panel that is not a WinWindow.</summary>
     private static void FixCloseGlyph(RectTransform windowRoot)
     {
         foreach (var label in windowRoot.GetComponentsInChildren<TextMeshProUGUI>(true))
             if (label.name == "Close") label.text = "X";
+    }
+
+    private static void FixCloseGlyph(RectTransform windowRoot, WinWindow win)
+    {
+        foreach (var label in windowRoot.GetComponentsInChildren<TextMeshProUGUI>(true))
+        {
+            if (label.name != "Close") continue;
+
+            label.text = "X";
+
+            var labelRt = label.rectTransform;
+            var bar = labelRt.parent;
+            if (bar == null) return;
+
+            // Generous: the whole top-right corner, not just the 30 pixels the glyph occupies.
+            var hit = Rect(bar, "CloseButton",
+                           labelRt.anchoredPosition.x - 5f, -labelRt.anchoredPosition.y,
+                           labelRt.sizeDelta.x + 10f, labelRt.sizeDelta.y);
+
+            var img = hit.gameObject.AddComponent<Image>();
+            img.color = new Color(1f, 1f, 1f, 1f / 255f);   // invisible but never culled
+
+            var button = Undo.AddComponent<Button>(hit.gameObject);
+            button.targetGraphic = img;
+
+            var action = Undo.AddComponent<WinButtonAction>(hit.gameObject);
+            action.action = WinButtonAction.Kind.CloseWindow;
+            action.window = win;
+
+            // Behind the glyph, so the X still draws over it.
+            hit.SetSiblingIndex(labelRt.GetSiblingIndex());
+            return;
+        }
     }
 
     /// <summary>
@@ -3236,9 +3499,33 @@ public class COC3DesktopBuilder : EditorWindow
         return w - 2f * t.buttonSize.x - 10f;
     }
 
+    /// <summary>
+    /// The y of the bottom button row, measured from the body rather than counted by hand.
+    ///
+    /// WHY THIS EXISTS
+    /// Several of these windows had their Cancel placed at a literal y - 274, 320, 400 - worked
+    /// out for the size the window was when it was written. Every later resize left the number
+    /// behind, and the button ended up hanging through the bottom border.
+    ///
+    /// COC3WinWidgets.Window makes the body (window height - 2 - title bar - 2 x padding), so the
+    /// only correct answer is "the body's own height, less a button". Derived, it cannot drift.
+    ///
+    /// Eight pixels clear of the bottom edge - the same gap the windows that were written
+    /// correctly already used, so nothing that looked right moves.
+    /// </summary>
+    private static float BottomRow(RectTransform body, COC3WinTheme t)
+    {
+        return body.rect.height - t.buttonSize.y - 8f;
+    }
+
     private static void CancelButton(RectTransform body, COC3WinTheme t, WinWindow win,
                                      float w, float y, string label = "Cancel")
     {
+        // Clamped, not trusted. A y that would push the button through the bottom border is
+        // always a stale number rather than an intention - nothing in a Windows dialog sits
+        // half outside its own frame.
+        if (y > body.rect.height - t.buttonSize.y) y = BottomRow(body, t);
+
         var cancel = COC3WinWidgets.Button(body, t, label + "Button",
                                            w - t.buttonSize.x, y, t.buttonSize.x, t.buttonSize.y,
                                            label);

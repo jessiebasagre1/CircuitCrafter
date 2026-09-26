@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Step_09_FileServicesConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_09_FileServicesConfig
-  instructionText: "File and Storage Services \u25B8 File Server is what lets this
-    machine host a shared folder over SMB. Without it, the share you create later
-    would exist on disk and be unreachable from the client."
+  instructionText: 'LO2.3 - File and Storage Services > File Server is what lets
+    this machine host a shared folder over SMB.
+
+
+    You ticked it at step 5. Press
+    NEXT.'
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

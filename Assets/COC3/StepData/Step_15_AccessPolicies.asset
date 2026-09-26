@@ -13,12 +13,17 @@ MonoBehaviour:
   m_Name: Step_15_AccessPolicies
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_15_AccessPolicies
-  instructionText: 'LO1.2 - Apply the account policy required by the enterprise standard.
+  instructionText: 'LO1.2 - Apply the account policy the enterprise standard requires.
 
 
-    In
-    Group Policy Management Editor > Account Policies > Password Policy, open ''Minimum
-    password length''.'
+    Start
+    > Group Policy Management. Under Computer Configuration > Policies > Windows
+    Settings > Security Settings > Account Policies, select Password Policy, then
+    open Minimum password length.
+
+
+    Tick ''Define this policy setting'' - the
+    value alone does nothing.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

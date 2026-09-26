@@ -13,12 +13,17 @@ MonoBehaviour:
   m_Name: Step_14_AccessLevels
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_14_AccessLevels
-  instructionText: 'LO1.2 - Access levels are assigned to groups, never to individual
-    users.
+  instructionText: 'LO1.2 - Access goes to a GROUP, then the person goes into the
+    group.
 
 
-    Create the STUDENTS global security group and add student01 as a
-    member.'
+    Start > Active Directory Users and Computers. Select Users, then
+    New > Group. Name it, choose Global and Security, then OK.
+
+
+    Its Properties
+    window opens by itself on the General tab. Click MEMBERS, type the account name
+    in object name, then press ''Add'' not OK - that is what completes the step.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -17,8 +17,12 @@ MonoBehaviour:
     each user''s data.
 
 
-    In File Explorer, create the folder and type its full
-    path.'
+    File Explorer is on the desktop, already showing the
+    ServerData folder.
+
+
+    Press New folder and type the folder''s own name - not
+    the whole path.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

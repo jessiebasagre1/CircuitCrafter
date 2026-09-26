@@ -53,8 +53,14 @@ namespace CircuitCrafter.Assessment.UI
                  "having - a locked badge with no number gives the learner nothing to aim at.")]
         [SerializeField] private TMP_Text statusText;
 
-        [Tooltip("Optional 0-1 bar under the badge showing outcomes earned so far.")]
+        [Tooltip("The BLUE bar under the badge: outcomes earned so far. Optional.")]
         [SerializeField] private Slider progressBar;
+
+        [Tooltip("OPTIONAL. The YELLOW bar behind it: outcomes at Practised OR BETTER - what the " +
+                 "learner has worked through in this module.\n\n" +
+                 "Same RectTransform as the blue bar, EARLIER in the hierarchy so it draws behind, " +
+                 "Background image off. Leave it empty and the badge behaves exactly as before.")]
+        [SerializeField] private Slider storyBar;
 
         [Header("Locked look")]
         [Tooltip("Tint multiplied over the artwork while locked. This DARKENS rather than " +
@@ -119,12 +125,13 @@ namespace CircuitCrafter.Assessment.UI
             CompetencyLedger ledger = CompetencyLedger.Instance;
 
             int competent = 0;
+            int practised = 0;
             int total = 0;
             bool unlocked = false;
 
             if (ledger != null && id.Length > 0)
             {
-                ledger.GetModuleProgress(id, out competent, out total);
+                ledger.GetModuleProgress(id, out competent, out practised, out total);
                 unlocked = ledger.IsModuleCompetent(id);
             }
 
@@ -137,6 +144,12 @@ namespace CircuitCrafter.Assessment.UI
             {
                 progressBar.maxValue = Mathf.Max(1, total);
                 progressBar.value = competent;
+            }
+
+            if (storyBar != null)
+            {
+                storyBar.maxValue = Mathf.Max(1, total);
+                storyBar.value = practised;
             }
 
             if (lockOverlay != null) lockOverlay.SetActive(!unlocked);

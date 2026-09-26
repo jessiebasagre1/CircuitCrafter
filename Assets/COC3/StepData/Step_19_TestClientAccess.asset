@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: Step_19_TestClientAccess
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_19_TestClientAccess
-  instructionText: 'LO3.1 - Test 1. Confirm the share is reachable from the client.
+  instructionText: 'LO3.1 - TEST 1. Walk to CLIENT01.
 
 
-    In
-    the Run box or File Explorer address bar, type the full UNC path to the shared
-    folder.'
+    Start > Run. Type the
+    full UNC path to the shared folder and press OK.
+
+
+    The test passes when the
+    folder opens.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -16,8 +16,13 @@ MonoBehaviour:
   instructionText: 'LO1.2 - Restrict the share to the group that needs it.
 
 
-    On
-    the Security tab, grant the STUDENTS group ''Modify'' permission.'
+    Same
+    property sheet, the SECURITY tab - Sharing puts the folder on the network, Security
+    decides who may do what with it.
+
+
+    Press Edit, select the group, and grant
+    Modify. Not Full control.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

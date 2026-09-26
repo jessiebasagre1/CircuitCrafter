@@ -13,11 +13,17 @@ MonoBehaviour:
   m_Name: Step_20_InstallSharedPrinter
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_20_InstallSharedPrinter
-  instructionText: 'LO1.1 - Back to the server. Install the printer and publish it.
+  instructionText: 'LO1.1 - Back to the server. Publish the printer so clients can
+    install it by name.
 
 
-    In
-    Devices and Printers > Printer Properties > Sharing, tick ''Share this printer''.'
+    Start > Devices and Printers. Select the printer, open
+    Printer properties, and go to the SHARING tab.
+
+
+    Share it, and list it in
+    the directory. Sharing puts it on the network; listing is what lets a domain
+    client find it.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -13,13 +13,17 @@ MonoBehaviour:
   m_Name: Step_03_StaticIPConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_03_StaticIPConfig
-  instructionText: "LO2.2 \u2014 A server must never lease its own address from DHCP.
-    Every client and every service on this network will look for it at a fixed address.\n\nOpen
-    Network Connections, then Ethernet \u25B8 Properties \u25B8 Internet Protocol
-    Version 4 (TCP/IPv4) \u25B8 Properties.\n\nSet the static address, subnet mask
-    and default gateway from the job order, and set the Preferred DNS server to this
-    machine's own loopback address \u2014 it will be hosting the DNS role itself.\n\nApply
-    them together with OK. Windows commits the whole sheet at once."
+  instructionText: 'LO2.2 - A server must never lease its own address from DHCP.
+
+
+    Start
+    > Network Connections. Open Ethernet, then Properties. Select Internet Protocol
+    Version 4 (TCP/IPv4) and press Properties again.
+
+
+    Choose ''Use the following
+    IP address'' and ''Use the following DNS server addresses then enter the static
+    configuration and Prefered DNS server.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 192.168.10.10

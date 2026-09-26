@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Step_10_OtherServices
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_10_OtherServices
-  instructionText: Print and Document Services does the same job for printers. It
-    is what allows a printer attached to this server to be published to the domain,
-    so a client can install it by name rather than by driver.
+  instructionText: 'LO2.3 - Print and Document Services does the same job for printers
+    - it is what allows one to be published to the domain by name.
+
+
+    You ticked
+    it at step 5. Press NEXT.'
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

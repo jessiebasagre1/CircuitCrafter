@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: Step_29_ConnectFromClient
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_29_ConnectFromClient
-  instructionText: 'LO3.1 - Test 4. Connect remotely from the client.
+  instructionText: 'LO3.1 - TEST 4. Walk to CLIENT01.
 
 
-    Open
-    Remote Desktop Connection (mstsc) on CLIENT01 and type the address of the server.'
+    Start > Remote Desktop
+    Connection. Enter the server''s address and press Connect.
+
+
+    Sign-in is as
+    the student account, not as an administrator.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

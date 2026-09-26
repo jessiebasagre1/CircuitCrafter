@@ -16,9 +16,12 @@ MonoBehaviour:
   instructionText: 'LO1.1 - Publish the folder so clients can reach it over the network.
 
 
-    Right-click
-    the folder > Properties > Sharing > Advanced Sharing, tick ''Share this folder'',
-    and type the share name.'
+    File
+    Explorer, select the Users folder, then Properties.
+
+
+    The sheet opens on
+    General. Go to the SHARING tab, then Advanced Sharing.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

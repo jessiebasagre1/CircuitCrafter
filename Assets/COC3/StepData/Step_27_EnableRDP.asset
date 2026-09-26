@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: Step_27_EnableRDP
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_27_EnableRDP
-  instructionText: 'LO1.1 - Enable remote administration of the server.
+  instructionText: 'LO1.1 - Back to the server. Enable remote administration.
 
 
-    In
-    System Properties > Remote, select ''Allow remote connections to this computer''.'
+    Start
+    > System, then the REMOTE tab.
+
+
+    Allow remote connections and apply. Enabling
+    the service is not the same as permitting anyone to use it.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

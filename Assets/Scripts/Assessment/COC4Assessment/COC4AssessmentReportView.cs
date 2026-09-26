@@ -46,6 +46,14 @@ namespace CircuitCrafter.Repair
         [Header("Assessment")]
         [SerializeField] private string moduleId = "COC4";
 
+        [Tooltip("How many of the drawn tickets must be FULLY resolved - diagnosed, repaired AND " +
+                 "tested - for this run to count as completed.\n\n" +
+                 "THIS IS THE COC 4 PASS STANDARD, and this is the only place it is written. Set it " +
+                 "to the number drawn (5) to demand a perfect run; 4 allows one failure. It is " +
+                 "clamped to the number actually drawn, so it can never ask for more tickets than " +
+                 "the learner was given.")]
+        [SerializeField] private int ticketsRequiredToPass = 4;
+
         // ==================================================================
 
         private void Start()
@@ -177,7 +185,8 @@ namespace CircuitCrafter.Repair
                 }
             }
 
-            AddCompetencyStages(result);
+            int required = TicketsRequiredToPass();
+            AddCompetencyStages(result, required);
 
             score = Mathf.Max(0, score - COC4AssessmentRun.TotalMistakes * COC4AssessmentRun.MistakePenalty);
 
@@ -186,9 +195,13 @@ namespace CircuitCrafter.Repair
             result.gradedAttempts = gradedAttempts;
             result.firstAttemptCorrect = firstAttemptCorrect;
 
-            // Completed means every ticket was resolved. A run that reached the report by giving up
-            // is finished but not completed, and the ledger's promotion gate reads that difference.
-            result.completed = COC4AssessmentRun.PassedCount == COC4AssessmentRun.Count;
+            // Completed means the PASS STANDARD was met, not that every ticket was perfect.
+            //
+            // One number decides this and the three outcome stages below it. Before, completion
+            // demanded 5 of 5 while the ledger's score threshold asked for 75% - two rules of
+            // different strictness, so a learner at 80% was failed by the one the report never
+            // showed them, and only the Console said which.
+            result.completed = COC4AssessmentRun.PassedCount >= required;
 
             // Ledger first: RecordResult fills in result.criteria, and the stored JSON should carry
             // that judgement rather than an empty list. Same order AssessmentRecorder uses.
@@ -224,15 +237,15 @@ namespace CircuitCrafter.Repair
         ///   coc4_ticket_1 .. coc4_ticket_5   one per position in the run, completed when that
         ///                                    ticket was resolved. Pair with Required Evidence
         ///                                    Count to say "any 4 of 5" without naming which.
-        ///   coc4_identify                    every ticket attempted was correctly diagnosed
-        ///   coc4_repair                      every ticket attempted was repaired
-        ///   coc4_verify                      every ticket attempted was both
+        ///   coc4_identify                    at least Tickets Required To Pass were diagnosed
+        ///   coc4_repair                      at least that many were repaired
+        ///   coc4_verify                      at least that many were diagnosed AND repaired
         ///   coc4_all_resolved                every ticket DRAWN was resolved
         ///
         /// They carry no points. Scoring is the per-ticket stages' job, and counting a summary of
         /// the run as if it were more work would inflate every learner's percentage.
         /// </summary>
-        private static void AddCompetencyStages(AssessmentResult result)
+        private static void AddCompetencyStages(AssessmentResult result, int required)
         {
             var attempts = COC4AssessmentRun.Attempts;
 
@@ -254,20 +267,22 @@ namespace CircuitCrafter.Repair
                 if (attempt.Passed) passed++;
             }
 
-            // "Every ticket they actually got to", not "every ticket drawn". A learner the clock
-            // stopped after three has demonstrated identification on three tickets or they have
-            // not; the two they never saw say nothing either way, and counting them as failures
-            // would punish them for running out of time twice over.
+            // AT LEAST `required`, NOT "every ticket attempted".
+            //
+            // The old rule was == started, which meant ONE give-up closed none of these three: a
+            // learner who diagnosed, repaired and tested four machines out of five evidenced no
+            // outcome whatsoever. Counting what they did demonstrate is the entire point of
+            // sampling five tickets rather than marking one.
             bool anyStarted = started > 0;
 
-            AddStage(result, "coc4_identify", "Identified the fault on every ticket attempted",
-                     anyStarted && diagnosed == started);
+            AddStage(result, "coc4_identify", $"Identified the fault on at least {required} ticket(s)",
+                     anyStarted && diagnosed >= required);
 
-            AddStage(result, "coc4_repair", "Repaired every ticket attempted",
-                     anyStarted && repaired == started);
+            AddStage(result, "coc4_repair", $"Repaired at least {required} ticket(s)",
+                     anyStarted && repaired >= required);
 
-            AddStage(result, "coc4_verify", "Diagnosed and repaired every ticket attempted",
-                     anyStarted && passed == started);
+            AddStage(result, "coc4_verify", $"Diagnosed, repaired and tested at least {required} ticket(s)",
+                     anyStarted && passed >= required);
 
             AddStage(result, "coc4_all_resolved", "Resolved all five tickets",
                      attempts.Count > 0 && passed == attempts.Count);
@@ -276,6 +291,19 @@ namespace CircuitCrafter.Repair
                       DescribeClosed(result) + "\n\n" +
                       "Put these ids in the COC4 CompetencyDefinition's Evidence Task Ids. Anything " +
                       "an outcome asks for that is NOT in that list can never be satisfied.");
+        }
+
+        /// <summary>
+        /// The pass standard, clamped to what was actually drawn.
+        ///
+        /// Clamped because Tickets To Draw lives on COC4AssessmentLauncher and this number lives
+        /// here: drop the draw to 3 for a quick test and an unclamped 5 would make every run
+        /// unpassable, with nothing on screen to say why.
+        /// </summary>
+        private int TicketsRequiredToPass()
+        {
+            int drawn = Mathf.Max(1, COC4AssessmentRun.Count);
+            return Mathf.Clamp(ticketsRequiredToPass, 1, drawn);
         }
 
         private static void AddStage(AssessmentResult result, string id, string name, bool completed)

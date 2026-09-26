@@ -21,24 +21,25 @@ MonoBehaviour:
     criteria: Assigns a static address, installs the required server roles, and creates
       the domain.
     evidenceTaskIds:
-    - coc3_static_ip
-    - coc3_install_roles
-    - coc3_create_domain
+    - coc3_lo1_1
+    - coc3_lo1_2
+    - coc3_lo1_3
     requiredEvidenceCount: 0
   - code: LO2
     title: Configure users, groups and shared resources
     criteria: Creates accounts and groups and applies share permissions appropriately.
     evidenceTaskIds:
-    - coc3_users_groups
-    - coc3_shares
+    - coc3_lo2_1
+    - coc3_lo2_2
+    - coc3_lo2_3
+    - coc3_lo2_4
     requiredEvidenceCount: 0
   - code: LO3
     title: Configure services and document the work
     criteria: Configures printing and folder redirection, carries out the test plan,
       and completes the report.
     evidenceTaskIds:
-    - coc3_printer
-    - coc3_redirection
-    - coc3_test_plan
-    - coc3_service_report
+    - coc3_lo3_1
+    - coc3_lo3_2
+    - coc3_lo3_3
     requiredEvidenceCount: 0

@@ -66,8 +66,18 @@ namespace CircuitCrafter.Assessment
         public int assessmentAttempts;
     }
 
-    /// <summary>One learner's standing on one learning outcome, accumulated
-    /// across every run they've ever done.</summary>
+    /// <summary>
+    /// One learner's standing on one learning outcome, accumulated across every run they've ever
+    /// done.
+    ///
+    /// TWO HALVES, AND THE SPLIT IS THE POINT. Everything named plainly - evidenceSatisfied,
+    /// attempts - is "across all modes", and everything named ...Assessment is "in a completed
+    /// graded run only". They are stored separately rather than one being derived from the other
+    /// because the competency screen asks BOTH questions: the Story tab asks what the learner has
+    /// worked through, the Assessment tab asks what they have proven. Before this split, a story
+    /// run stamped the only copy there was, so a screen showing proof had nothing but story figures
+    /// to draw.
+    /// </summary>
     [Serializable]
     public class OutcomeRecord
     {
@@ -79,16 +89,43 @@ namespace CircuitCrafter.Assessment
         public int status = (int)CompetencyStatus.NotAttempted;
 
         public int attempts;
+
+        [Tooltip("Best ScorePercent from a COMPLETED ASSESSMENT run - see assessmentScored. " +
+                 "Meaningless on its own, because 0 is both 'scored zero' and 'never graded'.")]
         public int bestScorePercent;
 
-        [Tooltip("How much of this outcome's evidence was in place at the end of the best run so far. Stored on the record rather than recomputed, because the competency screen usually runs on the main menu where there is no TaskManager to ask.")]
+        [Tooltip("True once a completed Assessment run has stamped bestScorePercent. Without this " +
+                 "flag there is no way to tell a genuine 0% from a story run that was never marked " +
+                 "at all - and a row reading 'Best 0%' after a clean story playthrough is the one " +
+                 "thing on this screen guaranteed to be read as a failure.")]
+        public bool assessmentScored;
+
+        [Tooltip("How much of this outcome's evidence was in place at the end of the best run so far, in ANY mode. Stored on the record rather than recomputed, because the competency screen usually runs on the main menu where there is no TaskManager to ask.")]
         public int evidenceSatisfied;
+
+        [Tooltip("The same figure, but counting only COMPLETED ASSESSMENT runs. This is what the " +
+                 "Assessment tab draws: evidence collected while the game was leading the learner " +
+                 "step by step is practice, and must not fill a bar that claims proof.")]
+        public int evidenceSatisfiedAssessment;
+
         public int evidenceRequired;
 
         public string lastResultId = "";
         public string lastUpdatedUtc = "";
 
         public CompetencyStatus Status => (CompetencyStatus)status;
+
+        /// <summary>
+        /// The evidence position to show for one of the two standings.
+        ///
+        /// Lives here rather than on the view so that the four things that draw an evidence figure
+        /// cannot each pick a different field - the same reason CompetencyCount owns the counting
+        /// rule.
+        /// </summary>
+        public int EvidenceFor(bool gradedOnly)
+        {
+            return gradedOnly ? evidenceSatisfiedAssessment : evidenceSatisfied;
+        }
     }
 
     /// <summary>
@@ -113,6 +150,15 @@ namespace CircuitCrafter.Assessment
     ///   Assessment mode, outcome fully evidenced,
     ///   run completed, score >= pass threshold  -> Competent
     ///   Never demotes.
+    ///
+    /// WHAT A STORY RUN MAY AND MAY NOT WRITE
+    ///   May:  status up to Practised, attempts, evidenceSatisfied, knowledge bestPercent.
+    ///   Must not: status Competent, bestScorePercent, evidenceSatisfiedAssessment,
+    ///             knowledge.passed, ModuleBestScore.
+    /// Everything in the second list is a claim about what the learner has PROVEN, and the whole
+    /// Assessment tab of the competency screen is drawn from it. One shared test - Assessment mode
+    /// and completed - guards all five; see `graded` in Apply and the identical line in
+    /// RecordModuleBest.
     ///
     /// The Guided exclusion is deliberate and worth defending: a run where the
     /// game told the learner what to do at every step is evidence of exposure,
@@ -572,6 +618,20 @@ namespace CircuitCrafter.Assessment
             if (earned != CompetencyStatus.NotAttempted)
                 record.attempts++;
 
+            // THE ONE TEST THIS METHOD USED NOT TO MAKE.
+            //
+            // Everything else in this ledger that means "proven" is gated on exactly this pair -
+            // awarding Competent, RecordModuleBest, knowledge.passed. Apply was not, so a Guided
+            // story run stamped the per-outcome score and the per-outcome evidence position just as
+            // hard as a graded run did. The visible results were a row reading "Best 0%" after a
+            // clean COC1 story playthrough (StoryRunRecorder writes 0/0 deliberately - a story run
+            // is not marked) and an evidence bar that filled on the Assessment tab without the
+            // learner ever having sat an assessment.
+            //
+            // 'completed' is part of the test, not decoration: an abandoned graded run is not a
+            // measurement of anything either.
+            bool graded = result.Mode == SessionMode.Assessment && result.completed;
+
             // Keep the best evidence position ever reached, not the latest. A
             // learner who evidenced 4 of 4 last week and only got through 2 of 4
             // on a rushed retry has not un-done the earlier work, and the screen
@@ -580,13 +640,21 @@ namespace CircuitCrafter.Assessment
             if (evidenceSatisfied > record.evidenceSatisfied)
                 record.evidenceSatisfied = evidenceSatisfied;
 
+            if (graded && evidenceSatisfied > record.evidenceSatisfiedAssessment)
+                record.evidenceSatisfiedAssessment = evidenceSatisfied;
+
             // One-way promotion. See the class comment - a bad retry must not
             // erase a judgement the learner already earned.
             if ((int)earned > record.status)
                 record.status = (int)earned;
 
-            if (result.ScorePercent > record.bestScorePercent)
+            // Best-ever, never worse, and only from a graded run. A learner who scored 84% and then
+            // replays the module in story mode has not scored 0%.
+            if (graded && (!record.assessmentScored || result.ScorePercent > record.bestScorePercent))
+            {
                 record.bestScorePercent = result.ScorePercent;
+                record.assessmentScored = true;
+            }
 
             record.lastResultId = result.resultId;
             record.lastUpdatedUtc = DateTime.UtcNow.ToString("o");
@@ -643,7 +711,31 @@ namespace CircuitCrafter.Assessment
         /// otherwise a learner who has done one outcome shows as 100 percent.</summary>
         public void GetModuleProgress(string moduleId, out int competent, out int total)
         {
+            GetModuleProgress(moduleId, out competent, out int _, out total);
+        }
+
+        /// <summary>
+        /// Both standings at once: how many outcomes are Competent, how many are Practised OR
+        /// BETTER, and how many exist.
+        ///
+        /// THE TWO BARS ON THE COMPETENCY SCREEN ARE DRAWN FROM THIS, and the asymmetry is
+        /// deliberate. `practised` counts Competent outcomes too, so it can never be the smaller
+        /// number - which is what lets the yellow story fill sit behind the blue assessment fill
+        /// without the back bar ever being overtaken by the front one. The alternative, counting
+        /// only outcomes that stopped at Practised, makes the yellow bar visibly SHRINK as a reward
+        /// for passing an assessment.
+        ///
+        /// Returned from one pass rather than two calls because every caller needs both and two
+        /// passes is two chances to read them against different ledger states.
+        ///
+        /// Counted from the DEFINITION, not from the stored records, so an outcome never attempted
+        /// still counts in the denominator - otherwise a learner who has done one outcome shows as
+        /// 100 percent.
+        /// </summary>
+        public void GetModuleProgress(string moduleId, out int competent, out int practised, out int total)
+        {
             competent = 0;
+            practised = 0;
             total = 0;
 
             var definition = GetDefinition(moduleId);
@@ -652,8 +744,13 @@ namespace CircuitCrafter.Assessment
             foreach (var outcome in definition.outcomes)
             {
                 if (outcome == null || string.IsNullOrEmpty(outcome.code)) continue;
+
                 total++;
-                if (GetStatus(moduleId, outcome.code) == CompetencyStatus.Competent) competent++;
+
+                CompetencyStatus status = GetStatus(moduleId, outcome.code);
+
+                if (status == CompetencyStatus.Competent) competent++;
+                if (status >= CompetencyStatus.Practised) practised++;
             }
         }
 
@@ -713,6 +810,7 @@ namespace CircuitCrafter.Assessment
                 if (ledger.knowledge == null) ledger.knowledge = new List<KnowledgeRecord>();
                 if (ledger.moduleBests == null) ledger.moduleBests = new List<ModuleBestScore>();
                 ledger.profileId = profileId;
+                Migrate();
                 Debug.Log($"[CompetencyLedger] Loaded {ledger.records.Count} record(s) for profile '{profileId}'.");
             }
             catch (Exception e)
@@ -724,6 +822,58 @@ namespace CircuitCrafter.Assessment
             }
 
             OnLedgerChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Brings a ledger file written before OutcomeRecord had a graded half up to date.
+        ///
+        /// Unity fills a field a JSON file has never heard of with its default, so every record in
+        /// an existing file arrives with assessmentScored = false and evidenceSatisfiedAssessment =
+        /// 0 - which would read as "this learner has never sat an assessment" and quietly blank a
+        /// best score they really did earn. Neither field can be recovered exactly, but both can be
+        /// inferred safely from something the old file DID store:
+        ///
+        ///   status == Competent  ->  only a completed graded run can set that, so the evidence was
+        ///                            in place in a graded run: carry evidenceSatisfied across.
+        ///   bestScorePercent > 0 ->  a story run writes 0/0 and therefore 0%, so any score above
+        ///                            zero came from a marked run: keep it.
+        ///
+        /// Deliberately one-way and lossy in the safe direction. A genuine 0% graded run on an
+        /// outcome that never reached Competent reads as "never graded" after this, which shows one
+        /// blank label instead of inventing proof - and the learner's next graded run restores it.
+        /// Idempotent, so running it on an already-migrated file changes nothing.
+        /// </summary>
+        private void Migrate()
+        {
+            if (ledger == null || ledger.records == null) return;
+
+            int carried = 0;
+
+            foreach (OutcomeRecord record in ledger.records)
+            {
+                if (record == null) continue;
+
+                if (!record.assessmentScored && record.bestScorePercent > 0)
+                {
+                    record.assessmentScored = true;
+                    carried++;
+                }
+
+                if (record.evidenceSatisfiedAssessment == 0
+                    && record.Status == CompetencyStatus.Competent
+                    && record.evidenceSatisfied > 0)
+                {
+                    record.evidenceSatisfiedAssessment = record.evidenceSatisfied;
+                    carried++;
+                }
+            }
+
+            if (carried > 0)
+                Debug.Log($"[CompetencyLedger] Migrated {carried} field(s) on an older ledger file: " +
+                          "scores and evidence positions that could only have come from a graded run " +
+                          "have been carried into the assessment half of the record. Anything that " +
+                          "could not be told apart from story-mode progress now reads as not yet " +
+                          "graded, which is the safe direction.");
         }
 
         public void Save()

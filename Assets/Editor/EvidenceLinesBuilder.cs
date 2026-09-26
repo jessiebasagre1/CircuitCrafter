@@ -95,7 +95,7 @@ namespace CircuitCrafter.Assessment.EditorTools
 
                 TMP_Text style = FindStyleSource(view);
 
-                RectTransform holder = EnsureRect(root.transform, EvidenceRoot, report);
+                RectTransform holder = EnsureHolder(root.transform, report);
                 EnsureVerticalLayout(holder);
 
                 TMP_Text performance = EnsureText(holder, PerformanceName, style,
@@ -105,7 +105,7 @@ namespace CircuitCrafter.Assessment.EditorTools
                 EnsureVerticalLayout(knowledgeRow);
 
                 TMP_Text knowledge = EnsureText(knowledgeRow, KnowledgeName, style,
-                                                "Knowledge (written test): not taken", report);
+                                                "Quiz (written test): not taken yet", report);
 
                 WireUp(view, performance, knowledge, knowledgeRow.gameObject, report);
 
@@ -191,6 +191,62 @@ namespace CircuitCrafter.Assessment.EditorTools
             }
 
             return view.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        /// <summary>
+        /// Finds the EvidenceLines holder wherever it already is, and only creates one when the
+        /// prefab genuinely has none.
+        ///
+        /// WHY IT SEARCHES THE WHOLE PREFAB RATHER THAN JUST THE ROOT'S CHILDREN
+        /// CompetencyScreenBuilder now builds these lines itself, nested under the header's Pad
+        /// object. A root-children-only search would not see them, would create a SECOND holder
+        /// beside Pad - where the root has no layout group to position it - and would then wire the
+        /// view to that invisible copy. The prefab would look untouched and the lines would never
+        /// appear, with nothing in the Console to say why.
+        ///
+        /// WHERE A NEW ONE GOES, when there is nothing to find: under the first child that has a
+        /// VerticalLayoutGroup (Pad, on a header built by CompetencyScreenBuilder), because that is
+        /// the object that stacks the row's bands. Falling back to the root matches what this
+        /// builder did before, which is right for an older single-band header laid out by hand.
+        /// </summary>
+        private static RectTransform EnsureHolder(Transform root, StringBuilder report)
+        {
+            foreach (var candidate in root.GetComponentsInChildren<RectTransform>(true))
+            {
+                if (candidate != null && candidate.name == EvidenceRoot)
+                {
+                    report.AppendLine($"  {EvidenceRoot}: already there (under '{PathOf(candidate, root)}'), reused.");
+                    return candidate;
+                }
+            }
+
+            Transform parent = root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.GetComponent<VerticalLayoutGroup>() != null) { parent = child; break; }
+            }
+
+            report.AppendLine($"  {EvidenceRoot}: created under '{PathOf(parent, root)}'.");
+
+            var go = new GameObject(EvidenceRoot, typeof(RectTransform));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.localScale = Vector3.one;
+            return rect;
+        }
+
+        private static string PathOf(Transform target, Transform root)
+        {
+            string path = target.name;
+            Transform walk = target.parent;
+
+            while (walk != null && walk != root.parent)
+            {
+                path = walk.name + "/" + path;
+                walk = walk.parent;
+            }
+            return path;
         }
 
         private static RectTransform EnsureRect(Transform parent, string name, StringBuilder report)

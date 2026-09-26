@@ -164,6 +164,14 @@ namespace CircuitCrafter.Repair
         private bool running;
         private bool resolved;
         private bool openRequested;
+
+        /// <summary>The boot in progress, kept so it can be STOPPED.
+        ///
+        /// Held by handle rather than tracked with the `running` flag alone, because the flag was
+        /// the whole bug: a boot killed by its own object being deactivated left `running` stuck
+        /// true, and Open() hides the POWER button whenever that flag is set. The learner came back
+        /// to a dead monitor with no way to start it.</summary>
+        private Coroutine bootRoutine;
         private DialogSequence generatedFailDialog;
 
         /// <summary>True once the machine has started normally at least once this
@@ -213,6 +221,24 @@ namespace CircuitCrafter.Repair
             if (!openRequested && panelRoot != null) panelRoot.SetActive(false);
         }
 
+        /// <summary>
+        /// THE SAFETY NET, and the thing that was missing.
+        ///
+        /// Close() hides Panel Root. This component usually lives INSIDE Panel Root, so hiding it
+        /// deactivates this object - and Unity kills a coroutine on a deactivated object outright.
+        /// It does not resume when the object comes back. So BootSequence stopped mid-boot,
+        /// Finish() never ran, `running` stayed true forever, and every later Open() hid the POWER
+        /// button because of it.
+        ///
+        /// Cancelling here rather than only in Close() means it also covers a boot interrupted by
+        /// anything else - a station that hides the panel its own way, an object switched off by
+        /// hand, a scene change.
+        /// </summary>
+        private void OnDisable()
+        {
+            CancelBoot("the monitor was switched off mid-boot");
+        }
+
         /// <summary>Late binding, called from Start AND from Open, so the panel
         /// still works if it was inactive when the scene loaded.</summary>
         private void Resolve()
@@ -248,6 +274,11 @@ namespace CircuitCrafter.Repair
 
             ServiceCallState.EnsureTicket(RepairTicketMode.ActiveTicketId);
 
+            // Belt and braces. Close() and OnDisable() both cancel, so this should never fire - but
+            // if a boot is ever orphaned by a path neither of them sees, THIS is the method that
+            // would otherwise hide the POWER button for the rest of the ticket.
+            CancelBoot("the monitor was reopened while a boot was still marked as running");
+
             if (panelRoot != null) panelRoot.SetActive(true);
             SetScreenOff(true);
 
@@ -276,7 +307,48 @@ namespace CircuitCrafter.Repair
         /// <summary>Wired to the monitor station's On Exit.</summary>
         public void Close()
         {
+            // BEFORE hiding, not after. The UI writes inside CancelBoot land while the objects are
+            // still active, and cancelling here means OnDisable finds nothing left to do.
+            CancelBoot("the learner left the monitor mid-boot");
+
             if (panelRoot != null) panelRoot.SetActive(false);
+        }
+
+        /// <summary>
+        /// Abandons a boot in progress and puts the monitor back to OFF.
+        ///
+        /// WALKING AWAY CANCELS THE BOOT, AND NOTHING IS RECORDED. That is the deliberate choice
+        /// here, and it is the one that matters for grading: Finish() calls
+        /// ServiceCallState.RecordVerification and AssessmentRecorder.Attempt, so letting an
+        /// unwatched boot run to completion would credit - or fail - the learner on a test they
+        /// never saw the result of. A power-on is evidence because they watched it.
+        ///
+        /// The machine goes back to OFF with the POWER button available, so coming back means
+        /// pressing POWER and watching it properly.
+        /// </summary>
+        private void CancelBoot(string why)
+        {
+            if (!running) return;
+
+            if (bootRoutine != null)
+            {
+                StopCoroutine(bootRoutine);
+                bootRoutine = null;
+            }
+
+            running = false;
+
+            // Back to the dead-monitor look, whichever presentation this site uses.
+            if (bootScreen != null) bootScreen.ShowOff();
+            else if (screenText != null)
+                screenText.text = "The computer is switched off.\n\nPress POWER to start it.";
+
+            SetScreenOff(true);
+            SetPowerButtonShown(true);
+
+            Debug.Log($"[PCPowerStation] Boot ABANDONED - {why}. Nothing was recorded: a power-on " +
+                      "only counts as a test or an observation when the learner watched it finish. " +
+                      "The machine is off again and POWER is available.", this);
         }
 
         /// <summary>The Step back button. Leaves the whole station - camera included -
@@ -329,7 +401,7 @@ namespace CircuitCrafter.Repair
                 return;
             }
 
-            StartCoroutine(BootSequence());
+            bootRoutine = StartCoroutine(BootSequence());
         }
 
         private IEnumerator BootSequence()
@@ -632,6 +704,7 @@ namespace CircuitCrafter.Repair
             }
 
             running = false;
+            bootRoutine = null;
             SetPowerButtonShown(true);
 
             ShowDialogFor(allClear);

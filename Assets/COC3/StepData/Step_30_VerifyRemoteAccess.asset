@@ -13,17 +13,18 @@ MonoBehaviour:
   m_Name: Step_30_VerifyRemoteAccess
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_30_VerifyRemoteAccess
-  instructionText: 'LO3.1 - Test 5. Before blaming Remote Desktop, prove the two
-    machines can see each other at all.
+  instructionText: 'LO3.1 - TEST 5. Still at CLIENT01.
 
 
-    On CLIENT01, open Command Prompt and
-    run:  ping 192.168.10.10
+    Run the ping and watch
+    the replies. Nothing to type.
 
 
-    Tap RUN PING to execute the test.'
+    A reply proves the two machines can reach
+    each other. It proves nothing above that - which is why it is the last test,
+    not the first.'
   screenshotImage: {fileID: 0}
-  stepType: 2
+  stepType: 3
   expectedIP: 
   expectedSubnetMask: 
   expectedGateway: 

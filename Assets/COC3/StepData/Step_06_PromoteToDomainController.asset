@@ -13,17 +13,15 @@ MonoBehaviour:
   m_Name: Step_06_PromoteToDomainController
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_06_PromoteToDomainController
-  instructionText: 'LO2.3 - Installing AD DS does not create a domain. The server
-    must still be promoted.
+  instructionText: 'LO2.3 - Installing the role did not create the domain. Promotion
+    does.
 
 
-    Click the notification flag in Server Manager >
-    ''Promote this server to a domain controller'' > ''Add a new forest'', then type
-    the root domain name.
+    Back in Server Manager, click the notification flag at the top right.
 
 
-    The server restarts afterwards and you sign back
-    in as a domain administrator.'
+    Add
+    a new forest, and enter the root domain name from the job order.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -13,21 +13,11 @@ MonoBehaviour:
   m_Name: Step_01_OHSAndJobOrder
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_01_OHSAndJobOrder
-  instructionText: 'OCCUPATIONAL HEALTH AND SAFETY
+  instructionText: 'LO2.1 - Read the job order before touching anything.
 
 
-    Before touching any equipment:
-    wear your anti-static wrist strap, check that power cables are secure and walkways
-    are clear, and make sure the workstation is properly ventilated.
-
-
-    Read the
-    job order. You are setting up SERVER01 as the domain controller for the cssncii.local
-    lab network, then verifying it from CLIENT01.
-
-
-    Tap NEXT when you are ready
-    to begin.'
+    It
+    names every value you will be asked for. Press NEXT when you have read it.'
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

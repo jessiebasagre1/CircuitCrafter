@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -125,6 +126,11 @@ namespace CSSSimulation.WindowsSim
                           && current.stepData != null
                           && !string.IsNullOrEmpty(ExpectedActionFor(current.stepData.stepId));
 
+            // A quiz is modal. Without this the simulated desktop stays up behind it and can still
+            // be clicked - and hiding it from anywhere else does not work, because this line runs
+            // every frame and would switch it straight back on.
+            if (QuizManager.Instance != null && QuizManager.Instance.IsQuizOpen) wanted = false;
+
             if (desktopRoot.activeSelf != wanted)
                 desktopRoot.SetActive(wanted);
 
@@ -142,15 +148,62 @@ namespace CSSSimulation.WindowsSim
         {
             if (desktopInstruction == null) return;
 
-            string text = current != null && current.instructionLabel != null
-                ? current.instructionLabel.text
-                : string.Empty;
+            string text = InstructionFor(current);
 
             // Compared before assigning: writing to a TMP_Text marks it dirty and rebuilds the
             // mesh, and this runs every frame.
             if (desktopInstruction.text != text)
                 desktopInstruction.text = text;
         }
+
+        /// <summary>
+        /// The instruction to show, from the panel's label if it has one and from the StepData
+        /// asset if it does not.
+        ///
+        /// WHY THE FALLBACK
+        /// The label is normally the right source - ScreenshotStep.Setup() copies the asset into
+        /// it, and anything you edit on the panel is what the learner reads. But a panel whose
+        /// Instruction Label was never assigned - a duplicated hotspot panel, an older one that
+        /// predates the desktop - copies nothing, and the banner goes BLANK with nothing in the
+        /// Console to say why. That is what happened on step 20.
+        ///
+        /// Reading the asset directly when the label is missing means a panel can be wired
+        /// imperfectly and the learner still gets their instruction.
+        /// </summary>
+        private string InstructionFor(ScreenshotStep current)
+        {
+            if (current == null) return string.Empty;
+
+            if (current.instructionLabel != null &&
+                !string.IsNullOrEmpty(current.instructionLabel.text))
+                return current.instructionLabel.text;
+
+            if (current.stepData != null && !string.IsNullOrEmpty(current.stepData.instructionText))
+            {
+                WarnOnce(current, "has no Instruction Label assigned, so the banner is reading the " +
+                                  "StepData asset directly. Assign the label on the panel when you " +
+                                  "get a chance.");
+
+                return current.stepData.instructionText;
+            }
+
+            if (current.stepData != null)
+                WarnOnce(current, "has no instruction text at all - neither on the panel nor on the " +
+                                  "StepData asset. Run Tools > COC 3 > Instruction Writer.");
+
+            return string.Empty;
+        }
+
+        /// <summary>One line per step, not one per frame. This runs in Update.</summary>
+        private void WarnOnce(ScreenshotStep step, string message)
+        {
+            string id = step.stepData != null ? step.stepData.stepId : step.name;
+            if (!warnedAbout.Add(id)) return;
+
+            Debug.LogWarning("[COC3StepGate] '" + id + "' " + message, step);
+        }
+
+        private readonly HashSet<string> warnedAbout = new HashSet<string>();
 
         private void HandleAction(string actionId, bool success)
         {

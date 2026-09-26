@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Step_08_DNSServerConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_08_DNSServerConfig
-  instructionText: 'LO2.4 - Promoting the domain created the forward lookup zone
-    automatically, but not the reverse one, which is what lets a technician resolve
-    an IP address back to a name.
+  instructionText: 'LO2.3 - Promotion created the forward lookup zone automatically.
+    The reverse one is not created for you.
 
 
-    In DNS Manager > Reverse Lookup Zones > New
-    Zone > IPv4, type the Network ID.'
+    Start > DNS Manager. Select Reverse
+    Lookup Zones in the tree, then New Zone. Choose the IPv4 reverse zone and enter
+    the network ID.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

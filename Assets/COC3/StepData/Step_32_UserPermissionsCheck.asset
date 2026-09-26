@@ -17,8 +17,11 @@ MonoBehaviour:
     intended.
 
 
-    On the shared folder: Security > Advanced > Effective Access,
-    select student01 and click ''View effective access''.'
+    File Explorer, select the Users folder, Properties > Security
+    > Advanced, then the EFFECTIVE ACCESS tab.
+
+
+    Check the account, not the group.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

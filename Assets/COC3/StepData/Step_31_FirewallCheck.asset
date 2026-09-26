@@ -13,12 +13,17 @@ MonoBehaviour:
   m_Name: Step_31_FirewallCheck
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_31_FirewallCheck
-  instructionText: 'LO3.2 - A server that blocks its own services is the most common
-    false fault.
+  instructionText: 'LO3.2 - A server that blocks its own services is the commonest
+    cause of a connection that should work and does not.
 
 
-    In Windows Defender Firewall > Advanced Settings > Inbound
-    Rules, confirm the File and Printer Sharing rules are enabled.'
+    Back on the server:
+    Start > Windows Defender Firewall. Under Inbound Rules, find the Remote Desktop
+    rule and enable it.
+
+
+    Turning the firewall off would also make it work, and
+    would be wrong. The rule is the fix, not the firewall.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

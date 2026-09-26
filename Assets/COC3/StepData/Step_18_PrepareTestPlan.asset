@@ -15,12 +15,12 @@ MonoBehaviour:
   stepId: Step_18_PrepareTestPlan
   instructionText: "LO3.1 - PREPARE THE TEST PLAN\n\nA technician writes down what
     will be tested and what counts as a pass BEFORE testing, so nothing is skipped
-    and the result is not decided after the fact.\n\nYour plan for this job:\n\n 
-    1. Shared folder reachable from the client by UNC path\n  2. Shared printer prints
-    a test page from the client\n  3. Redirected Documents folder points at the server\n 
-    4. Remote Desktop connects from the client\n  5. Connectivity confirmed by ping\n\nEach
-    one is performed on CLIENT01, because a service that has only been checked on
-    the server has not been tested at all.\n\nTap NEXT to begin testing."
+    and the result is not decided after the fact.\n\n  1. Shared folder reachable
+    from the client\n  2. Shared printer prints a test page from the client\n  3.
+    Redirected Documents folder points at the server\n  4. Remote Desktop connects
+    from the client\n  5. Connectivity confirmed by ping\n\nEach one is performed
+    on CLIENT01, because a service checked only on the server has not been tested
+    at all.\n\nPress NEXT to begin testing."
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

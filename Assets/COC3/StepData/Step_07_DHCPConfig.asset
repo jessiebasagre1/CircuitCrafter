@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: Step_07_DHCPConfig
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_07_DHCPConfig
-  instructionText: 'Configure the DHCP scope that will serve the lab clients.
+  instructionText: 'LO2.3 - Configure the scope that will serve the lab clients.
 
 
-    In
-    the New Scope Wizard, enter the starting address of the pool, the subnet mask,
-    and the router address handed out with each lease.
+    Start
+    > DHCP, then click IPv4 in the tree to open the New Scope Wizard.
 
 
-    Note the pool starts
-    well clear of 192.168.10.10 - a scope must never overlap a static address.'
+    Enter
+    the starting address of the pool, the subnet mask, and the router address handed
+    out with each lease. The pool must start clear of the server''s own static address.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 192.168.10.100

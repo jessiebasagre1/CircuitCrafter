@@ -42,10 +42,13 @@ namespace CircuitCrafter.Assessment.UI
         [SerializeField] private Color practiceColor = new Color32(0x5F, 0xD4, 0xFF, 0xFF);
         [SerializeField] private Color guidedColor = new Color32(0xA9, 0xC6, 0xF0, 0xFF);
 
-        [SerializeField] private Color completedColor = new Color32(0x1B, 0x7F, 0x4B, 0xFF);
+        // Light, for the same reason as the header's met/not-met pair: these rows sit on #2B3AA8,
+        // and the dark green and grey they used to be measured 1.84:1 and 1.91:1 against it.
+        [Tooltip("Light mint - readable on the row's blue, where a dark green is not.")]
+        [SerializeField] private Color completedColor = new Color32(0x6E, 0xE7, 0xB7, 0xFF);
 
         [Tooltip("Deliberately neutral, not red - an incomplete run is not a failure, just unfinished.")]
-        [SerializeField] private Color incompleteColor = new Color32(0x6B, 0x72, 0x80, 0xFF);
+        [SerializeField] private Color incompleteColor = new Color32(0xC3, 0xD7, 0xF7, 0xFF);
 
         [Header("Detail (optional)")]
         [Tooltip("Opens CompetencyRunDetailView for this run. Leave empty on a build that doesn't want a detail popup - the row still shows its summary either way.")]
@@ -114,8 +117,17 @@ namespace CircuitCrafter.Assessment.UI
                     ? $"{result.FirstAttemptPercent}% first-attempt"
                     : "no graded attempts";
 
+                // The quiz mark rides on the same line rather than getting a field of its own, so
+                // the row prefab does not have to be rebuilt to show it. It is omitted entirely
+                // on a run with no quiz - printing "quiz 0/0" would read as a failed quiz rather
+                // than as one that was never offered.
+                string quiz = result.KnowledgeAttempted
+                    ? $"  \u00b7  quiz {result.knowledgeCorrect}/{result.knowledgeQuestions} ({result.KnowledgePercent}%)"
+                    : "";
+
                 detailText.text = $"{result.mistakeCount} mistake{(result.mistakeCount == 1 ? "" : "s")}" +
-                                  $"  \u00b7  {firstAttempt}  \u00b7  {AssessmentResult.FormatTime(result.durationSeconds)}";
+                                  $"  \u00b7  {firstAttempt}  \u00b7  {AssessmentResult.FormatTime(result.durationSeconds)}" +
+                                  quiz;
             }
         }
 

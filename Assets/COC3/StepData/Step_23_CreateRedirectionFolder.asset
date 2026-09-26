@@ -17,8 +17,12 @@ MonoBehaviour:
     not on the client.
 
 
-    On the server, create the folder that will receive the
-    redirected data and type its full path.'
+    On the server: File Explorer, New folder. Create the
+    folder that will receive the redirected data inside ServerData.
+
+
+    Type only
+    the folder''s own name.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

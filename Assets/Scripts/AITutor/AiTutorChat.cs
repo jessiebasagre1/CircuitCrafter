@@ -820,6 +820,28 @@ namespace CSSSimulation.Tutor
         {
             if (!avoidTouchKeyboard || inputRowRect == null || canvasRect == null) return;
 
+            // THE LINE THAT MAKES THE SUMMARY ABOVE TRUE. It was not true before: nothing here
+            // asked about the platform, and TryGetKeyboardHeightPixels answers from
+            // TouchScreenKeyboard.visible alone.
+            //
+            // With the build target set to Android, the Unity EDITOR creates a stand-in touch
+            // keyboard the moment a TMP_InputField activates, sets visible to true, and leaves it
+            // true for the rest of the session while reporting an area of zero. That zero then took
+            // the "degenerate, use the fallback fraction" branch inside TryGetKeyboardHeightPixels,
+            // so the Input Row was pulled out of the chat window and floated full-width at 42% of
+            // the screen height - a bar across the middle of the game sitting above a keyboard that
+            // does not exist, and staying there for the rest of the session.
+            //
+            // TouchSession rather than Application.isMobilePlatform directly: it is this project's
+            // own answer to "is this a touch session", it asks the touch controls first, and its
+            // own comment already records that isMobilePlatform reads false in the Editor whatever
+            // the build target is set to. Using it keeps this in step with the rest of the HUD.
+            if (!TouchSession)
+            {
+                LowerInputRowIfLifted();
+                return;
+            }
+
             if (TryGetKeyboardHeightPixels(out float px)) LiftInputRow(px);
             else LowerInputRowIfLifted();
         }

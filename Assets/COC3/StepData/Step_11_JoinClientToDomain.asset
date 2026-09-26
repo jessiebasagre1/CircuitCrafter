@@ -13,17 +13,16 @@ MonoBehaviour:
   m_Name: Step_11_JoinClientToDomain
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_11_JoinClientToDomain
-  instructionText: 'LO2.4 - Move to CLIENT01.
+  instructionText: 'LO2.4 - Walk to CLIENT01 and sit down at it.
 
 
-    A client that is not a domain
-    member cannot use domain accounts, receive Group Policy, or be managed from the
-    server - so nothing after this point would work.
+    A client that
+    is not a domain member cannot use domain accounts or receive Group Policy, so
+    nothing after this point would work.
 
 
-    On the client: System
-    Properties > Change > select ''Domain'', and type the domain name. Authenticate
-    as the domain administrator, then restart.'
+    Start > System, then Change. Select
+    Domain and enter the domain name.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

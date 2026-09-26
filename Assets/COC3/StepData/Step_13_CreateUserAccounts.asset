@@ -16,9 +16,13 @@ MonoBehaviour:
   instructionText: 'LO1.1 - Create the domain account the learner will sign in with.
 
 
-    In
-    Active Directory Users and Computers > Users > New > User, type the User logon
-    name.'
+    Start
+    > Active Directory Users and Computers.
+
+
+    Select the Users container in the
+    tree FIRST, then New > User. An account created elsewhere works, but nobody will
+    find it where they expect.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

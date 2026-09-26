@@ -13,11 +13,12 @@ MonoBehaviour:
   m_Name: Step_22_TestPrintFromClient
   m_EditorClassIdentifier: Assembly-CSharp::ScreenshotStepData
   stepId: Step_22_TestPrintFromClient
-  instructionText: 'LO3.1 - Test 2. Verify the shared printer from the client side.
+  instructionText: 'LO3.1 - TEST 2. Walk to CLIENT01.
 
 
-    Connect
-    to the shared printer from CLIENT01 and click ''Print Test Page''.'
+    Start > Devices and Printers.
+    Select the printer shared from the server - not the local PDF printer - open
+    Printer properties, and print a test page from the General tab.'
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 
