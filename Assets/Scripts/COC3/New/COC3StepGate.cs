@@ -178,6 +178,14 @@ namespace CSSSimulation.WindowsSim
                 !string.IsNullOrEmpty(current.instructionLabel.text))
                 return current.instructionLabel.text;
 
+            // GUIDANCE: the fallback below reads the Story instruction straight off the asset, which
+            // would put step-by-step help on the banner during an assessment. Use the requirement.
+            if (current.stepData != null &&
+                !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.StepInstructions))
+                return string.IsNullOrEmpty(current.stepData.assessmentPrompt)
+                    ? "Continue the server configuration required by the job order."
+                    : current.stepData.assessmentPrompt;
+
             if (current.stepData != null && !string.IsNullOrEmpty(current.stepData.instructionText))
             {
                 WarnOnce(current, "has no Instruction Label assigned, so the banner is reading the " +

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28f2acdc6fa3c5347ba1d48975e20f75, type: 3}
+  m_Name: GuidanceSettings
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.GuidanceSettings
+  story:
+    procedureTutorials: 1
+    controlsTutorials: 1
+    featureTutorials: 1
+    stepInstructions: 1
+    hints: 1
+    waypoints: 1
+    objectHighlights: 1
+    referenceGuides: 1
+    correctiveFeedback: 1
+    successFeedback: 1
+    aiTutor: 1
+    quizzes: 1
+    jobOrderCoaching: 1
+  practice:
+    procedureTutorials: 0
+    controlsTutorials: 0
+    featureTutorials: 0
+    stepInstructions: 0
+    hints: 1
+    waypoints: 0
+    objectHighlights: 0
+    referenceGuides: 1
+    correctiveFeedback: 1
+    successFeedback: 1
+    aiTutor: 1
+    quizzes: 0
+    jobOrderCoaching: 0
+  assessment:
+    procedureTutorials: 0
+    controlsTutorials: 0
+    featureTutorials: 0
+    stepInstructions: 0
+    hints: 0
+    waypoints: 0
+    objectHighlights: 0
+    referenceGuides: 0
+    correctiveFeedback: 0
+    successFeedback: 0
+    aiTutor: 0
+    quizzes: 0
+    jobOrderCoaching: 0
+  assessmentStationMarkers: 1
+  neutralRejectionText: Action not accepted.
+  showNeutralRejectionToast: 0
+  unlockAiTutorDuringReview: 1
+  reviewLibrary: {fileID: 11400000, guid: be806385cb96b824a895e1327c1a4809, type: 2}
+  minSecondsBetweenCards: 2
+  feedbackSeconds: 5
+  repeatFeedbackAfterSeconds: 8
+  editorPreview: 0

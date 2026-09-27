@@ -103,7 +103,10 @@ public class ChecklistToolView : MonoBehaviour
 
             if (manager.IsItemComplete(pair.Key))
                 row.SetComplete();
-            else if (manager.IsInstalling && manager.CurrentItem == pair.Key)
+            // Per item, not "is anything installing": with several going at once, the old test
+            // repainted every unfinished row as idle except the most recent one, wiping the
+            // progress bars of the others every time the window was reopened.
+            else if (manager.IsItemInstalling(pair.Key))
                 continue;   // still going: the next progress event repaints this row
             else
                 row.SetIdle();

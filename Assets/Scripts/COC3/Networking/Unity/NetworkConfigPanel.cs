@@ -157,7 +157,10 @@ namespace CircuitCrafter.Networking.Unity
                 AssessmentRecorder.Mistake("configuration", message);
             }
 
-            Show(message);
+            // GUIDANCE: the message names the rule that was broken - corrective feedback, Story only.
+            // An assessment just says it was not accepted; the reason is on the review screen.
+            Show(CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                ? message : CircuitCrafter.Guidance.GuidancePolicy.NeutralRejection);
             OnConfigurationRejected?.Invoke(message);
             onRejected?.Invoke();
         }

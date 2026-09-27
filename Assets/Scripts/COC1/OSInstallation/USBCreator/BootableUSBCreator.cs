@@ -120,8 +120,10 @@ public class BootableUSBCreator : MonoBehaviour
                 $"Bootable USB: selected '{_selectedImage.displayName}' instead of " +
                 $"'{requiredImage.displayName}', which is the image on the job order.", this);
 
+            // Corrective feedback: shown at once in Story Mode; in an assessment its text is kept
+            // for the review screen instead of naming the right image mid-run.
             if (wrongImageWarning != null && DialogManager.Instance != null)
-                DialogManager.Instance.ShowDialog(wrongImageWarning, null, true);
+                DialogManager.Instance.ShowCorrectiveDialog(wrongImageWarning);
             else
                 Debug.LogWarning($"[BootableUSBCreator] Wrong image selected: {_selectedImage.displayName}", this);
 

@@ -1,0 +1,435 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 763b7bf307cb4ee4e8fa0a2befef6ddb, type: 3}
+  m_Name: ReviewLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.ReviewLibrary
+  rules:
+  - ruleName: Cooler still mounted
+    moduleId: 
+    category: 
+    keywords:
+    - heatsink is still mounted
+    whatWentWrong: The CPU cooler is still mounted on top.
+    howToFix: Remove the heatsink and fan first.
+    correctProcedure: Unplug the CPU fan cable, release the cooler's clips or screws
+      evenly, and lift the cooler off. Only then open the socket lever and load plate
+      and lift the CPU straight out by its edges.
+    areaToImprove: CPU handling
+    activityId: coc1-disassembly
+  - ruleName: CPU not secured for cooler
+    moduleId: 
+    category: 
+    keywords:
+    - load plate is still open
+    - retention lever is still open
+    - cpu is not installed
+    whatWentWrong: The CPU isn't secured yet.
+    howToFix: Seat the CPU, close the load plate and lower the lever - then fit the
+      cooler.
+    correctProcedure: Seat the CPU (gold triangle to the socket mark), close the
+      load plate, lower and latch the retention lever, apply thermal paste if the
+      cooler has none, then fit the cooler and plug its fan into CPU_FAN.
+    areaToImprove: CPU handling
+    activityId: coc1-assembly
+  - ruleName: CPU socket locked
+    moduleId: 
+    category: 
+    keywords:
+    - cpu lock is still closed
+    - case lock is still closed
+    - open the main cpu lock
+    whatWentWrong: The CPU socket is still locked.
+    howToFix: Lift the socket lever and open the load plate first.
+    correctProcedure: 'To remove: lift the retention lever, open the load plate,
+      and lift the CPU straight up by its edges. To install: line up the gold triangle
+      with the socket mark, lower the CPU in without pressing, close the load plate
+      and lever, then fit the cooler with fresh thermal paste.'
+    areaToImprove: CPU handling
+    activityId: coc1-assembly
+  - ruleName: Removal out of order
+    moduleId: 
+    category: 
+    keywords:
+    - must come off first
+    whatWentWrong: That part can't come off yet - something is still in the way.
+    howToFix: Remove the parts on top of it first.
+    correctProcedure: 'Disassemble from the outside in: 1) shut down, unplug and
+      wear the ESD strap; 2) remove the side panel; 3) disconnect power and data
+      cables; 4) remove expansion cards and RAM; 5) remove the CPU cooler, then the
+      CPU; 6) remove the drives and the power supply; 7) remove the motherboard last.
+      Reassemble in the reverse order.'
+    areaToImprove: Component removal sequence
+    activityId: coc1-disassembly
+  - ruleName: Cable still connected
+    moduleId: 
+    category: 
+    keywords:
+    - plugged in
+    whatWentWrong: A cable is still connected to that part.
+    howToFix: Unplug its cable first - hold the connector, not the wire.
+    correctProcedure: Before removing a component, disconnect every power and data
+      cable attached to it. Grip the connector body, press any locking tab, and pull
+      straight out. Never pull a cable by its wires.
+    areaToImprove: Cable handling
+    activityId: coc1-disassembly
+  - ruleName: RAM clips closed
+    moduleId: 
+    category: 
+    keywords:
+    - still closed
+    - clip
+    whatWentWrong: The RAM retention clips are still closed.
+    howToFix: Push both clips outward, then lift the module straight up.
+    correctProcedure: 'Open both retention clips and lift the module straight out,
+      holding it by the edges (never the gold contacts). To install: line up the
+      notch with the key in the slot and press down evenly on both ends until the
+      clips snap shut.'
+    areaToImprove: Memory installation
+    activityId: coc1-assembly
+  - ruleName: Socket not ready
+    moduleId: 
+    category: 
+    keywords:
+    - tried to install '
+    whatWentWrong: That socket isn't ready for the part.
+    howToFix: Open the socket's clips or lever and check which way round it goes.
+    correctProcedure: Prepare the slot or socket first (open clips or lever), match
+      the part's notch or key to the socket, then seat it without forcing. A part
+      that needs force is in the wrong way or the wrong socket.
+    areaToImprove: Component installation
+    activityId: coc1-assembly
+  - ruleName: Partition not prepared
+    moduleId: COC1
+    category: 
+    keywords:
+    - partition
+    - unallocated
+    whatWentWrong: Windows can't be installed to that space yet.
+    howToFix: Select the unallocated space, click New, then Apply.
+    correctProcedure: 'In Windows Setup choose Custom: Install Windows only. Select
+      the unallocated space and click New > Apply - Setup creates its system partitions.
+      Select the Primary partition (Format it if it was used before) and click Next.'
+    areaToImprove: OS installation - disk partitioning
+    activityId: coc1-os-install
+  - ruleName: Wrong installer image
+    moduleId: COC1
+    category: 
+    keywords:
+    - bootable usb
+    - .iso
+    - installer image
+    whatWentWrong: That isn't the installer image the job needs.
+    howToFix: Use the image named on the job order.
+    correctProcedure: Check the job order for the operating system and edition required,
+      then select exactly that ISO before writing the flash drive. Writing the wrong
+      image wastes the drive and the customer's time.
+    areaToImprove: Preparing installation media
+    activityId: coc1-usb
+  - ruleName: Rufus step
+    moduleId: COC1
+    category: 
+    keywords:
+    - rufus
+    whatWentWrong: That Rufus step isn't right.
+    howToFix: Official site first, then Device, Boot selection, START.
+    correctProcedure: 'Download Rufus only from its official site (rufus.ie). In
+      Rufus: Device = the USB flash drive; Boot selection = the Windows ISO from
+      the job order; Partition scheme = GPT for UEFI (MBR for a legacy BIOS); keep
+      the default file system; press START and confirm the warning that the drive
+      will be erased.'
+    areaToImprove: Preparing installation media
+    activityId: coc1-usb
+  - ruleName: Windows Setup choice
+    moduleId: COC1
+    category: 
+    keywords:
+    - os setup
+    whatWentWrong: That isn't the option this job needs.
+    howToFix: Re-read the job order and choose the matching option.
+    correctProcedure: 'Read each Windows Setup screen: language and region, Install
+      now, the edition on the job order, accept the licence, Custom: Install Windows
+      only, then the partition you prepared.'
+    areaToImprove: OS installation choices
+    activityId: coc1-os-install
+  - ruleName: Driver order
+    moduleId: COC1
+    category: 
+    keywords:
+    - installed out of order
+    - must be installed first
+    whatWentWrong: Drivers were installed in the wrong order.
+    howToFix: Install the chipset (motherboard) driver first.
+    correctProcedure: Install the chipset driver first so Windows identifies the
+      other devices correctly, then the network, audio and display drivers. Restart
+      when asked, then install the application software and Windows updates.
+    areaToImprove: Driver and software installation
+    activityId: coc1-system-config
+  - ruleName: Patch panel termination
+    moduleId: COC2
+    category: 
+    keywords:
+    - termination
+    - punch
+    whatWentWrong: The patch panel termination isn't right.
+    howToFix: Follow the panel's colour code and seat each wire fully.
+    correctProcedure: Keep the jacket close to the panel and each pair twisted right
+      up to the terminal. Lay each conductor in the slot shown by the panel's colour
+      code (T568A or T568B as specified), then punch down with the tool's cutting
+      blade facing the waste side. Test the port afterwards.
+    areaToImprove: Structured cabling (punch-down)
+    activityId: coc2-punchdown
+  - ruleName: IP settings rejected
+    moduleId: COC2
+    category: 
+    keywords:
+    - configuration was rejected
+    whatWentWrong: Those network settings won't work together.
+    howToFix: Same network, same subnet mask, no duplicate addresses.
+    correctProcedure: Give each device an address in the same network with the same
+      subnet mask and no duplicates - for example 192.168.1.10 and 192.168.1.11 with
+      255.255.255.0.
+    areaToImprove: IP addressing
+    activityId: coc2-connectivity
+  - ruleName: Peer unreachable
+    moduleId: COC2
+    category: 
+    keywords:
+    - could not reach
+    - connectivity
+    whatWentWrong: The devices can't reach each other.
+    howToFix: Check the cable and link lights, then each device's IP settings.
+    correctProcedure: Check the physical link first (correct cable type, fully seated,
+      link lights on), then the IP address and subnet mask on both ends, then test
+      again with ping.
+    areaToImprove: Testing connectivity
+    activityId: coc2-connectivity
+  - ruleName: Cable failed tester
+    moduleId: COC2
+    category: cable
+    keywords: []
+    whatWentWrong: The cable failed the tester.
+    howToFix: Check the colour order at both ends against the standard.
+    correctProcedure: 'T568B pin order: 1 white-orange, 2 orange, 3 white-green,
+      4 blue, 5 white-blue, 6 green, 7 white-brown, 8 brown. T568A swaps the orange
+      and green pairs (1 white-green, 2 green, 3 white-orange, 6 orange). Straight-through
+      = the same standard at both ends; crossover = T568A at one end, T568B at the
+      other. Untwist no more than 13 mm, push every conductor to the end of the plug,
+      crimp once firmly, then test all 8 pins.'
+    areaToImprove: Cable termination (T568A / T568B)
+    activityId: coc2-crimping
+  - ruleName: Server step out of sequence
+    moduleId: COC3
+    category: 
+    keywords:
+    - refused on
+    whatWentWrong: That action doesn't belong at this point of the setup.
+    howToFix: Check which part of the server setup comes next.
+    correctProcedure: 'Server setup order: set the computer name and a static IP
+      address; install the AD DS (and DNS) roles; promote the server to a domain
+      controller; create OUs, users and groups; create the shared folders; set share
+      and NTFS permissions; test from a client and complete the report.'
+    areaToImprove: Server setup sequence
+    activityId: coc3-server
+  - ruleName: Server value wrong
+    moduleId: COC3
+    category: configuration
+    keywords: []
+    whatWentWrong: That value isn't what the job order specifies.
+    howToFix: Check the value against the job order's specifications.
+    correctProcedure: 'Enter each setting exactly as the job order specifies: computer
+      name, static IP address, subnet mask, default gateway and preferred DNS server.
+      A server needs its name and static address BEFORE roles are installed or it
+      is promoted to a domain controller.'
+    areaToImprove: Server configuration values
+    activityId: coc3-server
+  - ruleName: Ping failed
+    moduleId: COC3
+    category: connectivity
+    keywords: []
+    whatWentWrong: The ping test failed.
+    howToFix: Check both machines with ipconfig, fix the address or mask, and ping
+      again.
+    correctProcedure: A ping fails when the hosts are on different subnets, have
+      duplicate addresses, or have no working link. Check the settings on both machines
+      with ipconfig, correct the address or subnet mask, then ping again.
+    areaToImprove: Testing network services
+    activityId: coc3-server
+  - ruleName: Repair before diagnosis
+    moduleId: 
+    category: 
+    keywords:
+    - before diagnosing
+    whatWentWrong: The repair started before the fault was diagnosed.
+    howToFix: Observe and diagnose first, then repair.
+    correctProcedure: 'Follow the troubleshooting process: 1) identify the problem;
+      2) establish a probable cause; 3) test it; 4) plan and carry out the repair;
+      5) verify the whole system works; 6) document the findings. Diagnose before
+      you repair.'
+    areaToImprove: Troubleshooting process
+    activityId: coc4-tickets
+  - ruleName: Wrong diagnosis
+    moduleId: 
+    category: diagnosis
+    keywords: []
+    whatWentWrong: That cause doesn't match the evidence.
+    howToFix: Look again at what you observed.
+    correctProcedure: 'Gather evidence before choosing a cause: power the machine
+      on and observe (fans, beeps, lights, POST messages), then inspect inside for
+      loose, missing or unseated parts and cables. Choose the cause that explains
+      ALL the symptoms.'
+    areaToImprove: Diagnosing from evidence
+    activityId: coc4-tickets
+  - ruleName: Repair not verified
+    moduleId: 
+    category: verification
+    keywords: []
+    whatWentWrong: The machine still fails after the repair.
+    howToFix: Go back to diagnosis.
+    correctProcedure: 'After a repair, power on and confirm the fault is gone: the
+      machine passes POST, boots, and the reported problem no longer occurs. If it
+      still fails, the diagnosis was incomplete - return to it.'
+    areaToImprove: Verifying repairs
+    activityId: coc4-tickets
+  - ruleName: Ticket unresolved
+    moduleId: 
+    category: unresolved
+    keywords: []
+    whatWentWrong: The job was left unfinished.
+    howToFix: 
+    correctProcedure: 'See each ticket through: observe, diagnose, repair, verify,
+      and record the cause before leaving the site.'
+    areaToImprove: Completing each job
+    activityId: coc4-tickets
+  - ruleName: Cause not recorded
+    moduleId: 
+    category: identification
+    keywords: []
+    whatWentWrong: The cause was not recorded.
+    howToFix: 
+    correctProcedure: Record the diagnosed cause on the ticket as part of the job
+      - a repair with no recorded cause is incomplete work and cannot be checked
+      by the next technician.
+    areaToImprove: Recording the cause
+    activityId: coc4-tickets
+  - ruleName: Time
+    moduleId: 
+    category: time
+    keywords: []
+    whatWentWrong: Time ran out.
+    howToFix: 
+    correctProcedure: Read the job order fully first, then work methodically. If
+      a step takes too long, re-check the job order and the standard procedure rather
+      than trying things at random.
+    areaToImprove: Working within the time allowed
+    activityId: 
+  activities:
+  - activityId: coc1-disassembly
+    title: 'COC1 Story: Disassemble the system unit'
+    moduleId: COC1
+    sceneName: COC1
+    whatToPractise: Practise the removal order and disconnecting cables safely.
+  - activityId: coc1-assembly
+    title: 'COC1 Story: Reassemble the system unit'
+    moduleId: COC1
+    sceneName: COC1
+    whatToPractise: Seat the CPU and RAM correctly and reconnect every cable.
+  - activityId: coc1-usb
+    title: 'COC1 Story: Create the bootable USB'
+    moduleId: COC1
+    sceneName: COC1
+    whatToPractise: Get Rufus from the official site and write the correct ISO.
+  - activityId: coc1-os-install
+    title: 'COC1 Story: Install Windows'
+    moduleId: COC1
+    sceneName: COC1
+    whatToPractise: Prepare the partition and complete Windows Setup.
+  - activityId: coc1-system-config
+    title: 'COC1 Story: Drivers, software and updates'
+    moduleId: COC1
+    sceneName: COC1
+    whatToPractise: Install drivers in order, then software and updates, then test
+      and report.
+  - activityId: coc2-crimping
+    title: 'COC2 Story: Make and test UTP cables'
+    moduleId: COC2
+    sceneName: COC2-StoryMode
+    whatToPractise: Build straight-through and crossover cables to T568A / T568B.
+  - activityId: coc2-punchdown
+    title: 'COC2 Story: Patch panel punch-down'
+    moduleId: COC2
+    sceneName: COC2-StoryMode
+    whatToPractise: Terminate the patch panel to the colour code and test the port.
+  - activityId: coc2-connectivity
+    title: 'COC2 Story: Connect and test devices'
+    moduleId: COC2
+    sceneName: COC2-StoryMode
+    whatToPractise: Set matching IP settings and prove the link with ping.
+  - activityId: coc3-server
+    title: 'COC3 Story: Configure the server'
+    moduleId: COC3
+    sceneName: COC3
+    whatToPractise: Follow the setup order from static IP to shared folders and permissions.
+  - activityId: coc4-tickets
+    title: 'COC4 Story: Service tickets'
+    moduleId: COC4
+    sceneName: COC4-Hub
+    whatToPractise: Observe, diagnose, repair, verify and record - one ticket at
+      a time.
+  outcomeLinks:
+  - moduleId: COC1
+    outcomeCode: LO1
+    areaToImprove: Assembling and disassembling hardware
+    activityId: coc1-disassembly
+  - moduleId: COC1
+    outcomeCode: LO2
+    areaToImprove: Preparing installation media
+    activityId: coc1-usb
+  - moduleId: COC1
+    outcomeCode: LO3
+    areaToImprove: Installing the OS and drivers
+    activityId: coc1-os-install
+  - moduleId: COC1
+    outcomeCode: LO4
+    areaToImprove: Installing application software
+    activityId: coc1-system-config
+  - moduleId: COC1
+    outcomeCode: LO5
+    areaToImprove: Testing and documenting the work
+    activityId: coc1-system-config
+  - moduleId: COC2
+    outcomeCode: LO1
+    areaToImprove: Preparing and terminating cables
+    activityId: coc2-crimping
+  - moduleId: COC2
+    outcomeCode: LO2
+    areaToImprove: Testing cable terminations
+    activityId: coc2-crimping
+  - moduleId: COC2
+    outcomeCode: LO3
+    areaToImprove: Structured cabling
+    activityId: coc2-punchdown
+  - moduleId: COC3
+    outcomeCode: LO1
+    areaToImprove: Server addressing and roles
+    activityId: coc3-server
+  - moduleId: COC3
+    outcomeCode: LO2
+    areaToImprove: Users, groups and shared resources
+    activityId: coc3-server
+  - moduleId: COC3
+    outcomeCode: LO3
+    areaToImprove: Services, testing and documentation
+    activityId: coc3-server
+  - moduleId: COC4
+    outcomeCode: LO1
+    areaToImprove: Diagnosing and repairing faults
+    activityId: coc4-tickets

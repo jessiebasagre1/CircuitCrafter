@@ -333,7 +333,11 @@ namespace CSSSimulation.Networking
             report.readoutLines.Add("");
             report.readoutLines.Add(report.Passed ? "RESULT: PASS" : "RESULT: FAIL");
 
-            if (!report.Passed)
+            // GUIDANCE: the pin-by-pin readout above is what a real tester shows and stays in every
+            // mode. The sentence below explains the cause and the fix - Story Mode feedback. In an
+            // assessment it is recorded for the review screen instead (COC2AssessmentManager).
+            if (!report.Passed &&
+                CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback))
                 report.readoutLines.Add(FailureHint(report));
         }
 

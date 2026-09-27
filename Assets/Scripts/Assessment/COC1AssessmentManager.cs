@@ -3,6 +3,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using CircuitCrafter.Guidance;
 
 /// <summary>
 /// Runs COC 1 as a graded assessment: timer, score, mistakes, a waypoint pointing at the next
@@ -185,6 +186,9 @@ public class COC1AssessmentManager : MonoBehaviour
         IsRunning = true;
         log.Clear();
 
+        // GUIDANCE: a fresh journal for this run's mistakes and their withheld explanations.
+        MistakeJournal.BeginRun(ModeId);
+
         if (TaskManager.Instance != null)
             TaskManager.Instance.OnTaskCompleted += HandleTaskCompleted;
 
@@ -268,7 +272,9 @@ public class COC1AssessmentManager : MonoBehaviour
     {
         if (WaypointIndicator.Instance == null) return;
 
-        if (target != null) WaypointIndicator.Instance.SetTarget(target);
+        // SetStationTarget: allowed in an assessment only while GuidanceSettings > Assessment
+        // Station Markers is ticked - it points at a station, never at a part.
+        if (target != null) WaypointIndicator.Instance.SetStationTarget(target);
         else WaypointIndicator.Instance.ClearTarget();
     }
 
@@ -282,7 +288,24 @@ public class COC1AssessmentManager : MonoBehaviour
     /// </summary>
     public static void ReportMistake(string description, Object context = null)
     {
-        if (Instance == null || !Instance.IsRunning) return;
+        if (Instance == null || !Instance.IsRunning)
+        {
+            // GUIDANCE: another module's assessment is running in this scene - COC4's repair sites
+            // reuse COC1's parts. Count it for that run (and keep it for its review) instead of
+            // dropping it.
+            if (GuidancePolicy.IsAssessment)
+            {
+                CircuitCrafter.Assessment.AssessmentRecorder.Mistake(CategoryFor(description), description);
+                return;
+            }
+
+            // GUIDANCE: not being assessed, so this is a learning moment. Every mistake COC1 already
+            // reports (removal order, cables still plugged in, RAM clips, CPU lever, partitions,
+            // Rufus, drivers) now gets a short "what went wrong + how to fix it" toast in Story
+            // Mode, with the fix looked up in the ReviewLibrary. Silent in an assessment.
+            CoachFeedback.Mistake(description, null, null, ModeId, context);
+            return;
+        }
         Instance.AddMistake(description, context);
     }
 
@@ -295,8 +318,24 @@ public class COC1AssessmentManager : MonoBehaviour
         Score = Mathf.Max(0, Score - mistakePenalty);
         log.Add($"MISTAKE at {FormatTime(ElapsedSeconds)}: {description}");
 
+        // GUIDANCE: kept with its explanation for the review screen (the log above is private).
+        MistakeJournal.Record(CategoryFor(description), description);
+
         Debug.Log($"[COC1AssessmentManager] Mistake #{Mistakes}: {description}", context);
         RefreshHud();
+    }
+
+    /// <summary>A category for the review screen, read from the wording the COC1 call sites already
+    /// use. The legacy manager never had categories; this recovers them without touching any caller.</summary>
+    private static string CategoryFor(string description)
+    {
+        string d = (description ?? "").ToLowerInvariant();
+        if (d.Contains("out of order")) return "sequence";
+        if (d.Contains("plugged in") || d.Contains("still closed") || d.Contains("tried to install") ||
+            d.Contains("tried to remove") || d.Contains("tried to move")) return "procedure";
+        if (d.Contains("partition") || d.Contains("os setup") || d.Contains("rufus") ||
+            d.Contains("bootable usb")) return "configuration";
+        return "general";
     }
 
     // ==================================================================

@@ -98,7 +98,14 @@ public class ScreenshotStep : MonoBehaviour
         if (screenshotDisplay != null && stepData.screenshotImage != null)
             screenshotDisplay.sprite = stepData.screenshotImage;
 
-        if (instructionLabel != null) instructionLabel.text = stepData.instructionText;
+        // GUIDANCE: step-by-step instructions are Story Mode help. An assessment shows the step's
+        // Assessment Prompt (the requirement, not the method) or a generic line.
+        if (instructionLabel != null)
+            instructionLabel.text = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.StepInstructions)
+                ? stepData.instructionText
+                : (string.IsNullOrEmpty(stepData.assessmentPrompt)
+                    ? "Continue the server configuration required by the job order."
+                    : stepData.assessmentPrompt);
 
         PrepareField(ipInputField);
         PrepareField(subnetInputField);

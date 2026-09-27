@@ -103,7 +103,11 @@ namespace CircuitCrafter.Networking.Unity
             LastOutcome = outcome;
 
             if (outputText != null) outputText.text = BuildConsoleOutput(destination, outcome);
-            if (explanationText != null) explanationText.text = outcome.Explanation;
+            // GUIDANCE: the console output above is what Windows prints and stays in every mode. The
+            // explanation under it teaches WHY - Story only; an assessment keeps it for the review.
+            if (explanationText != null)
+                explanationText.text = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                    ? outcome.Explanation : "";
 
             if (!string.IsNullOrEmpty(stageId))
             {

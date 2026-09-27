@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172adfa7dee68e9419a918774649431a, type: 3}
+  m_Name: Tutorial_COC2_T568
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.TutorialCardData
+  cardId: coc2_t568
+  kind: 0
+  title: T568A and T568B
+  body: '- T568B: white-orange, orange, white-green, blue, white-blue, green, white-brown,
+    brown.
+
+    - T568A swaps the orange and green pairs.
+
+    - Straight-through:
+    same standard both ends. Crossover: A at one end, B at the other.
+
+    - Untwist
+    no more than 13 mm and push every wire to the end of the plug.'
+  bodyTouch: 
+  image: {fileID: 0}
+  demoFrames: []
+  demoFramesPerSecond: 6
+  tryIt: 'Now you try: arrange the wires for the first end.'
+  pauseGameplay: 1
+  showOnce: 1
+  autoHideSeconds: 0

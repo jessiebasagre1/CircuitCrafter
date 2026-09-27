@@ -34,7 +34,79 @@ using UnityEngine.UI;
 /// </summary>
 public static class COC1SetupScreens
 {
+
+    // ------------------------------------------------------------------
+    // TEXT SIZE
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Multiplies every font size on the OS install stage screens - the POST console, the firmware
+    /// setup, the Windows Setup window, the partition table, the progress screen and the
+    /// out-of-box screens. 1 is the original look; 1.35 is a comfortable start for a phone.
+    ///
+    /// ONE NUMBER, NOT EVERY CALL SITE EDITED. Every label here is created through the two helpers
+    /// below, so scaling at that point reaches all of them and cannot miss one - and the sizes
+    /// passed in stay as written, so the relative hierarchy of heading, body and caption is
+    /// preserved rather than drifting as numbers get rounded by hand.
+    ///
+    /// static readonly, not const: a const makes the FontScale &lt;= 1 branch provably dead and the
+    /// compiler warns about unreachable code on every recompile.
+    /// </summary>
+    // BACK TO 1 ON PURPOSE. Scaling the numbers here was the wrong lever: the boxes on these
+    // screens are positioned by normalised anchors and resize with the panel, while a font size is
+    // an absolute number, so raising it pushed text through boxes that had not grown with it.
+    // OSInstallTextFit on the install panel does the job properly - it lets each label grow only
+    // as far as its own box allows. Leave this at 1 unless that component has been removed.
+    public static readonly float FontScale = 1f;
+
+    /// <summary>
+    /// Applies the scaled size, with auto-sizing as the safety net.
+    ///
+    /// A bigger number alone is what breaks a layout: a label that exactly filled its box at 14
+    /// does not fit at 19, and it then overlaps its neighbour or is clipped. Giving TMP a RANGE -
+    /// the original size as the floor, the scaled size as the ceiling - means each label grows as
+    /// far as its own box allows and falls back toward the original where there is no room.
+    /// </summary>
+    private static void SetScaledFontSize(TextMeshProUGUI label, float size)
+    {
+        float scaled = size * FontScale;
+
+        if (FontScale <= 1f)
+        {
+            label.fontSize = size;
+            label.enableAutoSizing = false;
+            return;
+        }
+
+        label.fontSize = scaled;
+        label.fontSizeMin = size;
+        label.fontSizeMax = scaled;
+        label.enableAutoSizing = true;
+    }
     public const float DW = 1920f;
+
+    // ------------------------------------------------------------------
+    // PARTITION TABLE GEOMETRY
+    //
+    // THE COLUMN FRACTIONS LIVE HERE, ONCE, because the header row and the row prefab are built
+    // by two different methods and were drifting apart. The headers were placed at hand-typed x
+    // positions (512, 950, 1110, 1270) while the rows place their columns by fraction - so
+    // "Total Size" sat about 26px left of the numbers under it, and "Type" about 55px. Deriving
+    // both from the same four numbers is what makes them line up, at any width.
+    // ------------------------------------------------------------------
+
+    /// <summary>Column edges as a fraction of the row's width: Name, Total, Free, Type.</summary>
+    private static readonly float[] ColumnEdges = { 0.00f, 0.46f, 0.62f, 0.78f, 1.00f };
+
+    /// <summary>Left padding inside each column, matching the row prefab's own labels.</summary>
+    private const float NameColumnPad = 12f;
+    private const float ColumnPad = 8f;
+
+    /// <summary>The partition window is wider than the wizard's. A disk table has four columns and
+    /// real Windows Setup gives it the room; at the wizard's 1000 the sizes crowd the names.</summary>
+    private const float PartitionWindowW = 1400f;
+
+    private const float WindowPad = 40f;
     public const float DH = 1080f;
 
     private const string UndoLabel = "COC1 Build Install Screens";
@@ -221,21 +293,38 @@ public static class COC1SetupScreens
     private static void BuildPartition(Transform root, Built b)
     {
         var s = Screen(root, "Skin_Partition");
-        SetupWindow(s, "Windows Setup");
+        SetupWindow(s, "Windows Setup", PartitionWindowW);
 
         // The partition UI lives inside this skin, so it is only ever reachable on the stage
         // that uses this skin. OSInstallView switches the panel itself on and off.
         var panel = Stretch(s.root, "PartitionSelectPanel");
         var p = new Frame { root = panel, ox = 0f, oy = 0f };
 
-        Box(p, "HeaderRow", 500, 362, 920, 30, TableHead);
-        Text(p, "ColName", 512, 362, 420, 30, "Name", 15, MutedText);
-        Text(p, "ColTotal", 950, 362, 150, 30, "Total Size", 15, MutedText);
-        Text(p, "ColFree", 1110, 362, 150, 30, "Free Space", 15, MutedText);
-        Text(p, "ColType", 1270, 362, 140, 30, "Type", 15, MutedText);
+        // EVERY NUMBER BELOW IS DERIVED, NOT TYPED. Change PartitionWindowW and the table, its
+        // headers, the buttons and Next all follow - which is the only way four columns and four
+        // headers stay lined up after a width change.
+        float winX = Mathf.Round((DW - PartitionWindowW) * 0.5f);
+        float cx = winX + WindowPad;                 // content left
+        float cw = PartitionWindowW - WindowPad * 2; // content width
 
-        var listBorder = Box(p, "ListBorder", 500, 394, 920, 250, Rule).rectTransform;
-        var list = Box(p, "RowsContent", 501, 395, 918, 248, WindowFill).rectTransform;
+        float listX = cx + 1f;                       // inside the 1px border
+        float listW = cw - 2f;
+
+        // The rows sit inside the list's VerticalLayoutGroup padding, set to 4 below. The headers
+        // have to measure from the same place the rows start, or they line up with the list and
+        // not with the text in it.
+        float rowX = listX + 4f;
+        float rowW = listW - 8f;
+
+        Box(p, "HeaderRow", cx, 362, cw, 30, TableHead);
+
+        Column(p, "ColName", "Name", rowX, rowW, 0, NameColumnPad);
+        Column(p, "ColTotal", "Total Size", rowX, rowW, 1, ColumnPad);
+        Column(p, "ColFree", "Free Space", rowX, rowW, 2, ColumnPad);
+        Column(p, "ColType", "Type", rowX, rowW, 3, ColumnPad);
+
+        var listBorder = Box(p, "ListBorder", cx, 394, cw, 250, Rule).rectTransform;
+        var list = Box(p, "RowsContent", listX, 395, listW, 248, WindowFill).rectTransform;
 
         // PartitionSelectView only instantiates rows into this transform - it does no layout of
         // its own, so the stacking has to come from a layout group here.
@@ -251,14 +340,16 @@ public static class COC1SetupScreens
         b.toggleGroup = list.gameObject.AddComponent<ToggleGroup>();
         b.toggleGroup.allowSwitchOff = false;
 
-        b.newBtn = FlatButton(p, "NewButton", 500, 664, 140, 38, "New");
-        b.formatBtn = FlatButton(p, "FormatButton", 652, 664, 140, 38, "Format");
-        b.deleteBtn = FlatButton(p, "DeleteButton", 804, 664, 140, 38, "Delete");
+        b.newBtn = FlatButton(p, "NewButton", cx, 664, 140, 38, "New");
+        b.formatBtn = FlatButton(p, "FormatButton", cx + 152f, 664, 140, 38, "Format");
+        b.deleteBtn = FlatButton(p, "DeleteButton", cx + 304f, 664, 140, 38, "Delete");
 
-        b.errorText = Text(p, "ErrorText", 500, 712, 920, 30, "", 17, ErrorRed);
+        b.errorText = Text(p, "ErrorText", cx, 712, cw, 30, "", 17, ErrorRed);
         b.errorText.gameObject.SetActive(false);
 
-        b.nextBtn = FlatButton(p, "NextButton", 1230, 820, 190, 48, "Next");
+        // Right-aligned against the window, where Setup puts it.
+        float nextX = winX + PartitionWindowW - WindowPad - 190f;
+        b.nextBtn = FlatButton(p, "NextButton", nextX, 820, 190, 48, "Next");
 
         b.partitionPanel = panel.gameObject;
         b.partitionView = Undo.AddComponent<PartitionSelectView>(panel.gameObject);
@@ -269,14 +360,29 @@ public static class COC1SetupScreens
             name = "Partition",
             root = s.root.gameObject,
             stages = new[] { OSInstallManager.InstallStage.PartitionSelect },
-            label = N(500, 236, 920, 110),
-            dropdown = N(500, 900, 660, 46),      // parked - the view hides it on this stage
-            cont = N(1230, 900, 190, 48),
-            progress = N(500, 900, 920, 22),
+            label = N(cx, 236, cw, 110),
+            dropdown = N(cx, 900, 660, 46),       // parked - the view hides it on this stage
+            cont = N(nextX, 900, 190, 48),
+            progress = N(cx, 900, cw, 22),
             labelColor = DarkText,
             labelSize = 19f,
             labelAlign = TextAlignmentOptions.TopLeft
         });
+    }
+
+    /// <summary>
+    /// One header cell, placed from the same fractions the row prefab uses for its columns.
+    ///
+    /// The pad matches the row's own label inset, so the header text sits directly above the text
+    /// beneath it rather than above the edge of its cell.
+    /// </summary>
+    private static void Column(Frame f, string name, string text, float rowX, float rowW,
+                               int index, float pad)
+    {
+        float x0 = rowX + ColumnEdges[index] * rowW;
+        float x1 = rowX + ColumnEdges[index + 1] * rowW;
+
+        Text(f, name, x0 + pad, 362, x1 - x0 - pad, 30, text, 15, MutedText);
     }
 
     private static void BuildProgress(Transform root, Built b)
@@ -331,17 +437,26 @@ public static class COC1SetupScreens
     }
 
     /// <summary>The grey Setup window, shared by the Wizard and Partition looks.</summary>
-    private static void SetupWindow(Frame s, string title)
+    private static void SetupWindow(Frame s, string title, float winW = 1000f)
     {
+        // Centred rather than pinned at 460, so a wider window stays in the middle of the screen
+        // instead of growing off the right edge.
+        float x = Mathf.Round((DW - winW) * 0.5f);
+
         Box(s, "Backdrop", 0, 0, DW, DH, SetupBackdrop);
 
-        Box(s, "WindowBorder", 460, 150, 1000, 760, WindowBorder);
-        Box(s, "WindowFill", 461, 151, 998, 758, WindowFill);
+        Box(s, "WindowBorder", x, 150, winW, 760, WindowBorder);
+        Box(s, "WindowFill", x + 1, 151, winW - 2, 758, WindowFill);
 
-        Box(s, "TitleStrip", 461, 151, 998, 44, TitleStrip);
-        Text(s, "WindowTitle", 480, 151, 600, 44, title, 18, DarkText);
-        Box(s, "TitleRule", 461, 195, 998, 1, Rule);
-        Box(s, "FooterRule", 461, 800, 998, 1, Rule);
+        Box(s, "TitleStrip", x + 1, 151, winW - 2, 44, TitleStrip);
+
+        // Bold and two points up on the body text. A window title that is the same weight and size
+        // as the paragraph under it is not a title - and real Windows Setup does draw it heavier.
+        Text(s, "WindowTitle", x + 20, 151, 600, 44, title, 20, DarkText,
+             TextAlignmentOptions.Left, true);
+
+        Box(s, "TitleRule", x + 1, 195, winW - 2, 1, Rule);
+        Box(s, "FooterRule", x + 1, 800, winW - 2, 1, Rule);
     }
 
     // ==================================================================
@@ -354,7 +469,10 @@ public static class COC1SetupScreens
 
         b.stageLabel = COC1WinWidgets.Label(controls, "StageLabel", 0f, 0f, 800f, 300f, "",
                                             TextAlignmentOptions.TopLeft);
-        b.dropdown = COC1WinWidgets.FlatDropdown(controls, "ChoiceDropdown", 0f, 0f, 600f, 46f, "");
+        // 20 to match the wizard skin's labelSize - the paragraph above the dropdown. The list
+        // rows grow with it; a 20pt option in a 22px row is clipped, not small.
+        b.dropdown = COC1WinWidgets.FlatDropdown(controls, "ChoiceDropdown", 0f, 0f, 600f, 46f, "",
+                                                 200f, 20f, 36f);
         b.continueButton = COC1WinWidgets.FlatButton(controls, "ContinueButton", 0f, 0f, 190f, 48f,
                                                      "Next", out TextMeshProUGUI _);
         b.progressBar = COC1WinWidgets.FlatProgressBar(controls, "ProgressBar", 0f, 0f, 600f, 20f,
@@ -402,10 +520,16 @@ public static class COC1SetupScreens
         checkImg.raycastTarget = false;
         toggle.graphic = checkImg;
 
-        var name = ChildLabel(rt, "NameText", 12f, 0.00f, 0.46f, DarkText, 16f);
-        var total = ChildLabel(rt, "TotalSizeText", 8f, 0.46f, 0.62f, DarkText, 16f);
-        var free = ChildLabel(rt, "FreeSpaceText", 8f, 0.62f, 0.78f, DarkText, 16f);
-        var type = ChildLabel(rt, "TypeText", 8f, 0.78f, 1.00f, MutedText, 16f);
+        // The same ColumnEdges the headers use. Typing 0.46 again here is how they drifted apart
+        // the first time.
+        var name = ChildLabel(rt, "NameText", NameColumnPad,
+                              ColumnEdges[0], ColumnEdges[1], DarkText, 16f);
+        var total = ChildLabel(rt, "TotalSizeText", ColumnPad,
+                               ColumnEdges[1], ColumnEdges[2], DarkText, 16f);
+        var free = ChildLabel(rt, "FreeSpaceText", ColumnPad,
+                              ColumnEdges[2], ColumnEdges[3], DarkText, 16f);
+        var type = ChildLabel(rt, "TypeText", ColumnPad,
+                              ColumnEdges[3], ColumnEdges[4], MutedText, 16f);
 
         var view = go.AddComponent<PartitionRowView>();
         var so = new SerializedObject(view);
@@ -454,11 +578,13 @@ public static class COC1SetupScreens
         if (Font != null) label.font = Font;
         else if (TMP_Settings.defaultFontAsset != null) label.font = TMP_Settings.defaultFontAsset;
 
-        label.fontSize = size;
+        SetScaledFontSize(label, size);
         label.color = color;
         label.alignment = TextAlignmentOptions.Left;
         label.text = "";
-        label.enableAutoSizing = false;
+        // enableAutoSizing is owned by SetScaledFontSize above: it switches auto-sizing ON
+        // to hold the scaled size inside this label's own box. Setting it false here would
+        // undo that a few lines after it was applied.
         label.raycastTarget = false;
         return label;
     }
@@ -558,11 +684,13 @@ public static class COC1SetupScreens
         if (Font != null) label.font = Font;
         else if (TMP_Settings.defaultFontAsset != null) label.font = TMP_Settings.defaultFontAsset;
 
-        label.fontSize = size;
+        SetScaledFontSize(label, size);
         label.color = color;
         label.alignment = align;
         label.text = text;
-        label.enableAutoSizing = false;
+        // enableAutoSizing is owned by SetScaledFontSize above: it switches auto-sizing ON
+        // to hold the scaled size inside this label's own box. Setting it false here would
+        // undo that a few lines after it was applied.
         label.raycastTarget = false;
         if (bold) label.fontStyle = FontStyles.Bold;
 
@@ -587,7 +715,7 @@ public static class COC1SetupScreens
         var label = ChildStretch(rt, "Label", 2f, 2f, 2f, 2f).gameObject.AddComponent<TextMeshProUGUI>();
         if (Font != null) label.font = Font;
         else if (TMP_Settings.defaultFontAsset != null) label.font = TMP_Settings.defaultFontAsset;
-        label.fontSize = 17f;
+        SetScaledFontSize(label, 17f);
         label.color = DarkText;
         label.alignment = TextAlignmentOptions.Center;
         label.text = text;

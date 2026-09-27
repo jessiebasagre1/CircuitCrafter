@@ -329,10 +329,10 @@ public class OSInstallManager : MonoBehaviour
                         $"OS setup - {stageData.stage}: chose '{SelectedChoice}' " +
                         $"instead of '{stageData.correctChoice}'.", stageData);
 
-                    // ignoreSuppression: this is corrective feedback, not a tutorial, so it
-                    // must still appear while an assessment has tutorials switched off.
+                    // Corrective feedback: shown at once in Story Mode; in an assessment its text
+                    // is kept for the review screen instead of revealing the answer mid-run.
                     if (stageData.wrongChoiceDialog != null && DialogManager.Instance != null)
-                        DialogManager.Instance.ShowDialog(stageData.wrongChoiceDialog, null, true);
+                        DialogManager.Instance.ShowCorrectiveDialog(stageData.wrongChoiceDialog);
                 }
             }
             else

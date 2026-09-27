@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2220f057af6e84f46b4697fbe8e147af, type: 3}
+  m_Name: JobOrder_COC2
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.JobOrderData
+  jobNumber: JO-COC2-001
+  moduleId: COC2
+  unitTitle: Set up computer networks
+  customerName: Mr. Santos
+  customerDetail: IT coordinator, Santos Trading
+  request: We need network cables made and tested for our new workstations, and our
+    patch panel terminated.
+  problem: One new PC connects to the switch; two others need a direct PC-to-PC link
+    for file transfer.
+  expectedOutcomes:
+  - A straight-through cable that passes all 8 conductors on the tester
+  - A crossover cable that passes all 8 conductors on the tester
+  - Patch panel port terminated and verified
+  specifications:
+  - 'Cable: Category 5e UTP with RJ45 connectors'
+  - 'Cables required: 1 straight-through, 1 crossover'
+  whatYouWillPractise: Terminating UTP cable to T568A / T568B, testing it, and punching
+    down a patch panel.
+  toolsNeeded:
+  - Crimping tool
+  - Cable stripper
+  - RJ45 connectors
+  - LAN cable tester
+  - Punch-down tool
+  safetyReminder: Cut away from your hand, and keep offcuts of wire off the floor
+    and the bench.
+  assessmentTitle: COC 2 Assessment - Set Up Computer Networks
+  assessmentScenario: A small office needs its network cabling prepared and verified
+    before its workstations are connected.
+  assessmentOutcomes:
+  - Make the cables listed in the specifications and prove each one with the tester.
+  - Terminate the patch panel and verify the port.
+  timeLimitMinutes: 0

@@ -83,6 +83,10 @@ public class COC1CompletionManager : MonoBehaviour
     private void CheckAllComplete()
     {
         if (!osInstallDone) return;
+
+        // GUIDANCE: finishing the ASSESSMENT is not finishing Story Mode - it must not unlock the
+        // next COC or mark COC1 complete. The assessment's record lives in the CompetencyLedger.
+        if (CircuitCrafter.Guidance.GuidancePolicy.IsAssessment) return;
         if (TaskManager.Instance == null) return;
 
         foreach (var taskId in requiredTaskIds)

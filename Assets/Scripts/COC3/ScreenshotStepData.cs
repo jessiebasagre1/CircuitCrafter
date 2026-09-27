@@ -34,6 +34,12 @@ public class ScreenshotStepData : ScriptableObject
     [TextArea(2, 5)]
     public string instructionText;
 
+    [Tooltip("GUIDANCE: what to show INSTEAD during an assessment. State the requirement, never the " +
+             "clicks - e.g. 'Assign the server its static IP address (see the job order).' Leave blank to " +
+             "show the scene's generic assessment line (COC3 steps use the job order's specifications).")]
+    [TextArea(1, 3)]
+    public string assessmentPrompt;
+
     [Header("Visual")]
     [Tooltip("The screenshot image to display for this step. Swap this to reuse the system for other topics.")]
     public Sprite screenshotImage;

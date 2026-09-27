@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Web browser
   description: Google Chrome / Mozilla Firefox. The customer's everyday browser,
     set as default once installed.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 70a373667d45a1c40a2be31bf716b06a, type: 3}
   duration: 3
   prerequisiteTaskIds: []
   blockedHint: 

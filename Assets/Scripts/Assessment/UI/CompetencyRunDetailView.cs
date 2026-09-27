@@ -158,6 +158,10 @@ namespace CircuitCrafter.Assessment.UI
 
                     sb.AppendLine($"  - [{mistake.category}] {mistake.description}  " +
                                   $"({AssessmentResult.FormatTime(mistake.atSeconds)})");
+
+                    // GUIDANCE: the correct procedure that was withheld during the run.
+                    if (!string.IsNullOrEmpty(mistake.correction))
+                        sb.AppendLine($"      <color={ColorGold}>Correct procedure:</color> <color={ColorMuted}>{mistake.correction}</color>");
                 }
             }
 

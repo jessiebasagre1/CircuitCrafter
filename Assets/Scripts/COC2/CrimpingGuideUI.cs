@@ -100,14 +100,21 @@ namespace CSSSimulation.Networking
         /// with null (e.g. nothing picked yet)  the rows just show blank placeholders.</summary>
         public void Refresh(CableTypeSO cableType)
         {
-            BuildList(cableType);
+            // GUIDANCE: this chart IS the answer to the crimping task - the colour at every pin. It is
+            // a Story Mode reference (GuidanceKind.ReferenceGuides); in an assessment the rows stay
+            // blank and the standard is not named, so the candidate works from memory. The cable
+            // TYPE is still shown - that is the job's requirement, not the method.
+            bool guideAllowed = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ReferenceGuides);
+            if (!guideAllowed && panel != null && panel != gameObject) panel.SetActive(false);
+
+            BuildList(guideAllowed ? cableType : null);
 
             if (cableTypeLabel != null)
                 cableTypeLabel.text = cableType != null ? cableType.displayName : "No cable type selected";
 
             if (standardLabel != null)
             {
-                WireStandardSO standard = cableType == null ? null
+                WireStandardSO standard = cableType == null || !guideAllowed ? null
                     : (endNumber == 1 ? cableType.endAStandard : cableType.endBStandard);
                 standardLabel.text = standard != null ? standard.standard.ToString() : "-";
             }
@@ -146,6 +153,7 @@ namespace CSSSimulation.Networking
         /// <summary>Wire to a "Guide" button's OnClick if you're using the optional `panel` field.</summary>
         public void ShowPanel()
         {
+            if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ReferenceGuides)) return;
             if (panel != null) panel.SetActive(true);
         }
 
@@ -157,6 +165,8 @@ namespace CSSSimulation.Networking
 
         public void TogglePanel()
         {
+            if (panel != null && !panel.activeSelf &&
+                !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ReferenceGuides)) return;
             if (panel != null) panel.SetActive(!panel.activeSelf);
         }
     }

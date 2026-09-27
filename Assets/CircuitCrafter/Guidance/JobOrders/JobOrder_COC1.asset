@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2220f057af6e84f46b4697fbe8e147af, type: 3}
+  m_Name: JobOrder_COC1
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.JobOrderData
+  jobNumber: JO-COC1-001
+  moduleId: COC1
+  unitTitle: Install and configure computer systems
+  customerName: Ms. Reyes
+  customerDetail: Office manager, Reyes Printing Services
+  request: Our office PC needs a full check-up and a clean install. Please take it
+    apart, check the parts, put it back together, and set it up for work.
+  problem: The PC has become slow and unstable. We want a fresh system with the right
+    drivers and our office software.
+  expectedOutcomes:
+  - System unit disassembled and reassembled, every part seated and every cable connected
+  - Bootable Windows installer created on the USB flash drive
+  - Windows installed on a correctly prepared partition
+  - Drivers (chipset first), application software and updates installed
+  - System tested and the service report completed
+  specifications:
+  - 'Operating system: the Windows installer image listed in the USB creator'
+  - 'Installer media: USB flash drive'
+  whatYouWillPractise: Safe disassembly and assembly of a system unit, preparing
+    installation media, and installing and configuring the operating system.
+  toolsNeeded:
+  - Anti-static wrist strap
+  - Phillips screwdriver
+  - Parts tray
+  - USB flash drive (8 GB or larger)
+  safetyReminder: Unplug the PC before opening it, and wear an anti-static wrist
+    strap clipped to the chassis.
+  assessmentTitle: COC 1 Assessment - Install and Configure Computer Systems
+  assessmentScenario: A client's desktop computer must be disassembled, reassembled,
+    and made ready for use with a fresh operating system.
+  assessmentOutcomes:
+  - Disassemble and reassemble the system unit.
+  - Prepare the installation media.
+  - Install and configure the operating system, drivers, application software and
+    updates.
+  - Test the system and complete the service report.
+  timeLimitMinutes: 0

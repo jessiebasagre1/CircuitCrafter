@@ -65,6 +65,18 @@ public class TaskManager : MonoBehaviour, ISaveable
     public bool IsTaskComplete(string taskId) =>
         tasks.TryGetValue(taskId, out TaskProgress p) && p.isComplete;
 
+    /// <summary>Read-only progress for a HUD ("3 of 6 parts removed"). False for an unknown task.
+    /// Added for the guidance layer's Current Task panel; changes nothing about how tasks work.</summary>
+    public bool TryGetProgress(string taskId, out int current, out int required)
+    {
+        current = 0;
+        required = 0;
+        if (string.IsNullOrEmpty(taskId) || !tasks.TryGetValue(taskId, out TaskProgress p)) return false;
+        current = p.current;
+        required = p.required;
+        return true;
+    }
+
     // ---------------------------------------------------------------
     // ISaveable � lets SaveManager persist/restore task progress with no
     // changes needed on its end.

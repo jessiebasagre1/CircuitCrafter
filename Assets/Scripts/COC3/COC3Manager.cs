@@ -113,7 +113,7 @@ public class COC3Manager : MonoBehaviour
         AssessmentRecorder.Attempt(step.stepData.stepId, success);
 
         if (!success)
-            AssessmentRecorder.Mistake("configuration", message);
+            AssessmentRecorder.Mistake("configuration", message, ExpectedFor(step.stepData));
 
         // Remember whether the config step passed, so a later PingTest step can react to it.
         if (step.stepData.stepType == StepType.NetworkConfigInput)
@@ -130,10 +130,33 @@ public class COC3Manager : MonoBehaviour
         else
         {
             if (scoreManager != null) scoreManager.AddMistake(step.stepData.pointsPenaltyForMistake);
-            if (feedbackManager != null) feedbackManager.ShowFailure(string.IsNullOrEmpty(message) ? "Try again." : message);
+
+            // GUIDANCE: "Please check: Subnet Mask" names the wrong field - corrective feedback,
+            // Story only. An assessment says only that it was not accepted; the detail and the
+            // expected values wait for the review screen.
+            bool explain = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback);
+            if (feedbackManager != null)
+                feedbackManager.ShowFailure(!explain ? CircuitCrafter.Guidance.GuidancePolicy.NeutralRejection
+                                          : string.IsNullOrEmpty(message) ? "Try again." : message);
 
             stepLog.Add($"Step {currentStepIndex + 1} ({step.stepData.stepId}): RETRY");
             // We intentionally do NOT advance - the learner stays on this step to try again.
+        }
+    }
+
+    /// <summary>GUIDANCE: the values this step wanted, for the assessment review screen only.</summary>
+    private static string ExpectedFor(ScreenshotStepData d)
+    {
+        if (d == null) return null;
+        switch (d.stepType)
+        {
+            case StepType.NetworkConfigInput:
+                return $"IP address {d.expectedIP}, subnet mask {d.expectedSubnetMask}, default gateway {d.expectedGateway} - as given on the job order.";
+            case StepType.TextInput:
+                return string.IsNullOrEmpty(d.textFieldExpectedValue) ? null
+                     : $"{d.textFieldLabel}: {d.textFieldExpectedValue}";
+            default:
+                return string.IsNullOrEmpty(d.instructionText) ? null : d.instructionText;
         }
     }
 

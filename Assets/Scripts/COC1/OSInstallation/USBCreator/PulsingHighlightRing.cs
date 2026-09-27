@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// to RufusStyleUSBCreatorView.highlightRingPrefab.
 ///
 /// The ring is instantiated as a child of the active hotspot and stretches to fill it
-/// (see RufusStyleUSBCreatorView.HighlightCurrentStep), so size it generously — a ring
+/// (see RufusStyleUSBCreatorView.HighlightCurrentStep), so size it generously ï¿½ a ring
 /// a bit larger than the button itself reads better than one that hugs it tightly.
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
@@ -46,6 +46,16 @@ public class PulsingHighlightRing : MonoBehaviour
 
     private void Update()
     {
+        // GUIDANCE: this ring marks the CORRECT button. In an assessment it stays invisible - the
+        // candidate has to find it. Hidden rather than destroyed, so whoever spawned it can still
+        // clean it up the way it always has.
+        if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+        {
+            if (_graphic != null && _graphic.enabled) _graphic.enabled = false;
+            return;
+        }
+        if (_graphic != null && !_graphic.enabled) _graphic.enabled = true;
+
         float t = (Mathf.Sin(Time.unscaledTime * pulseSpeed * Mathf.PI * 2f) + 1f) * 0.5f;
 
         float scale = Mathf.Lerp(minScale, maxScale, t);

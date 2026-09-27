@@ -34138,6 +34138,7 @@ MonoBehaviour:
   objectivesText: {fileID: 111326704}
   rulesText: {fileID: 111326703}
   startButton: {fileID: 111326702}
+  jobOrder: {fileID: 0}
   title: COC 2 - Cable Assembly and Testing
   objectives:
   - Collect the crimping tool from the workbench.
@@ -34538,7 +34539,7 @@ MonoBehaviour:
   failedCablePenalty: 25
   terminationPenalty: 25
   perfectRunBonus: 50
-  timeLimitSeconds: 600
+  timeLimitSeconds: 900
   endOnTimeUp: 1
   disableInAssessment:
   - {fileID: 1017459697}

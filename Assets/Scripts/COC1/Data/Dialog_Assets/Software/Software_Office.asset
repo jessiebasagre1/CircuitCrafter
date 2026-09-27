@@ -15,6 +15,9 @@ MonoBehaviour:
   itemTaskId: install_app_office
   displayName: Microsoft office Installer
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 479473f1205aeb44ea440868b8ae5bec, type: 3}
   duration: 2
+  prerequisiteTaskIds: []
+  blockedHint: 
+  blockedDialog: {fileID: 0}
   educationalDialog: {fileID: 0}

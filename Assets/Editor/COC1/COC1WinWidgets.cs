@@ -572,8 +572,18 @@ public static class COC1WinWidgets
     /// </summary>
     public static TMP_Dropdown FlatDropdown(Transform parent, string name, float x, float y,
                                             float w, float h, string caption,
-                                            float templateHeight = 160f)
+                                            float templateHeight = 160f,
+                                            float? textSize = null,
+                                            float? itemHeight = null)
     {
+        // THE SIZE AND THE ROW HEIGHT TRAVEL TOGETHER, BECAUSE ONE WITHOUT THE OTHER DOES NOTHING.
+        // The list rows were a fixed 22 high while the text on the screen around them is 17pt.
+        // 17pt glyphs do not fit a 22px row, so the items were the one place on the screen where
+        // the text had to stay small - which is exactly what "the fonts are not equal" looks like.
+        // Passing a size without making room for it would leave them clipped instead of small,
+        // which is no better.
+        float size = textSize ?? FontSize;
+        float rowH = itemHeight ?? Mathf.Max(ItemH, size * 1.8f);
         var img = Box(parent, name, x, y, w, h, FieldBg);
 
         var border = img.gameObject.AddComponent<Outline>();
@@ -583,8 +593,16 @@ public static class COC1WinWidgets
         var dd = img.gameObject.AddComponent<TMP_Dropdown>();
         dd.targetGraphic = img;
 
-        var captionText = StretchLabel(img.rectTransform, "Label", caption, 8f, 1f, 30f, 1f);
-        Label(img.rectTransform, "Arrow", w - 26f, 0f, 16f, h, "▼", TextAlignmentOptions.Center,
+        // Right inset 34, not 30: the arrow cell grew by 4 and the caption has to stop clear of it.
+        var captionText = StretchLabel(img.rectTransform, "Label", caption, 8f, 1f, 34f, 1f,
+                                       TextAlignmentOptions.Left, null, size);
+        // THE ARROW IS AN ICON, NOT BODY TEXT, AND MUST NOT SCALE WITH IT.
+        // Raising it to the caption's size was a mistake: a 20pt glyph does not fit the 16px-wide
+        // cell it sits in, and with Ellipsis overflow a glyph that does not fit is not drawn at
+        // all - so the arrow vanished from every dropdown rather than merely looking cramped.
+        // It stays at SmallFontSize, and the cell is widened a little so it still has room on a
+        // dropdown whose text is now larger.
+        Label(img.rectTransform, "Arrow", w - 30f, 0f, 24f, h, "▼", TextAlignmentOptions.Center,
               false, DimText, SmallFontSize);
 
         var template = new GameObject("Template", typeof(RectTransform));
@@ -627,7 +645,7 @@ public static class COC1WinWidgets
         crt.anchorMax = new Vector2(1f, 1f);
         crt.pivot = new Vector2(0.5f, 1f);
         crt.anchoredPosition = Vector2.zero;
-        crt.sizeDelta = new Vector2(0f, ItemH);
+        crt.sizeDelta = new Vector2(0f, rowH);
         crt.localScale = Vector3.one;
 
         var item = new GameObject("Item", typeof(RectTransform));
@@ -638,7 +656,7 @@ public static class COC1WinWidgets
         irt.anchorMax = new Vector2(1f, 0.5f);
         irt.pivot = new Vector2(0.5f, 0.5f);
         irt.anchoredPosition = Vector2.zero;
-        irt.sizeDelta = new Vector2(0f, ItemH);
+        irt.sizeDelta = new Vector2(0f, rowH);
         irt.localScale = Vector3.one;
 
         var toggle = item.AddComponent<Toggle>();
@@ -653,10 +671,11 @@ public static class COC1WinWidgets
         itemCheck.anchorMin = new Vector2(0f, 0.5f);
         itemCheck.anchorMax = new Vector2(0f, 0.5f);
         itemCheck.pivot = new Vector2(0.5f, 0.5f);
-        itemCheck.sizeDelta = new Vector2(3f, ItemH);
+        itemCheck.sizeDelta = new Vector2(3f, rowH);
         itemCheck.anchoredPosition = new Vector2(2f, 0f);
 
-        var itemLabel = StretchLabel(irt, "Item Label", "Option", 10f, 1f, 10f, 1f);
+        var itemLabel = StretchLabel(irt, "Item Label", "Option", 10f, 1f, 10f, 1f,
+                                     TextAlignmentOptions.Left, null, size);
 
         toggle.targetGraphic = itemBgImg;
         toggle.graphic = checkImg;

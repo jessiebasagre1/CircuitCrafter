@@ -153375,7 +153375,7 @@ MonoBehaviour:
   desktopMistakePenalty: 5
   countGuardRejections: 1
   perfectRunBonus: 50
-  timeLimitSeconds: 600
+  timeLimitSeconds: 900
   endOnTimeUp: 1
   disableInAssessment:
   - {fileID: 349341187}
@@ -153410,6 +153410,7 @@ MonoBehaviour:
   objectivesText: {fileID: 1293390292}
   rulesText: {fileID: 1293390291}
   startButton: {fileID: 1293390290}
+  jobOrder: {fileID: 0}
   title: "COC 3 \u2014 Set-up Computer Servers"
   objectives:
   - Set the server's network configuration to the values in the job order.

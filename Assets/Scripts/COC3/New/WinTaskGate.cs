@@ -229,7 +229,13 @@ namespace CSSSimulation.WindowsSim
             WinActionBus.Report(actionId, false);
             OnRejected?.Invoke();
 
-            if (errorText != null) errorText.text = problem;
+            // GUIDANCE: the problem text names what is wrong ("Check: IP address") - corrective, Story
+            // only. In an assessment the error box says only that it was not accepted, and the detail
+            // goes with the mistake the line above just recorded, for the review screen.
+            bool explain = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback);
+            if (!explain) CircuitCrafter.Guidance.MistakeJournal.AttachCorrectionToLast(problem);
+
+            if (errorText != null) errorText.text = explain ? problem : CircuitCrafter.Guidance.GuidancePolicy.NeutralRejection;
             if (errorDialog != null)
             {
                 errorDialog.SetActive(true);

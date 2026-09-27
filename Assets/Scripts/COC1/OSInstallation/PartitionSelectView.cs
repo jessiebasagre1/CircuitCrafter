@@ -167,7 +167,10 @@ public class PartitionSelectView : MonoBehaviour
         var p = partitions[selectedIndex];
         if (p.kind != PartitionKind.Primary)
         {
-            SetError("Create a partition here before continuing.");
+            // GUIDANCE: in an assessment, the message Windows Setup itself would give - not the fix.
+            SetError(CircuitCrafter.Guidance.GuidancePolicy.IsAssessment
+                ? "Windows can't be installed to this drive space."
+                : "Create a partition here before continuing.");
             COC1AssessmentManager.ReportMistake(
                 "Partition step: tried to install onto unallocated space. Click New to create a partition first.",
                 this);
@@ -175,7 +178,9 @@ public class PartitionSelectView : MonoBehaviour
         }
         if (!p.isFormatted)
         {
-            SetError("Format this partition before continuing.");
+            SetError(CircuitCrafter.Guidance.GuidancePolicy.IsAssessment
+                ? "Windows can't be installed to this partition."
+                : "Format this partition before continuing.");
             COC1AssessmentManager.ReportMistake(
                 "Partition step: tried to install onto an unformatted partition. Click Format first.",
                 this);

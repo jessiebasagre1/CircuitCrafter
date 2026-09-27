@@ -46,6 +46,14 @@ namespace CircuitCrafter.Assessment
         // Write
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// Raised after every Save - whether or not the file write succeeded, because a learner who
+        /// just finished should see their review even on a machine with a full disk. The assessment
+        /// review screen (AssessmentReviewPanel) listens to this, which is how it opens for COC1-COC4
+        /// without any of the four finishing paths having to know it exists.
+        /// </summary>
+        public static event Action<AssessmentResult> Saved;
+
         /// <summary>Writes one result as JSON and appends its summary row to the
         /// per-profile CSV. Returns the JSON path, or null if the write failed.</summary>
         public static string Save(AssessmentResult result)
@@ -55,6 +63,22 @@ namespace CircuitCrafter.Assessment
             if (string.IsNullOrEmpty(result.resultId))
                 result.resultId = Guid.NewGuid().ToString("N").Substring(0, 12);
 
+            // GUIDANCE: an assessment's mistakes, with the explanations that were withheld during the
+            // run, are folded in before the file is written - so the saved record, the review screen
+            // and the history screen all carry them. Does nothing for Story records.
+            if (result.Mode == SessionMode.Assessment)
+                CircuitCrafter.Guidance.MistakeJournal.MergeInto(result);
+
+            string path = WriteFiles(result);
+
+            try { Saved?.Invoke(result); }
+            catch (Exception e) { Debug.LogError($"[ResultsRepository] A Saved listener threw: {e}"); }
+
+            return path;
+        }
+
+        private static string WriteFiles(AssessmentResult result)
+        {
             try
             {
                 string dir = RootFor(result.profileId);

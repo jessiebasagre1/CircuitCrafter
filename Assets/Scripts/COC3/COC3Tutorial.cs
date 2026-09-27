@@ -171,7 +171,7 @@ public class COC3Tutorial : MonoBehaviour
         if (!dialogOpen && !IsHintOpen && usingMachine)
         {
             timeOnStep += Time.deltaTime;
-            if (tutorialMode && !hintShownForThisStep &&
+            if (TutorialOn && !hintShownForThisStep &&
                 autoHintAfterSeconds > 0f && timeOnStep >= autoHintAfterSeconds)
             {
                 ShowHint();
@@ -220,11 +220,13 @@ public class COC3Tutorial : MonoBehaviour
 
         // A dead Hint button on the completion screen just invites confusion.
         if (hintButton != null)
-            hintButton.gameObject.SetActive(tutorialMode && newStep != null);
+            hintButton.gameObject.SetActive(TutorialOn && newStep != null);
 
-        if (newStep == null || !tutorialMode) return;
+        if (newStep == null || !TutorialOn) return;
 
-        if (highlightHotspots) BeginHotspotPulse(newStep);
+        if (highlightHotspots &&
+            CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+            BeginHotspotPulse(newStep);
 
         if (playIntroDialogs)
         {
@@ -253,9 +255,15 @@ public class COC3Tutorial : MonoBehaviour
     // ==================================================================
 
     /// <summary>Opens the hint panel. Wired to your Hint button automatically.</summary>
+    /// <summary>GUIDANCE: the Inspector switch AND GuidancePolicy. Hints, auto-hints, the hint button
+    /// and the hotspot pulse are all withheld in an assessment even if nothing called
+    /// SetTutorialMode(false) - COC3AssessmentManager only does when its Disable Hints is ticked.</summary>
+    private bool TutorialOn =>
+        tutorialMode && CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints);
+
     public void ShowHint()
     {
-        if (!tutorialMode || activeStep == null || activeStep.stepData == null) return;
+        if (!TutorialOn || activeStep == null || activeStep.stepData == null) return;
 
         // If the walk-up station system is in use, a hint only makes sense while the
         // learner is actually sitting at a machine - the step UI is hidden otherwise.

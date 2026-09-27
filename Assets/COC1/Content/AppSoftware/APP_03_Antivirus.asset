@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Antivirus / endpoint protection
   description: Installs the client, then pulls down current virus definitions - which
     needs a working network connection.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 1b79479755b295b4f83c567388f83be5, type: 3}
   duration: 4
   prerequisiteTaskIds:
   - install_driver_network

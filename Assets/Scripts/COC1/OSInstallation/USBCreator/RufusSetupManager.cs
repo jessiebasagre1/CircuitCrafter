@@ -288,10 +288,10 @@ public class RufusSetupManager : MonoBehaviour
     {
         COC1AssessmentManager.ReportMistake("Rufus setup - " + step.stepId + ": " + what + ".", step);
 
-        // ignoreSuppression: corrective feedback, not a tutorial, so it still shows while an
-        // assessment has tutorial dialogs switched off.
+        // Corrective feedback: shown at once in Story Mode; in an assessment its text is kept for
+        // the review screen instead of revealing the right answer mid-run.
         if (step.wrongDialog != null && DialogManager.Instance != null)
-            DialogManager.Instance.ShowDialog(step.wrongDialog, null, true);
+            DialogManager.Instance.ShowCorrectiveDialog(step.wrongDialog);
 
         OnWrongAnswer?.Invoke(step, what);
     }

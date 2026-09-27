@@ -326,6 +326,9 @@ namespace CSSSimulation.Tutor
 
             if (!IsOpen) return;
 
+            // GUIDANCE: an assessment starting (or the review closing) under an open window takes it away.
+            if (!TutorAllowed) { Close(); return; }
+
             // The world prompt has no business sitting behind a chat window, and the COC2
             // interactor takes this as a per-frame request rather than a switch.
             CSSSimulation.Interaction.PlayerInteractor.SuppressPromptThisFrame();
@@ -365,7 +368,7 @@ namespace CSSSimulation.Tutor
             // simply absent gives the player nothing to ask about and gives you nothing to search
             // for - and four of the five reasons it can be absent are invisible in the Inspector.
             if (!wanted && !everShown && logButtonVisibility && Time.timeSinceLevelLoad > 3f &&
-                !saidWhyOnce)
+                !saidWhyOnce && TutorAllowed)
             {
                 saidWhyOnce = true;
                 Debug.LogWarning("[AiTutorChat] The AI button has not appeared at all. " + blocking +
@@ -392,6 +395,11 @@ namespace CSSSimulation.Tutor
         string WhyTheButtonIsHidden()
         {
             if (openButton == null) return "Open Button is empty on this component.";
+
+            // GUIDANCE: first, because it is the one reason that is deliberate.
+            if (!TutorAllowed)
+                return "an assessment is running - the AI Tutor is withheld until it is finished " +
+                       "(GuidancePolicy / GuidanceSettings > Assessment > Ai Tutor).";
 
             if (!InternetWatcher.IsOnline)
                 return "there is no internet connection yet" +
@@ -491,9 +499,21 @@ namespace CSSSimulation.Tutor
 
         // ---------------------------------------------------------------- open / close
 
+        /// <summary>GUIDANCE: false during an assessment. The tutor may come back on the results
+        /// review screen, once the run is over, if GuidanceSettings allows it.</summary>
+        static bool TutorAllowed =>
+            CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.AiTutor);
+
         public void Open()
         {
             if (IsOpen || panel == null) return;
+
+            if (!TutorAllowed)
+            {
+                CircuitCrafter.Guidance.CoachFeedback.Info("The AI Tutor is not available during an assessment. " +
+                                                          "It will be back when you finish.");
+                return;
+            }
 
             IsOpen = true;
             openedOnFrame = Time.frameCount;
@@ -924,6 +944,15 @@ namespace CSSSimulation.Tutor
 
             if (waiting) { SetStatus("Still thinking about the last one..."); return; }
 
+            // GUIDANCE: belt and braces - nothing is sent to the model during an assessment.
+            if (!TutorAllowed)
+            {
+                inputField.text = "";
+                AddMessage(false, "I can't help during an assessment. Your results and a full review " +
+                                  "will show when you finish - ask me about them then.");
+                return;
+            }
+
             if (Time.unscaledTime < readyAt)
             {
                 SetStatus("One moment...");
@@ -1020,6 +1049,12 @@ namespace CSSSimulation.Tutor
         /// </summary>
         string JobOrder()
         {
+            // GUIDANCE: the job order and current task from StoryGuide / JobOrderPanel when the scene
+            // has them, or the finished assessment's mistakes on the review screen. Null means
+            // neither exists, and the arrow-based description below is used exactly as before.
+            string guided = CircuitCrafter.Guidance.GuidanceTutorContext.Describe();
+            if (!string.IsNullOrEmpty(guided)) return guided;
+
             CSSSimulation.Networking.TaskWaypointArrow arrow =
                 CSSSimulation.Networking.TaskWaypointArrow.Instance;
 

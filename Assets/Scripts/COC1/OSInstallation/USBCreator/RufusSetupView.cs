@@ -37,6 +37,13 @@ public class RufusSetupView : MonoBehaviour
 
     [Header("Instruction strip")]
     [SerializeField] private TMP_Text instructionText;
+
+    [Tooltip("GUIDANCE: shown on the strip instead of each step's instruction during an assessment. " +
+             "States the outcome, never the next click.")]
+    [TextArea(1, 3)]
+    [SerializeField]
+    private string assessmentInstruction =
+        "Create the bootable USB flash drive specified in the job order.";
     [SerializeField] private TMP_Text hintText;
 
     [Header("Click Hotspot")]
@@ -131,7 +138,10 @@ public class RufusSetupView : MonoBehaviour
 
         ShowScreen(step);
 
-        if (instructionText != null) instructionText.text = step.instruction;
+        // GUIDANCE: step-by-step instructions are Story Mode help.
+        if (instructionText != null)
+            instructionText.text = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.StepInstructions)
+                ? step.instruction : assessmentInstruction;
         if (hintText != null) hintText.gameObject.SetActive(false);
 
         switch (step.kind)
@@ -298,7 +308,10 @@ public class RufusSetupView : MonoBehaviour
     {
         if (hintText == null) return;
 
-        if (string.IsNullOrEmpty(step.hint))
+        // GUIDANCE: the step's hint names the right answer - Story Mode only. In an assessment it
+        // stays hidden; the mistake is already recorded, and explained on the review screen.
+        if (string.IsNullOrEmpty(step.hint) ||
+            !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints))
         {
             hintText.gameObject.SetActive(false);
             return;

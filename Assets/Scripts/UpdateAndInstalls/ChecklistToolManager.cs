@@ -34,13 +34,50 @@ public class ChecklistToolManager : MonoBehaviour
     [Tooltip("Every item this tool can install, e.g. the 4 driver categories for Device Manager.")]
     [SerializeField] private List<ChecklistItemData> items = new List<ChecklistItemData>();
 
-    [Tooltip("Shown if BeginInstall is called again while something is already installing.")]
+    [Tooltip("Shown when an install is refused because the concurrency limit below has been " +
+             "reached. No longer shown merely because something else is installing.")]
     [SerializeField] private DialogSequence alreadyInstallingWarning;
+
+    [Tooltip("How many items may install at the same time. 0 means no limit, which is the " +
+             "realistic setting for all three tools. Set it to 1 to go back to strictly one at a " +
+             "time.")]
+    [SerializeField] private int maxConcurrentInstalls = 0;
 
     public IReadOnlyList<ChecklistItemData> Items => items;
 
-    public bool IsInstalling { get; private set; }
+    // ------------------------------------------------------------------
+    // SEVERAL ITEMS CAN INSTALL AT ONCE.
+    //
+    // It used to be one bool: anything already installing refused the next click. That is not how
+    // any of these three tools behaves in reality - Windows Update downloads and installs a whole
+    // list at once, Device Manager will happily work through several drivers, and a technician
+    // kicks off the long installs and gets on with the next one rather than watching a bar. The
+    // single flag also made the tool tedious to use and taught a habit nobody wants: wait, click,
+    // wait, click.
+    //
+    // So the state is now a SET of items in progress. Order is still enforced per item through
+    // prerequisiteTaskIds, which is the part that carries the competency - starting the display
+    // driver while the chipset driver is still installing is still refused, because the chipset
+    // task is not complete until its routine finishes.
+    // ------------------------------------------------------------------
+
+    private readonly HashSet<ChecklistItemData> installing = new HashSet<ChecklistItemData>();
+
+    /// <summary>True while ANY item is installing. Kept for existing UI.</summary>
+    public bool IsInstalling => installing.Count > 0;
+
+    /// <summary>How many are going at once.</summary>
+    public int InstallsInProgress => installing.Count;
+
+    /// <summary>The most recently started item. Kept for existing UI; prefer IsItemInstalling,
+    /// which is the question a row actually wants answered now that there can be several.</summary>
     public ChecklistItemData CurrentItem { get; private set; }
+
+    /// <summary>True while this particular item is installing.</summary>
+    public bool IsItemInstalling(ChecklistItemData item)
+    {
+        return item != null && installing.Contains(item);
+    }
 
     // UI hooks -- mirrors OSInstallManager/BootableUSBCreator's event pattern
     public event Action<ChecklistItemData> OnItemInstallStarted;
@@ -104,10 +141,19 @@ public class ChecklistToolManager : MonoBehaviour
         if (IsItemComplete(item))
             return false; // nothing to do, already installed -- not an error
 
-        if (IsInstalling)
+        // Double-clicking one row is the only "already installing" case left, and it is not worth
+        // a popup - the learner can see that row's own progress bar moving.
+        if (IsItemInstalling(item)) return false;
+
+        if (maxConcurrentInstalls > 0 && installing.Count >= maxConcurrentInstalls)
         {
             if (alreadyInstallingWarning != null && DialogManager.Instance != null)
                 DialogManager.Instance.ShowDialog(alreadyInstallingWarning);
+            else
+                Debug.Log($"[ChecklistToolManager] '{item.displayName}' has to wait - " +
+                          $"{installing.Count} of {maxConcurrentInstalls} installs already running.",
+                          this);
+
             return false;
         }
 
@@ -126,10 +172,10 @@ public class ChecklistToolManager : MonoBehaviour
             COC1AssessmentManager.ReportMistake(
                 $"{item.displayName}: installed out of order - {reason}", item);
 
-            // ignoreSuppression: corrective feedback, not a tutorial, so it must still appear
-            // while an assessment has tutorial dialogs switched off.
+            // Corrective feedback: shown at once in Story Mode; in an assessment its text is kept
+            // for the review screen instead of revealing the install order mid-run.
             if (item.blockedDialog != null && DialogManager.Instance != null)
-                DialogManager.Instance.ShowDialog(item.blockedDialog, null, true);
+                DialogManager.Instance.ShowCorrectiveDialog(item.blockedDialog);
             else
                 Debug.LogWarning($"[ChecklistToolManager] {item.displayName} blocked: {reason}", item);
 
@@ -170,7 +216,7 @@ public class ChecklistToolManager : MonoBehaviour
 
     private IEnumerator InstallRoutine(ChecklistItemData item)
     {
-        IsInstalling = true;
+        installing.Add(item);
         CurrentItem = item;
         OnItemInstallStarted?.Invoke(item);
 
@@ -196,8 +242,12 @@ public class ChecklistToolManager : MonoBehaviour
         if (item.educationalDialog != null && DialogManager.Instance != null)
             DialogManager.Instance.ShowDialog(item.educationalDialog);
 
-        IsInstalling = false;
-        CurrentItem = null;
+        installing.Remove(item);
+
+        // Only clear CurrentItem if this was the one it pointed at - with several running, the
+        // last to finish must not blank out a reference to one still going.
+        if (CurrentItem == item) CurrentItem = null;
+
         OnItemInstallComplete?.Invoke(item);
 
         if (!_allCompleteFired && AllItemsComplete)

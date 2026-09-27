@@ -45,8 +45,16 @@ namespace CircuitCrafter.Repair
 
         [Tooltip("The closing line, which should point at the first step rather than describe the fault. Leave blank to skip it.")]
         [TextArea(2, 4)]
-        [SerializeField] private string firstStepLine =
+        [SerializeField]
+        private string firstStepLine =
             "Right. Before I touch anything, I want to see what it actually does. Switch it on and watch.";
+
+        [Header("Assessment")]
+        [Tooltip("Replaces the closing line during an assessment. It states the REQUIRED OUTCOME only - never which part to check first or how. The first-step line above is Story Mode coaching and is left out.")]
+        [TextArea(2, 4)]
+        [SerializeField]
+        private string assessmentOutcomeLine =
+            "Diagnose the problem, identify the cause, and perform the necessary corrective action.";
 
         [Header("Instead of the generated text (optional)")]
         [Tooltip("ON replays the ticket's own Briefing Dialog here, the one already shown at the hub. Off by default: the learner has just read it, and hearing it twice in ten seconds teaches them to skip dialogs.")]
@@ -116,7 +124,12 @@ namespace CircuitCrafter.Repair
             }
 
             Debug.Log($"[TicketArrivalDialog] Arrived on ticket '{RepairTicketMode.ActiveTicketId}'.", this);
-            DialogManager.Instance.ShowDialog(sequence, OnFinished);
+
+            // GUIDANCE: in an assessment this dialog IS the job order - the customer's complaint and
+            // the required outcome - so it must get past the tutorial suppression that silences
+            // every other dialog on the site. In Story it plays exactly as before.
+            bool assessment = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+            DialogManager.Instance.ShowDialog(sequence, OnFinished, ignoreSuppression: assessment);
         }
 
         // ==================================================================
@@ -126,7 +139,10 @@ namespace CircuitCrafter.Repair
             TicketData ticket = RepairTicketMode.ActiveTicket;
             if (ticket == null) return null;
 
-            if (replayBriefingDialog && ticket.briefingDialog != null)
+            bool assessment = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+
+            // Not in an assessment: a hub briefing may coach, and an assessment brief must not.
+            if (replayBriefingDialog && ticket.briefingDialog != null && !assessment)
                 return ticket.briefingDialog;
 
             // Built once and reused. A DialogSequence created per arrival would leak
@@ -150,12 +166,16 @@ namespace CircuitCrafter.Repair
                 text = opening
             });
 
-            if (!string.IsNullOrWhiteSpace(firstStepLine))
+            // Story: the learner's own thought pointing at the first step (coaching).
+            // Assessment: the required outcome, and nothing about where to start.
+            string closing = assessment ? assessmentOutcomeLine : firstStepLine;
+            if (!string.IsNullOrWhiteSpace(closing))
             {
                 generated.lines.Add(new DialogLine
                 {
-                    speakerName = string.IsNullOrWhiteSpace(playerSpeaker) ? "You" : playerSpeaker,
-                    text = firstStepLine
+                    speakerName = assessment ? "Job order"
+                                : string.IsNullOrWhiteSpace(playerSpeaker) ? "You" : playerSpeaker,
+                    text = closing
                 });
             }
 

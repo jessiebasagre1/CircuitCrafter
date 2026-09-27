@@ -293,18 +293,28 @@ namespace CircuitCrafter.Repair
 
                 if (!string.IsNullOrEmpty(stageId)) AssessmentRecorder.Stage(stageId);
 
+                // GUIDANCE: the option's feedback explains WHY this is the cause - teaching, so Story
+                // only. An assessment just confirms the diagnosis was accepted.
                 if (feedbackText != null)
-                    feedbackText.text = option.feedback + $"\n\nDiagnosed after {ServiceCallState.DiagnosisAttempts} attempt(s), {ServiceCallState.FormatTime()} on site.";
+                    feedbackText.text = (CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                                            ? option.feedback : "Diagnosis accepted.") +
+                                        $"\n\nDiagnosed after {ServiceCallState.DiagnosisAttempts} attempt(s), {ServiceCallState.FormatTime()} on site.";
 
                 Debug.Log($"[TicketDiagnosisPanel] Correct diagnosis. {ServiceCallState.Summary()}", this);
             }
             else
             {
-                if (!string.IsNullOrEmpty(stageId))
-                    AssessmentRecorder.Mistake("diagnosis", $"Incorrect cause offered: {option.label}");
+                // GUIDANCE: in an assessment the mistake is always recorded (a COC4 run has no stage
+                // ids of its own), with the option's explanation kept for the review screen.
+                bool assessing = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+                if (!string.IsNullOrEmpty(stageId) || assessing)
+                    AssessmentRecorder.Mistake("diagnosis", $"Incorrect cause offered: {option.label}", option.feedback);
 
+                // The explanation is Story Mode feedback. An assessment says only that it was not
+                // accepted - never why, and never which option is right.
                 if (feedbackText != null)
-                    feedbackText.text = option.feedback + $"\n\n(+{wrongAnswerPenaltySeconds}s. Time on site: {ServiceCallState.FormatTime()}.)";
+                    feedbackText.text = (assessing ? "Diagnosis not accepted. Review your observations." : option.feedback) +
+                                        $"\n\n(+{wrongAnswerPenaltySeconds}s. Time on site: {ServiceCallState.FormatTime()}.)";
 
                 Debug.Log($"[TicketDiagnosisPanel] Incorrect diagnosis '{option.label}' (+{wrongAnswerPenaltySeconds}s).", this);
             }

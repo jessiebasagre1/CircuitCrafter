@@ -1,4 +1,4 @@
-// PatchCordBoard.cs
+ï»¿// PatchCordBoard.cs
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -318,7 +318,7 @@ namespace CSSSimulation.Networking
                         : p.startSocket.name);
 
                 sb.AppendLine("  - '" + p.name + "' JUMPED " + moved.ToString("F4") + " units and " +
-                              turned.ToString("F0") + "° when it seated into " + anchor + ". The " +
+                              turned.ToString("F0") + "ï¿½ when it seated into " + anchor + ". The " +
                               "anchor is not where the plug was sitting in the editor.\n" +
                               "      Fix: put the plug exactly where you want it, right-click its " +
                               "Transform > Copy Component, then right-click the anchor's Transform > " +
@@ -920,7 +920,9 @@ namespace CSSSimulation.Networking
             }
             if (hintText != null)
             {
-                hintText.text = passed ? "" : reason;
+                // GUIDANCE: the fail reason explains the fault - Story only. The review screen has it.
+                hintText.text = passed || !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                    ? "" : reason;
                 hintClearAt = 0f;
             }
 
@@ -987,6 +989,10 @@ namespace CSSSimulation.Networking
         public void SetHint(string message)
         {
             if (hintText == null) return;
+
+            // GUIDANCE: these lines coach ("each cord goes to the port with its own number") - Story
+            // Mode only. In an assessment the line stays empty.
+            if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints)) message = null;
             hintText.text = message ?? "";
             hintClearAt = (hintSeconds > 0f && !string.IsNullOrEmpty(message))
                 ? Time.unscaledTime + hintSeconds

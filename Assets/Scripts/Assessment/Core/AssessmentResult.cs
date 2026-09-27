@@ -202,6 +202,14 @@ namespace CircuitCrafter.Assessment
         public string category = "general";
 
         public string description = "";
+
+        // ---- added for the assessment review (appended, so older result files still load) ----
+
+        [Tooltip("The correct procedure, withheld during the run and shown on the review screen. Filled from the wrong-choice dialog that would have played, or left blank for the ReviewLibrary to supply.")]
+        public string correction = "";
+
+        [Tooltip("Where it happened, e.g. the COC4 ticket title. Optional.")]
+        public string context = "";
     }
 
     /// <summary>How one learning outcome came out of this run. Stored ON the

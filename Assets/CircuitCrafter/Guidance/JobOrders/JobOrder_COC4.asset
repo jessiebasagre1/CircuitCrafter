@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2220f057af6e84f46b4697fbe8e147af, type: 3}
+  m_Name: JobOrder_COC4
+  m_EditorClassIdentifier: Assembly-CSharp::CircuitCrafter.Guidance.JobOrderData
+  jobNumber: JO-COC4-001
+  moduleId: COC4
+  unitTitle: Maintain and repair computer systems and networks
+  customerName: Service desk
+  customerDetail: Tickets arrive at the hub
+  request: Work through the service tickets at the hub. Each one is a customer's
+    report of a fault.
+  problem: The customer describes what they see - never the cause. Finding the cause
+    is the job.
+  expectedOutcomes:
+  - Each fault observed, diagnosed, repaired and verified
+  - The cause of each fault recorded on its ticket
+  specifications: []
+  whatYouWillPractise: 'The troubleshooting process: observe, diagnose from evidence,
+    repair, verify, document.'
+  toolsNeeded:
+  - Anti-static wrist strap
+  - Screwdriver
+  - Cleaning tools as needed
+  safetyReminder: Power off and unplug before working inside a machine.
+  assessmentTitle: COC 4 Assessment - Maintain and Repair
+  assessmentScenario: The customer reports that the computer cannot boot.
+  assessmentOutcomes:
+  - Diagnose the problem, identify the cause, and perform the necessary corrective
+    action.
+  timeLimitMinutes: 0

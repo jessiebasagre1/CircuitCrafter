@@ -226,6 +226,11 @@ namespace CircuitCrafter.Assessment
             IsRunning = true;
             startedUtc = DateTime.UtcNow;
 
+            // GUIDANCE: a graded run starts a fresh mistake journal. Ignored inside a COC4 run and
+            // when this scene's assessment manager already started one.
+            if (CircuitCrafter.Guidance.GuidancePolicy.IsAssessment)
+                CircuitCrafter.Guidance.MistakeJournal.BeginRun(moduleId);
+
             Subscribe();
 
             if (ProfileManager.Instance != null) ProfileManager.Instance.TouchActiveProfile();
@@ -330,6 +335,13 @@ namespace CircuitCrafter.Assessment
         /// than read prose.</summary>
         public void ReportMistake(string category, string description)
         {
+            ReportMistake(category, description, null);
+        }
+
+        /// <summary>As above, with the correct procedure attached. The correction is never shown
+        /// during an assessment - it is saved with the result for the review screen.</summary>
+        public void ReportMistake(string category, string description, string correction)
+        {
             if (!IsRunning) return;
 
             MistakeCount++;
@@ -339,8 +351,13 @@ namespace CircuitCrafter.Assessment
             {
                 atSeconds = ElapsedSeconds,
                 category = string.IsNullOrEmpty(category) ? "general" : category,
-                description = description
+                description = description,
+                correction = correction ?? ""
             });
+
+            // GUIDANCE: journalled too (assessments only), so a run that spans scenes - COC4 - and
+            // the review screen see every mistake with its explanation.
+            CircuitCrafter.Guidance.MistakeJournal.Record(category, description, correction);
 
             Debug.Log($"[AssessmentRecorder] Mistake #{MistakeCount} ({category}) at {AssessmentResult.FormatTime(ElapsedSeconds)}: {description}", this);
         }
@@ -351,9 +368,16 @@ namespace CircuitCrafter.Assessment
         /// Same pattern as COC1AssessmentManager.ReportMistake - a call left in
         /// gameplay code costs nothing in a scene with no recorder.
         /// </summary>
-        public static void Mistake(string category, string description)
+        public static void Mistake(string category, string description, string correction = null)
         {
-            if (Active != null) Active.ReportMistake(category, description);
+            if (Active != null && Active.IsRunning) Active.ReportMistake(category, description, correction);
+            else CircuitCrafter.Guidance.MistakeJournal.Record(category, description, correction);
+
+            // GUIDANCE: COC4's assessment spans six scenes and has no recorder of its own, so
+            // COC4AssessmentRun.ReportMistake() was never called and in-site mistakes (wrong
+            // diagnosis, repairing before diagnosing, a failed verification) were not counted.
+            // They are now - which is what the run's Mistake Penalty was always meant to apply to.
+            if (CircuitCrafter.Repair.COC4AssessmentRun.IsActive) CircuitCrafter.Repair.COC4AssessmentRun.ReportMistake();
         }
 
         public static void Attempt(string stageId, bool correct)

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Utilities (archiver, PDF reader, media player)
   description: 7-Zip / WinRAR, a PDF reader, and a media player - the standard shop
     set.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 7d855b89c7a5c49428bf0167232f9c56, type: 3}
   duration: 3
   prerequisiteTaskIds: []
   blockedHint: 
