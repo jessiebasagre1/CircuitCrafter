@@ -255,6 +255,24 @@ namespace CSSSimulation.Networking
         [Tooltip("The player. Left empty, the object tagged 'Player' is found at Start.")]
         public Transform player;
 
+        [Header("Assessment")]
+        [Tooltip("Keep this arrow on during an assessment as well.\n\n" +
+                 "OFF (default): the arrow and its label are switched off for the whole graded run - " +
+                 "an arrow pointing at the next station is teaching scaffolding.\n\n" +
+                 "ON: the arrow works in the assessment exactly as in Story Mode. Tick it only in the " +
+                 "scene whose assessment should keep it (COC2, say); every other scene stays off.")]
+        public bool allowInAssessment = false;
+
+        [Tooltip("With Allow In Assessment ticked: hide the step label and keep only the arrow, so an " +
+                 "assessment shows WHERE the next station is but not WHAT to do there.")]
+        public bool hideLabelInAssessment = false;
+
+        /// <summary>True while this run is an assessment and this arrow's label is switched off for it -
+        /// either because the whole arrow is off, or because only the arrow is being kept. Other scripts
+        /// that hide and show the label (COC2StationArrowHider) leave it alone while this is true.</summary>
+        public bool LabelLockedForAssessment =>
+            AssessmentMode.IsActive && (!allowInAssessment || hideLabelInAssessment);
+
         [Header("Diagnostics")]
         [Tooltip("Console line every time the active step changes. Leave this on while you are " +
                  "building the list - it is one line per step, not per frame.")]
@@ -334,14 +352,28 @@ namespace CSSSimulation.Networking
                 if (tagged != null) player = tagged.transform;
             }
 
-            // No guidance during a graded run. Done before ValidateSetup so an assessment does not
-            // also print a page of setup warnings about steps nobody is going to see.
-            if (AssessmentMode.IsActive)
+            // No guidance during a graded run - unless this scene's assessment keeps the arrow (Allow
+            // In Assessment). Done before ValidateSetup so an assessment does not also print a page of
+            // setup warnings about steps nobody is going to see.
+            if (AssessmentMode.IsActive && !allowInAssessment)
             {
                 LockOffForAssessment();
                 Debug.Log("[TaskWaypointArrow] Assessment mode - the arrow and its label stay off " +
                           "for this run.", this);
                 return;
+            }
+
+            if (AssessmentMode.IsActive)
+            {
+                if (hideLabelInAssessment)
+                {
+                    if (labelText != null) labelText.gameObject.SetActive(false);
+                    if (distanceText != null && distanceText != labelText)
+                        distanceText.gameObject.SetActive(false);
+                }
+
+                Debug.Log("[TaskWaypointArrow] Assessment mode - Allow In Assessment is ticked, so the " +
+                          "arrow stays on" + (hideLabelInAssessment ? " without its label." : "."), this);
             }
 
             ValidateSetup();

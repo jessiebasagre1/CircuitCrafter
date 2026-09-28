@@ -74,8 +74,60 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // ===================================================================
+    // The COC order, for the Next button on each COC's Story Complete panel
+    // ===================================================================
+
+    /// <summary>
+    /// This menu's Game Modes list, kept after the menu scene unloads (a static survives a scene
+    /// load). StoryCompletePanel's Next button reads it, so the COC order and the scene names live in
+    /// ONE place - this list - instead of being copied into every COC scene, where a renamed scene
+    /// would quietly break one copy.
+    ///
+    /// Empty until this menu has been opened once. Press Play from the MainMenu scene to test Next.
+    /// </summary>
+    private static GameModeOption[] course;
+
+    /// <summary>The COC after <paramref name="modeId"/> in the menu's order. False for the last one
+    /// (COC4), for an unknown id, or before the menu has been opened.</summary>
+    public static bool TryGetNextMode(string modeId, out GameModeOption next)
+    {
+        next = null;
+        if (course == null || string.IsNullOrWhiteSpace(modeId)) return false;
+
+        string id = modeId.Trim();
+        for (int i = 0; i < course.Length - 1; i++)
+        {
+            GameModeOption mode = course[i];
+            if (mode == null || mode.modeId == null ||
+                !string.Equals(mode.modeId.Trim(), id, System.StringComparison.OrdinalIgnoreCase)) continue;
+
+            GameModeOption candidate = course[i + 1];
+            if (candidate == null || string.IsNullOrWhiteSpace(candidate.modeId) ||
+                string.IsNullOrWhiteSpace(candidate.sceneName)) return false;
+
+            next = candidate;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>The mode id whose scene is <paramref name="sceneName"/>, or null. A fallback for when
+    /// SaveManager has not been told which COC is being played.</summary>
+    public static string ModeIdForScene(string sceneName)
+    {
+        if (course == null || string.IsNullOrWhiteSpace(sceneName)) return null;
+        foreach (GameModeOption mode in course)
+            if (mode != null && mode.sceneName != null &&
+                string.Equals(mode.sceneName.Trim(), sceneName.Trim(), System.StringComparison.OrdinalIgnoreCase))
+                return mode.modeId;
+        return null;
+    }
+
     private void Awake()
     {
+        if (gameModes != null && gameModes.Length > 0) course = gameModes;
+
         // MouseLook.cs locks and hides the cursor during gameplay and never
         // resets it, so returning to the Main Menu from any gameplay scene
         // otherwise leaves the cursor locked/invisible, making Continue and

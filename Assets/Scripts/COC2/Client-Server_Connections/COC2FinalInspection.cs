@@ -206,7 +206,9 @@ namespace CSSSimulation.Networking
                 body += "\n" + (ok ? passMark : failMark) + "  " + c.label +
                         (c.requiredToPass ? "" : "   (advisory)");
 
-                if (!ok && !string.IsNullOrEmpty(c.remedy))
+                // The remedy says where to go and what to do - teaching, so Story Mode only. In an
+                // assessment the report still shows which requirement is not met, never how to fix it.
+                if (!ok && !string.IsNullOrEmpty(c.remedy) && !AssessmentMode.IsActive)
                     body += "\n           " + c.remedy;
 
                 if (!ok && c.requiredToPass) failedLines.Add(c.label);

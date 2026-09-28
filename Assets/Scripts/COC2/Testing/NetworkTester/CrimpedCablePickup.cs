@@ -26,8 +26,15 @@ namespace CSSSimulation.Networking
     ///   3. Drag the cable model into `cableVisual`.
     ///   4. Set promptText to something like "Press E to pick up cable".
     ///   5. Leave BOTH objects active in the scene - this script hides the visual itself on Awake.
-    ///   6. Optional: assign Available Dialog to tell the player, the moment crimping finishes, to pick
-    ///      the cable up and take it to the tester.
+    ///   6. Optional: assign Available Dialog (e.g. CrimpedCable_Ready_Dialog) to tell the player, once
+    ///      crimping finishes, to pick the cable up and take it to the tester. Left empty, the
+    ///      Available Lines typed on this component are used instead - so the player is always told.
+    ///
+    /// WHEN THE "PICK IT UP" DIALOG APPEARS
+    /// Not at the instant the last end is crimped, but as soon as the player can act on it: once no
+    /// other dialog or quiz is open and they are out of the crimping station's close-up views. It
+    /// waits as long as that takes (it used to give up after 10 seconds, so a long briefing or the
+    /// crimping quiz could swallow it), and it is dropped if the cable gets picked up first.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class CrimpedCablePickup : Interactable
@@ -52,6 +59,17 @@ namespace CSSSimulation.Networking
                  "skipped in Assessment mode while the assessment manager's Suppress Tutorial " +
                  "Dialogs is ticked.")]
         public DialogSequence availableDialog;
+
+        [Tooltip("Used when Available Dialog is empty, so the player is always told to pick the cable up.")]
+        [TextArea(2, 6)]
+        public string[] availableLines =
+        {
+            "Both ends are crimped. Your finished cable is on the workbench - pick it up.",
+            "A cable isn't finished until it has been tested. Take it to the cable tester and plug it in."
+        };
+
+        [Tooltip("Speaker name for Available Lines.")]
+        public string availableSpeaker = "Guide";
 
         [Tooltip("On: show it for the first cable only. Off: show it for every cable, including one " +
                  "re-crimped after a failed test.")]
@@ -94,6 +112,8 @@ namespace CSSSimulation.Networking
 
         void OnDestroy()
         {
+            OnDestroyFallback();
+
             if (CrimpingStationController.Instance != null && subscribed)
                 CrimpingStationController.Instance.OnBothEndsCrimped -= HandleCrimpingFinished;
         }
@@ -115,37 +135,82 @@ namespace CSSSimulation.Networking
 
         void ShowAvailableDialog()
         {
-            if (availableDialog == null) return;
             if (showDialogOnlyOnce && dialogShown) return;
-            dialogShown = true;
 
-            // Finishing the crimp can raise other messages in the same moment. This never stacks on
-            // top of one - it waits for it to close - but not forever, so a stuck dialog cannot
-            // hold this back for good.
+            DialogSequence sequence = AvailableSequence();
+            if (sequence == null) return;
+
+            // Finishing the crimp raises other things in the same moment - the crimp stage closing,
+            // a stage briefing, the crimping quiz. This never stacks on top of them; it waits until
+            // the player can actually go and pick the cable up.
             if (isActiveAndEnabled)
             {
                 if (dialogRoutine != null) StopCoroutine(dialogRoutine);
-                dialogRoutine = StartCoroutine(ShowWhenFree());
+                dialogRoutine = StartCoroutine(ShowWhenFree(sequence));
             }
             else if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
             {
                 // A coroutine cannot start on an inactive object. Nothing is talking, so just say it.
-                DialogManager.Instance.ShowDialog(availableDialog);
+                dialogShown = true;
+                DialogManager.Instance.ShowDialog(sequence);
             }
         }
 
-        IEnumerator ShowWhenFree()
+        IEnumerator ShowWhenFree(DialogSequence sequence)
         {
-            float giveUpAt = Time.unscaledTime + 10f;
-
-            while (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen &&
-                   Time.unscaledTime < giveUpAt)
+            // No time limit. Picking the cable up switches this object off, which ends the wait by
+            // itself, and a reset after a failed test makes the cable unavailable, which ends it too.
+            while (IsAvailable && !PlayerFree())
                 yield return null;
 
-            if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)
-                DialogManager.Instance.ShowDialog(availableDialog);
+            if (IsAvailable && DialogManager.Instance != null)
+            {
+                dialogShown = true;
+                // In the COC2 assessment this counts as a result ("crimping is done") and is shown while
+                // COC2AssessmentDialogs > Allow Results is ticked - the built-in lines as well as an asset.
+                DialogManager.Instance.ShowDialog(sequence, null, COC2AssessmentDialogs.ResultsAllowed);
+            }
 
             dialogRoutine = null;
+        }
+
+        /// <summary>True when the player can take in a message and act on it: no dialog or quiz on
+        /// screen, and not inside one of the crimping station's close-up views.</summary>
+        static bool PlayerFree()
+        {
+            if (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen) return false;
+            if (QuizManager.Instance != null && QuizManager.Instance.IsQuizOpen) return false;
+
+            if (StrippingViewController.Instance != null && StrippingViewController.Instance.InStrippingView) return false;
+            if (CrimpStageViewController.Instance != null && CrimpStageViewController.Instance.InCrimpView) return false;
+            if (CrimpingViewController.Instance != null && CrimpingViewController.Instance.InCrimpingView) return false;
+            if (TestingViewController.Instance != null && TestingViewController.Instance.InTestingView) return false;
+
+            return true;
+        }
+
+        DialogSequence fallbackSequence;
+
+        /// <summary>The assigned asset, or one built from Available Lines.</summary>
+        DialogSequence AvailableSequence()
+        {
+            if (availableDialog != null) return availableDialog;
+            if (fallbackSequence != null) return fallbackSequence;
+            if (availableLines == null || availableLines.Length == 0) return null;
+
+            fallbackSequence = ScriptableObject.CreateInstance<DialogSequence>();
+            fallbackSequence.hideFlags = HideFlags.HideAndDontSave;
+            foreach (string line in availableLines)
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+                fallbackSequence.lines.Add(new DialogLine { speakerName = availableSpeaker, text = line });
+            }
+            return fallbackSequence.lines.Count > 0 ? fallbackSequence : null;
+        }
+
+        void OnDestroyFallback()
+        {
+            if (fallbackSequence != null) Destroy(fallbackSequence);
         }
 
         void SetAvailable(bool available)

@@ -120,6 +120,14 @@ namespace CSSSimulation.Networking
         /// <summary>Wire this to the mobile Exit button's OnClick - there's no Escape key on Android.</summary>
         public void RequestExitCrimpingView()
         {
+            // Leaving half-way sends the player back to stripping on the way in - a dead end. See
+            // CrimpingStationController.Lock Player In Until Crimped.
+            if (CrimpingStationController.ExitLocked)
+            {
+                Debug.Log("[CrimpingViewController] Leaving is locked until the cable is crimped.", this);
+                return;
+            }
+
             ExitCrimpingView();
         }
 
@@ -133,7 +141,7 @@ namespace CSSSimulation.Networking
             if (CrimpToolCrimpController.Instance != null && CrimpToolCrimpController.Instance.IsCrimping)
                 return;
 
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (!CrimpingStationController.ExitLocked && Input.GetKeyDown(KeyCode.Escape))
                 ExitCrimpingView();
         }
 
@@ -174,6 +182,9 @@ namespace CSSSimulation.Networking
             {
                 if (obj != null) obj.SetActive(active);
             }
+
+            // No Exit button while leaving is locked. A Crimp button in the same list stays.
+            if (active) CrimpingStationController.HideExitButtons(mobileCrimpingControls, crimpingUI);
 
             if (WireDragController.Instance != null)
             {

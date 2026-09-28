@@ -184,6 +184,10 @@ namespace CSSSimulation.Networking
             // whichever component Unity happened to update second.
             if (Time.frameCount - exitedOnFrame <= 1) return;
 
+            // Both cables built and passed: testing is over. Says so rather than opening the tester
+            // again. Does nothing before then, or in a scene without COC2BothCablesGate.
+            if (COC2BothCablesGate.RefuseBecauseComplete()) return;
+
             if (CableInventory.Instance == null || !CableInventory.Instance.HasCable)
             {
                 if (noCableDialog != null && DialogManager.Instance != null && !DialogManager.Instance.IsDialogOpen)

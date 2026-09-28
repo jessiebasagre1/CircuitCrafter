@@ -3,172 +3,28 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\aitutor\\aitutorchat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\aitutor\\aitutorchat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\ui\\taskwaypointarrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\taskwaypointarrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\updateandinstalls\\checklisttoolmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\updateandinstalls\\checklisttoolmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\savedata\\savemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\savedata\\savemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\mainmenu\\coc1completionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\mainmenu\\coc1completionmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\observation\\ticketdiagnosispanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\observation\\ticketdiagnosispanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc4\\new\\ticketarrivaldialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc4\\new\\ticketarrivaldialog.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\screenshotstepdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotstepdata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\screenshotstep.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\new\\wintaskgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\new\\wintaskgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\new\\coc3stepgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\new\\coc3stepgate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\networking\\unity\\pingconsolepanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\networking\\unity\\pingconsolepanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\networking\\unity\\networkconfigpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\networking\\unity\\networkconfigpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3manager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\networkteststation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\testing\\cabletestanalyzer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\cabletestanalyzer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\patchpanelscripts\\punchstageboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\patchpanelscripts\\punchstageboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\patchpanelscripts\\patchcordboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\patchpanelscripts\\patchcordboard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\patchpanelscripts\\cablecarrier.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\patchpanelscripts\\cablecarrier.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\crimpingguideui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\crimpingguideui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\sockets\\pcpartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\sockets\\pcpartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\rufussetupmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\pulsinghighlightring.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\pulsinghighlightring.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\usbcreator\\bootableusbcreator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\usbcreator\\bootableusbcreator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\partitionselectview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\partitionselectview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\osinstallation\\osinstallmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\osinstallation\\osinstallmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\interaction\\waypointindicator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\interaction\\waypointindicator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\interaction\\disassemblyhintglow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\interaction\\disassemblyhintglow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\hotbar\\partdescriptionpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\hotbar\\partdescriptionpanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\dialog\\taskmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\dialog\\taskmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\ui\\competencyrundetailview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\ui\\competencyrundetailview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\core\\resultsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\core\\resultsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\core\\assessmentresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\core\\assessmentresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\core\\assessmentrecorder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\core\\assessmentrecorder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc4assessment\\coc4assessmentrun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc4assessment\\coc4assessmentrun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\stageloop\\coc2stagedialogs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\stageloop\\coc2stagedialogs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc1assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc1assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\assessmentintropanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\assessmentintropanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -178,511 +34,84 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 41,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ChecklistToolManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UpdateAndInstalls\\ChecklistToolManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\UpdateAndInstalls\\ChecklistToolManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UpdateAndInstalls\\ChecklistToolManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\UpdateAndInstalls\\ChecklistToolManager.cs",
-              "ViewState": "AgIAAPwAAAAAAAAAAAAIwP8AAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:05:08.196Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "TaskWaypointArrow.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "RelativeToolTip": "Assets\\Scripts\\UI\\TaskWaypointArrow.cs",
-              "ViewState": "AgIAACcEAAAAAAAAAAAAACIEAAAbAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:04:41.997Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "SaveManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\SaveData\\SaveManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\SaveData\\SaveManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\SaveData\\SaveManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\SaveData\\SaveManager.cs",
-              "ViewState": "AgIAAMoDAAAAAAAAAAAIwNYDAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:04:30.294Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "COC1CompletionManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\MainMenu\\COC1CompletionManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\MainMenu\\COC1CompletionManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\MainMenu\\COC1CompletionManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\MainMenu\\COC1CompletionManager.cs",
-              "ViewState": "AgIAAFsAAAAAAAAAAAAIwGcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:04:14.847Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "TicketDiagnosisPanel.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC4\\Observation\\TicketDiagnosisPanel.cs",
-              "ViewState": "AgIAAD4BAAAAAAAAAAAIwEoBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:04:02.512Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "TicketArrivalDialog.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\New\\TicketArrivalDialog.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC4\\New\\TicketArrivalDialog.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC4\\New\\TicketArrivalDialog.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC4\\New\\TicketArrivalDialog.cs",
-              "ViewState": "AgIAAMQAAAAAAAAAAAAIwNAAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:03:43.518Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "ScreenshotStepData.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotStepData.cs",
-              "ViewState": "AgIAAEAAAAAAAAAAAAAIwEwAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:03:30.093Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "ScreenshotStep.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\ScreenshotStep.cs",
-              "ViewState": "AgIAACMBAAAAAAAAAAAIwC8BAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:03:15.415Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "WinTaskGate.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\WinTaskGate.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\New\\WinTaskGate.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\WinTaskGate.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\New\\WinTaskGate.cs",
-              "ViewState": "AgIAAE8BAAAAAAAAAAAIwFsBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:03:02.032Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "COC3StepGate.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\COC3StepGate.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\New\\COC3StepGate.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\COC3StepGate.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\New\\COC3StepGate.cs",
-              "ViewState": "AgIAAFABAAAAAAAAAAAwwFwBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:02:54.059Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "PingConsolePanel.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Networking\\Unity\\PingConsolePanel.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\Networking\\Unity\\PingConsolePanel.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Networking\\Unity\\PingConsolePanel.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\Networking\\Unity\\PingConsolePanel.cs",
-              "ViewState": "AgIAALAAAAAAAAAAAAAIwLwAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:02:42.608Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "NetworkConfigPanel.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Networking\\Unity\\NetworkConfigPanel.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\Networking\\Unity\\NetworkConfigPanel.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\Networking\\Unity\\NetworkConfigPanel.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\Networking\\Unity\\NetworkConfigPanel.cs",
-              "ViewState": "AgIAAKsAAAAAAAAAAAAIwLcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:02:27.151Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "COC3Tutorial.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
-              "ViewState": "AgIAANoBAAAAAAAAAAAwwOYBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:02:09.344Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "COC3Manager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Manager.cs",
-              "ViewState": "AgIAAMEAAAAAAAAAAAAIwM0AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:01:58.383Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "NetworkTestStation.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\NetworkTestStation.cs",
-              "ViewState": "AgIAANUBAAAAAAAAAAAIwOEBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:01:43.895Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "CableTestAnalyzer.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\CableTestAnalyzer.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\CableTestAnalyzer.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\CableTestAnalyzer.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\CableTestAnalyzer.cs",
-              "ViewState": "AgIAAIsBAAAAAAAAAAAIwJcBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:01:30.921Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "PunchStageBoard.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\PunchStageBoard.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\PatchPanelScripts\\PunchStageBoard.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\PunchStageBoard.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\PatchPanelScripts\\PunchStageBoard.cs",
-              "ViewState": "AgIAACYFAAAAAAAAAAAIwDIFAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:01:15.95Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "PatchCordBoard.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\PatchCordBoard.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\PatchPanelScripts\\PatchCordBoard.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\PatchCordBoard.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\PatchPanelScripts\\PatchCordBoard.cs",
-              "ViewState": "AgIAAJUEAAAAAAAAAAAIwKEEAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:01:05.364Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
-              "Title": "CableCarrier.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\CableCarrier.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\PatchPanelScripts\\CableCarrier.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\PatchPanelScripts\\CableCarrier.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\PatchPanelScripts\\CableCarrier.cs",
-              "ViewState": "AgIAAEEDAAAAAAAAAAAIwE0DAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T04:00:51.815Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "CrimpingGuideUI.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\CrimpingGuideUI.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\CrimpingGuideUI.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\CrimpingGuideUI.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC2\\CrimpingGuideUI.cs",
-              "ViewState": "AgIAAKAAAAAAAAAAAAAwwKwAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:57:15.307Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "PCPartItem.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Sockets\\PCPartItem.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Sockets\\PCPartItem.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Sockets\\PCPartItem.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Sockets\\PCPartItem.cs",
-              "ViewState": "AgIAAKEBAAAAAAAAAAAkwLEBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:57:01.038Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 22,
-              "Title": "RufusSetupView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupView.cs",
-              "ViewState": "AgIAAIEBAAAAAAAAAAAkwJEBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:56:41.629Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "RufusSetupManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\RufusSetupManager.cs",
-              "ViewState": "AgIAAD4BAAAAAAAAAAAkwE4BAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:56:33.976Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 24,
-              "Title": "PulsingHighlightRing.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\PulsingHighlightRing.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\PulsingHighlightRing.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\PulsingHighlightRing.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\PulsingHighlightRing.cs",
-              "ViewState": "AgIAADcAAAAAAAAAAAAkwEcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:56:19.967Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 25,
-              "Title": "BootableUSBCreator.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\BootableUSBCreator.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\BootableUSBCreator.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\BootableUSBCreator.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\USBCreator\\BootableUSBCreator.cs",
-              "ViewState": "AgIAAJIAAAAAAAAAAAAkwKIAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:56:09.783Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 26,
-              "Title": "PartitionSelectView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\PartitionSelectView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\PartitionSelectView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\PartitionSelectView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\PartitionSelectView.cs",
-              "ViewState": "AgIAALcAAAAAAAAAAAAkwMcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:56:00.317Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 27,
-              "Title": "OSInstallManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\OSInstallManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\OSInstallation\\OSInstallManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\OSInstallation\\OSInstallManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\OSInstallation\\OSInstallManager.cs",
-              "ViewState": "AgIAAGABAAAAAAAAAAAkwHABAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:55:45.995Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 28,
-              "Title": "DialogManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
-              "ViewState": "AgIAAGUBAAAAAAAAAAA3wHUBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:55:35.251Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 29,
-              "Title": "WaypointIndicator.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\WaypointIndicator.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Interaction\\WaypointIndicator.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\WaypointIndicator.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Interaction\\WaypointIndicator.cs",
-              "ViewState": "AgIAAI8AAAAAAAAAAAAkwJ8AAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:55:21.124Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 30,
-              "Title": "DisassemblyHintGlow.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\DisassemblyHintGlow.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Interaction\\DisassemblyHintGlow.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Interaction\\DisassemblyHintGlow.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Interaction\\DisassemblyHintGlow.cs",
-              "ViewState": "AgIAAPEBAAAAAAAAAAAkwAECAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:55:11.015Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 31,
-              "Title": "PartDescriptionPanel.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Hotbar\\PartDescriptionPanel.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Hotbar\\PartDescriptionPanel.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Hotbar\\PartDescriptionPanel.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Hotbar\\PartDescriptionPanel.cs",
-              "ViewState": "AgIAACAAAAAAAAAAAAAkwDAAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:54:52.327Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 32,
-              "Title": "TaskManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Dialog\\TaskManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Dialog\\TaskManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Dialog\\TaskManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\COC1\\Dialog\\TaskManager.cs",
-              "ViewState": "AgIAAJMAAAAAAAAAAAAswJsAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:54:41.462Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 33,
-              "Title": "CompetencyRunDetailView.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\UI\\CompetencyRunDetailView.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\UI\\CompetencyRunDetailView.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\UI\\CompetencyRunDetailView.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\UI\\CompetencyRunDetailView.cs",
-              "ViewState": "AgIAAKoAAAAAAAAAAAAkwLoAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:54:33.517Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 34,
-              "Title": "ResultsRepository.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\ResultsRepository.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\Core\\ResultsRepository.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\ResultsRepository.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\Core\\ResultsRepository.cs",
-              "ViewState": "AgIAAFgBAAAAAAAAAAAkwGgBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:54:24.796Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 35,
-              "Title": "AssessmentResult.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\AssessmentResult.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\Core\\AssessmentResult.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\AssessmentResult.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\Core\\AssessmentResult.cs",
-              "ViewState": "AgIAANgAAAAAAAAAAAAkwOgAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:54:08.168Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 37,
-              "Title": "COC4AssessmentRun.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC4Assessment\\COC4AssessmentRun.cs",
-              "ViewState": "AgIAAIQBAAAAAAAAAAAkwJQBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:53:53.5Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 36,
-              "Title": "AssessmentRecorder.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\AssessmentRecorder.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\Core\\AssessmentRecorder.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\Core\\AssessmentRecorder.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\Core\\AssessmentRecorder.cs",
-              "ViewState": "AgIAAOoBAAAAAAAAAAAkwPoBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:53:52.371Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 40,
-              "Title": "COC1AssessmentManager.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC1AssessmentManager.cs",
-              "ViewState": "AgIAALQBAAAAAAAAAAAkwMQBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:53:19.67Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 38,
+              "DocumentIndex": 0,
               "Title": "COC3AssessmentManager.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
-              "ViewState": "AgIAAEECAAAAAAAAAAAkwFECAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAFMCAAAAAAAAAAAAAF4CAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:53:15.553Z"
+              "WhenOpened": "2026-09-28T12:24:50.895Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 39,
+              "DocumentIndex": 1,
+              "Title": "COC3Tutorial.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
+              "ViewState": "AgIAAPUBAAAAAAAAAAAAAAgCAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-28T12:24:11.473Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "CrimpedCablePickup.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
+              "ViewState": "AgIAACsBAAAAAAAAAAAAADYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-28T12:07:23.962Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "DialogManager.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
+              "ViewState": "AgIAAGoBAAAAAAAAAAAAAH0BAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-28T12:06:17.39Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "COC2StageDialogs.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
+              "ViewState": "AgIAAPsCAAAAAAAAAAAqwA4DAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-28T11:28:23.719Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "COC2AssessmentManager.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
               "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "ViewState": "AgIAAPYCAAAAAAAAAAAkwAYDAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAB0DAAAAAAAAAAAqwDADAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:53:13.488Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 41,
-              "Title": "AssessmentIntroPanel.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
-              "ViewState": "AgIAACABAAAAAAAAAAAkwDABAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:52:44.06Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "AiTutorChat.cs",
-              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\AITutor\\AiTutorChat.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\AITutor\\AiTutorChat.cs",
-              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\AITutor\\AiTutorChat.cs",
-              "RelativeToolTip": "Assets\\Scripts\\AITutor\\AiTutorChat.cs",
-              "ViewState": "AgIAAAgFAAAAAAAAAAA3wAsFAAAVAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-27T03:52:29.029Z",
+              "WhenOpened": "2026-09-28T11:27:57.557Z",
               "EditorCaption": ""
             }
           ]

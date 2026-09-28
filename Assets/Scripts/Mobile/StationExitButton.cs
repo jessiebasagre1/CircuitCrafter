@@ -246,7 +246,11 @@ namespace CSSSimulation.Networking
         {
             get
             {
-                if (Allowed(Station.CrimpStageView) &&
+                // The crimping station's three views keep the player in until the cable is crimped
+                // (CrimpingStationController.Lock Player In Until Crimped), so Back does not offer them.
+                bool crimpLocked = CrimpingStationController.ExitLocked;
+
+                if (!crimpLocked && Allowed(Station.CrimpStageView) &&
                     CrimpStageViewController.Instance != null &&
                     CrimpStageViewController.Instance.InCrimpView)
                     return Station.CrimpStageView;
@@ -256,12 +260,12 @@ namespace CSSSimulation.Networking
                     TestingViewController.Instance.InTestingView)
                     return Station.TestingView;
 
-                if (Allowed(Station.CrimpingView) &&
+                if (!crimpLocked && Allowed(Station.CrimpingView) &&
                     CrimpingViewController.Instance != null &&
                     CrimpingViewController.Instance.InCrimpingView)
                     return Station.CrimpingView;
 
-                if (Allowed(Station.StrippingView) &&
+                if (!crimpLocked && Allowed(Station.StrippingView) &&
                     StrippingViewController.Instance != null &&
                     StrippingViewController.Instance.InStrippingView)
                     return Station.StrippingView;

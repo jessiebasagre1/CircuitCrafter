@@ -91,6 +91,14 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public static bool SuppressTutorials;
 
+    /// <summary>
+    /// Dialog assets that are still shown while tutorials are suppressed - i.e. during an assessment.
+    /// For messages that belong to the job rather than to the teaching: "you need the crimping tool
+    /// first", "the link is verified". Filled per scene (COC2AssessmentDialogs) and emptied again when
+    /// that scene unloads. Anything not listed here is withheld exactly as before.
+    /// </summary>
+    public static readonly HashSet<DialogSequence> AllowedWhileSuppressed = new HashSet<DialogSequence>();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -156,7 +164,7 @@ public class DialogManager : MonoBehaviour
         // to set SuppressTutorials. The assessment's own messages still pass ignoreSuppression.
         bool withheld = SuppressTutorials || !GuidancePolicy.Allows(GuidanceKind.ProcedureTutorial);
 
-        if (withheld && !ignoreSuppression)
+        if (withheld && !ignoreSuppression && (sequence == null || !AllowedWhileSuppressed.Contains(sequence)))
         {
             // Fire the callback anyway - a caller waiting on it must not stall just because
             // the popup itself was silenced.

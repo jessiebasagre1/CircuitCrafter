@@ -65,6 +65,15 @@ namespace CSSSimulation.Networking
         [Tooltip("Matches a taskId already registered with TaskManager.RegisterTask(). Leave blank to skip.")]
         public string taskId = "crimp_cable";
 
+        [Header("Leaving the station")]
+        [Tooltip("Keep the player at the crimping station from the moment they start stripping until both " +
+                 "ends are crimped: no Exit / Back button, and Escape and E do not leave the stripping, " +
+                 "wiring or crimping views.\n\n" +
+                 "Leaving half-way used to send the player back to stripping on the way in, with the cable " +
+                 "already stripped - a dead end. Once both ends are crimped the station closes by itself, as " +
+                 "before. Untick to allow leaving again.")]
+        public bool lockPlayerInUntilCrimped = true;
+
         [Header("Input")]
         [Tooltip("Keyboard shortcut that crimps the next ready end without dragging the tool (desktop convenience). " +
                  "It still plays the full crimp animation - it just skips the drag.")]
@@ -97,6 +106,58 @@ namespace CSSSimulation.Networking
 
         bool endOneCrimped;
         bool endTwoCrimped;
+
+        // ------------------------------------------------------------------
+        // Leaving the station
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// True while the player may NOT leave the stripping, wiring or crimping views: the lock is on
+        /// and this cable is not crimped yet. StrippingViewController, CrimpingViewController,
+        /// CrimpStageViewController and StationExitButton all ask this before letting the player out.
+        /// Scripts that close the views themselves (a reset after a failed test, say) are not affected.
+        /// </summary>
+        public static bool ExitLocked =>
+            Instance != null && Instance.lockPlayerInUntilCrimped && !Instance.IsCrimped;
+
+        static readonly string[] ExitMethodNames =
+        {
+            "RequestExitStrippingView", "ExitStrippingView",
+            "RequestExitCrimpingView", "ExitCrimpingView",
+            "RequestBack"
+        };
+
+        /// <summary>
+        /// Hides every button under these objects whose On Click leaves the station - the mobile
+        /// Cancel / Exit / Back buttons, or a desktop Exit button - while ExitLocked is true. Found by
+        /// what the button calls, so a Crimp button sitting in the same list is left alone.
+        /// </summary>
+        public static void HideExitButtons(GameObject[] roots, GameObject extraRoot = null)
+        {
+            if (!ExitLocked) return;
+
+            if (roots != null)
+                foreach (GameObject root in roots) HideExitButtonsUnder(root);
+
+            HideExitButtonsUnder(extraRoot);
+        }
+
+        static void HideExitButtonsUnder(GameObject root)
+        {
+            if (root == null) return;
+
+            foreach (UnityEngine.UI.Button button in root.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+            {
+                if (button == null) continue;
+
+                for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+                {
+                    if (System.Array.IndexOf(ExitMethodNames, button.onClick.GetPersistentMethodName(i)) < 0) continue;
+                    button.gameObject.SetActive(false);
+                    break;
+                }
+            }
+        }
 
         // The pin order each end was actually crimped with, frozen at crimp time. Index 0 = pin 1.
         WireColor[] crimpedEndOne;

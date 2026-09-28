@@ -82,6 +82,28 @@ public class COC3Tutorial : MonoBehaviour
     public string hintTitle = "Hint";
 
     // ------------------------------------------------------------------
+    [Header("Assessment")]
+    [Tooltip("Open the hint by itself after Auto Hint After Seconds during an ASSESSMENT as well. Off by " +
+             "default: in an assessment a hint appears only when the learner asks for it, and every step " +
+             "where one was opened is noted in the assessment report.\n\n" +
+             "Hints are allowed in the assessment by unticking Disable Hints on COC3AssessmentManager.")]
+    public bool autoHintInAssessment = false;
+
+    /// <summary>Set by COC3AssessmentManager when its Disable Hints is unticked: the learner may open
+    /// hints during this assessment.</summary>
+    public bool HintsAllowedInAssessment
+    {
+        get { return hintsAllowedInAssessment; }
+        set
+        {
+            hintsAllowedInAssessment = value;
+            // A step may already be open - its panel can come up before the assessment starts - so
+            // the Hint button is re-evaluated now rather than at the next step.
+            if (hintButton != null) hintButton.gameObject.SetActive(TutorialOn && activeStep != null);
+        }
+    }
+    private bool hintsAllowedInAssessment;
+
     [Header("Hotspot Highlight")]
     [Tooltip("Pulse the transparent hotspot buttons so the learner can see where to click.")]
     public bool highlightHotspots = true;
@@ -172,7 +194,8 @@ public class COC3Tutorial : MonoBehaviour
         {
             timeOnStep += Time.deltaTime;
             if (TutorialOn && !hintShownForThisStep &&
-                autoHintAfterSeconds > 0f && timeOnStep >= autoHintAfterSeconds)
+                autoHintAfterSeconds > 0f && timeOnStep >= autoHintAfterSeconds &&
+                (!AssessmentMode.IsActive || autoHintInAssessment))
             {
                 ShowHint();
             }
@@ -259,7 +282,11 @@ public class COC3Tutorial : MonoBehaviour
     /// and the hotspot pulse are all withheld in an assessment even if nothing called
     /// SetTutorialMode(false) - COC3AssessmentManager only does when its Disable Hints is ticked.</summary>
     private bool TutorialOn =>
-        tutorialMode && CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints);
+        tutorialMode &&
+        (CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints) ||
+         // The COC 3 assessment with Disable Hints unticked. Hotspot pulses and intro dialogs stay off
+         // there all the same - they have their own checks (ObjectHighlights, DialogManager).
+         (HintsAllowedInAssessment && AssessmentMode.IsActive));
 
     public void ShowHint()
     {
@@ -278,6 +305,10 @@ public class COC3Tutorial : MonoBehaviour
             Debug.LogWarning("[COC3Tutorial] Hint Panel / Hint Text are not assigned - nothing to show.", this);
             return;
         }
+
+        // Noted once per step in an assessment, so the report shows where help was used.
+        if (!hintShownForThisStep && AssessmentMode.IsActive && COC3AssessmentManager.Instance != null)
+            COC3AssessmentManager.Instance.NoteHintUsed();
 
         hintShownForThisStep = true;
 
@@ -348,8 +379,11 @@ public class COC3Tutorial : MonoBehaviour
         }
         else if (activeStep != null)
         {
-            if (hintButton != null) hintButton.gameObject.SetActive(true);
-            if (highlightHotspots) BeginHotspotPulse(activeStep);
+            if (hintButton != null) hintButton.gameObject.SetActive(TutorialOn);
+            // GUIDANCE: the pulse is a highlight - withheld in an assessment, as in OnStepChanged.
+            if (highlightHotspots &&
+                CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+                BeginHotspotPulse(activeStep);
         }
     }
 

@@ -25,8 +25,11 @@ namespace CSSSimulation.Networking
     /// distance; the tool icon resolves through a ray from the stage camera against the same bounds.
     /// Nothing here depends on physics, layers, or Physics.autoSyncTransforms.
     ///
-    /// WORKING ORDER. Position 1 first, then 2, and so on. Only the active pin accepts a conductor,
-    /// and by default it has to be struck before the next opens - seat, punch, seat, punch.
+    /// WORKING ORDER. Any order by default: a conductor can go into any empty position, and the
+    /// termination is judged against the standard only once all eight are struck - which pin each
+    /// colour ended up in is what counts, not the order they went in. Tick Work In Pin Order for the
+    /// old rule (position 1 first, then 2, and so on). Require Punch Before Next Wire still applies
+    /// either way: seat one, punch it, then the next.
     ///
     /// Setup:
     ///   1. Put this on the root of the stage set.
@@ -48,6 +51,12 @@ namespace CSSSimulation.Networking
         public WireStandardSO targetStandard;
 
         [Header("Rules")]
+        [Tooltip("OFF (default): a conductor can be seated in ANY empty position, in any order - the " +
+                 "way a technician lays pairs into a real block. The result is still judged against " +
+                 "the standard, pin by pin, once all eight are struck.\n\n" +
+                 "ON: positions must be filled 1 to 8 in order - the original rule.")]
+        public bool workInPinOrder = false;
+
         [Tooltip("ON: the active pin must be struck before the next one accepts a conductor - seat, " +
                  "punch, seat, punch.\n\nOFF: the player may seat 1-8 in order first and strike " +
                  "them afterwards.")]
@@ -602,6 +611,26 @@ namespace CSSSimulation.Networking
             return null;
         }
 
+        /// <summary>
+        /// True if a conductor dropped on this pin right now would seat. The single rule the drop and
+        /// the drag highlight both use, so the highlight never promises a seat the drop then refuses.
+        /// </summary>
+        public bool PinAccepts(PunchStagePin p)
+        {
+            if (p == null || p.IsSeated || p.IsPunched) return false;
+            if (workInPinOrder) return p == PinAcceptingWire();
+            return !requirePunchBeforeNextWire || SeatedUnpunched() == null;
+        }
+
+        /// <summary>A position with a conductor laid in but not struck yet, or null.</summary>
+        public PunchStagePin SeatedUnpunched()
+        {
+            if (pins == null) return null;
+            foreach (var p in pins)
+                if (p != null && p.IsSeated && !p.IsPunched) return p;
+            return null;
+        }
+
         public bool CanPunch(PunchStagePin p)
         {
             return AcceptsInput && p != null && p.IsSeated && !p.IsPunched;
@@ -769,21 +798,36 @@ namespace CSSSimulation.Networking
                 return false;
             }
 
-            PunchStagePin allowed = PinAcceptingWire();
-            if (allowed == null)
+            if (workInPinOrder)
             {
-                COC2Sfx.ActionRefused();
-                SetHint(requirePunchBeforeNextWire
-                    ? "Punch the conductor already seated before starting the next one."
-                    : "Every pin already has a conductor.");
-                RefreshUI();
-                return false;
-            }
+                PunchStagePin allowed = PinAcceptingWire();
+                if (allowed == null)
+                {
+                    COC2Sfx.ActionRefused();
+                    SetHint(requirePunchBeforeNextWire
+                        ? "Punch the conductor already seated before starting the next one."
+                        : "Every pin already has a conductor.");
+                    RefreshUI();
+                    return false;
+                }
 
-            if (target != allowed)
+                if (target != allowed)
+                {
+                    COC2Sfx.ActionRefused();
+                    SetHint("Work the block in order - position " + allowed.pinNumber + " is next.");
+                    RefreshUI();
+                    return false;
+                }
+            }
+            else if (!PinAccepts(target))
             {
+                // Any order - the only thing that can still refuse a free position is a conductor
+                // elsewhere waiting to be struck (Require Punch Before Next Wire).
+                PunchStagePin waiting = SeatedUnpunched();
                 COC2Sfx.ActionRefused();
-                SetHint("Work the block in order - position " + allowed.pinNumber + " is next.");
+                SetHint(waiting != null
+                    ? "Punch the conductor in position " + waiting.pinNumber + " before seating the next one."
+                    : "That position can't take a conductor right now.");
                 RefreshUI();
                 return false;
             }
@@ -905,8 +949,15 @@ namespace CSSSimulation.Networking
 
             if (PunchedCount() >= 8) { Finish(); return; }
 
-            PunchStagePin next = ActivePin();
-            SetHint(next != null ? "Position " + next.pinNumber + " next." : null);
+            if (workInPinOrder)
+            {
+                PunchStagePin next = ActivePin();
+                SetHint(next != null ? "Position " + next.pinNumber + " next." : null);
+            }
+            else
+            {
+                SetHint("Seat the next conductor in any empty position.");
+            }
             RefreshUI();
         }
 
@@ -975,7 +1026,7 @@ namespace CSSSimulation.Networking
             ResetStage();
 
             PunchStagePin first = ActivePin();
-            SetHint(first != null
+            SetHint(workInPinOrder && first != null
                 ? "Try again - start from position " + first.pinNumber + "."
                 : "Try again.");
 
@@ -1078,15 +1129,16 @@ namespace CSSSimulation.Networking
         /// </summary>
         public void HighlightForConductor(PunchStageConductor conductor)
         {
-            PunchStagePin target = PinAcceptingWire();
-            if (conductor == null || target == null) { SetOnlyHighlight(null); return; }
+            if (conductor == null) { SetOnlyHighlight(null); return; }
 
             float pixels;
             PunchStagePin nearest = PinNearestOnScreen(conductor.transform.position, out pixels);
 
             float range = highlightPixels > 0f ? highlightPixels : EffectiveScreenSnap;
 
-            SetOnlyHighlight(nearest == target && pixels <= range ? target : null);
+            // Any order: light whichever free position the wire is over. In order: only the one
+            // position that is next, and nothing while hovering any other.
+            SetOnlyHighlight(PinAccepts(nearest) && pixels <= range ? nearest : null);
         }
 
         /// <summary>Called every frame the tool is being dragged - shows what it would strike.</summary>
@@ -1127,7 +1179,10 @@ namespace CSSSimulation.Networking
             // it is off by default. It used to be unconditional - which is why the
             // first pin lit up the moment the station opened, before the learner
             // had touched a wire, and stayed lit through every drag.
-            SetOnlyHighlight(showNextPinWhenIdle ? ActivePin() : null);
+            // In any order there is no "next" position - only, at most, one waiting to be struck.
+            SetOnlyHighlight(!showNextPinWhenIdle ? null
+                             : workInPinOrder ? ActivePin()
+                             : SeatedUnpunched());
         }
 
         // ------------------------------------------------------------------

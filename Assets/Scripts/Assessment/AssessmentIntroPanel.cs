@@ -1,6 +1,9 @@
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -27,6 +30,14 @@ using UnityEngine.UI;
 /// IN CAMPAIGN MODE it enables the manager immediately in Awake and switches itself off. The
 /// manager's Start() still runs, still sees that no assessment is active, and still shuts itself
 /// down the way it always did - so a campaign playthrough is completely unaffected.
+///
+/// KEEPING START CLICKABLE (all on by default, nothing to wire)
+///   Hold Player   - PlayerInputLock + CursorKeeper.Claim while the briefing is up. Freeing the
+///                   cursor without claiming it lost to CursorKeeper every frame in COC 3, whose
+///                   MouseLook was still on: the cursor stayed pinned to the centre.
+///   Keep On Top   - the briefing is sorted above every other screen canvas.
+///   Enter Starts  - Enter presses Start on PC.
+///   Report Missed Clicks - a click on Start that does not arrive is explained in the Console.
 /// </summary>
 public class AssessmentIntroPanel : MonoBehaviour
 {
@@ -106,6 +117,28 @@ public class AssessmentIntroPanel : MonoBehaviour
 
     // ------------------------------------------------------------------
 
+    [Header("Keeping Start clickable")]
+    [Tooltip("Hold the player for as long as the briefing is up, the way the project's other panels " +
+             "do: PlayerInputLock is held (no walking, no mouse look) and CursorKeeper is told the " +
+             "cursor is claimed, so it does not lock it again underneath the briefing. Released when " +
+             "Start is pressed.\n\n" +
+             "LEAVE THIS ON. Without it, in a scene whose MouseLook is not in Freeze Until Start, " +
+             "CursorKeeper locks the cursor every frame and the Start button cannot be reached.")]
+    public bool holdPlayer = true;
+
+    [Tooltip("While the briefing is up, draw it above every other screen canvas, so that no full-screen " +
+             "panel on another canvas can sit in front of the Start button.")]
+    public bool keepOnTop = true;
+
+    [Tooltip("Enter also presses Start (PC).")]
+    public bool enterStarts = true;
+
+    [Tooltip("When a click lands on the Start button but does not reach it, say in the Console what " +
+             "took it: a locked cursor, a panel in front, a raycaster that is off. Silent otherwise.")]
+    public bool reportMissedClicks = true;
+
+    // ------------------------------------------------------------------
+
     [Header("Suppressed for the whole graded run")]
     [Tooltip("Switched off in Awake, before any Start() in the scene runs. This is where the " +
              "INTRO DIALOG trigger goes, and the quiz, and the autosaver.\n\n" +
@@ -131,6 +164,12 @@ public class AssessmentIntroPanel : MonoBehaviour
 
     /// <summary>True once Start has been pressed. Never resets - the briefing is shown once.</summary>
     public bool HasStarted { get; private set; }
+
+    private bool holding;
+    private float readyAt = float.MaxValue;
+    private Canvas ownCanvas;
+    private int reportsLeft = 3;
+    private readonly List<RaycastResult> hits = new List<RaycastResult>();
 
     // ==================================================================
 
@@ -163,7 +202,45 @@ public class AssessmentIntroPanel : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        if (IsShowing && manageCursor) CursorControl.Free();
+        if (!IsShowing) return;
+
+        if (manageCursor)
+        {
+            CursorControl.Free();
+            ListWithCursorArbiter();
+        }
+
+        // Again, now that every other canvas has run its own Awake - some raise their order there.
+        BringToFront();
+
+        // A short grace period, so an Enter still held from the menu does not skip the briefing.
+        readyAt = Time.unscaledTime + 0.3f;
+    }
+
+    private void OnEnable()
+    {
+        if (IsShowing) Hold();
+    }
+
+    private void OnDisable()
+    {
+        // Never leave the player frozen behind a briefing that has gone away.
+        Release();
+    }
+
+    private void Update()
+    {
+        if (!IsShowing) return;
+
+        if (enterStarts && Time.unscaledTime >= readyAt &&
+            (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+        {
+            StartAssessment();
+            return;
+        }
+
+        if (reportMissedClicks && Input.GetMouseButtonDown(0))
+            ReportMissedClick(Input.mousePosition);
     }
 
     /// <summary>
@@ -220,10 +297,13 @@ public class AssessmentIntroPanel : MonoBehaviour
         foreach (var mb in freezeUntilStart) if (mb != null) mb.enabled = false;
 
         if (manageCursor) CursorControl.Free();
+        Hold();
 
         if (panel != null) panel.SetActive(true);
+        BringToFront();
 
         IsShowing = true;
+        readyAt = Time.unscaledTime + 0.5f;
         OnBriefingShown?.Invoke();
 
         Debug.Log($"[AssessmentIntroPanel] Briefing shown for {modeId}. " +
@@ -242,6 +322,7 @@ public class AssessmentIntroPanel : MonoBehaviour
         foreach (var go in hideUntilStart) if (go != null) go.SetActive(true);
         foreach (var mb in freezeUntilStart) if (mb != null) mb.enabled = true;
 
+        Release();
         if (manageCursor) CursorControl.Capture();
 
         // LAST. Enabling the manager runs its Start(), which starts the timer - so everything
@@ -252,6 +333,206 @@ public class AssessmentIntroPanel : MonoBehaviour
         OnStarted?.Invoke();
 
         Debug.Log($"[AssessmentIntroPanel] {modeId} assessment started.");
+    }
+
+    // ==================================================================
+    // Keeping Start clickable
+    // ==================================================================
+
+    /// <summary>
+    /// Holds the player and claims the cursor from CursorKeeper for as long as the briefing is up.
+    ///
+    /// CursorKeeper runs after everything else in the frame and locks the cursor whenever a
+    /// MouseLook is switched on and nothing has claimed the cursor. Freeing the cursor here without
+    /// claiming it only lasts until the keeper's turn, so the cursor ends every frame locked and
+    /// pinned to the centre of the screen, and the Start button can never be reached. Holding the
+    /// player also stops the camera turning while the mouse moves over the briefing, even when
+    /// MouseLook is missing from Freeze Until Start.
+    /// </summary>
+    private void Hold()
+    {
+        if (!holdPlayer || holding) return;
+        holding = true;
+        PlayerInputLock.Acquire();
+        CursorKeeper.Claim();
+    }
+
+    private void Release()
+    {
+        if (!holding) return;
+        holding = false;
+        PlayerInputLock.Release();
+        CursorKeeper.Release();
+    }
+
+    /// <summary>
+    /// COC 3's CursorArbiter captures the cursor every frame unless something on its Free While
+    /// Active list is showing. Put the briefing on that list, so that nobody has to remember to.
+    /// </summary>
+    private void ListWithCursorArbiter()
+    {
+        CursorArbiter arbiter = CursorArbiter.Instance;
+        if (arbiter == null || panel == null) return;
+
+        GameObject[] list = arbiter.freeWhileActive;
+        if (list != null)
+            foreach (GameObject go in list) if (go == panel) return;
+
+        int count = list != null ? list.Length : 0;
+        var grown = new GameObject[count + 1];
+        if (count > 0) System.Array.Copy(list, grown, count);
+        grown[count] = panel;
+        arbiter.freeWhileActive = grown;
+    }
+
+    /// <summary>
+    /// Sorts the briefing above every other screen canvas that is showing.
+    ///
+    /// The briefing gets its own Canvas with Override Sorting, plus a GraphicRaycaster, because
+    /// the buttons on a nested canvas are clicked only through a raycaster on that same canvas.
+    /// The briefing is hidden after Start, so none of this is left on screen afterwards.
+    /// </summary>
+    private void BringToFront()
+    {
+        if (!keepOnTop || panel == null || !panel.activeInHierarchy) return;
+
+        int highest = HighestOtherSortingOrder();
+        if (highest == int.MinValue) return;   // nothing else on screen to get above
+
+        if (ownCanvas == null)
+        {
+            ownCanvas = panel.GetComponent<Canvas>();
+            if (ownCanvas == null)
+            {
+                Canvas parent = panel.transform.parent != null
+                    ? panel.transform.parent.GetComponentInParent<Canvas>() : null;
+                ownCanvas = panel.AddComponent<Canvas>();
+                if (parent != null) ownCanvas.sortingLayerID = parent.rootCanvas.sortingLayerID;
+            }
+            if (panel.GetComponent<GraphicRaycaster>() == null) panel.AddComponent<GraphicRaycaster>();
+        }
+
+        if (!ownCanvas.isRootCanvas) ownCanvas.overrideSorting = true;
+
+        int target = Mathf.Min(highest + 1, short.MaxValue);
+        if (ownCanvas.sortingOrder < target) ownCanvas.sortingOrder = target;
+    }
+
+    private int HighestOtherSortingOrder()
+    {
+        int highest = int.MinValue;
+
+        foreach (Canvas c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+        {
+            if (c == null || !c.isActiveAndEnabled) continue;
+            if (c.renderMode == RenderMode.WorldSpace) continue;
+            if (!c.isRootCanvas && !c.overrideSorting) continue;          // drawn with its parent
+            if (c.transform.IsChildOf(panel.transform)) continue;         // the briefing itself
+            if (c.sortingOrder > highest) highest = c.sortingOrder;
+        }
+
+        return highest;
+    }
+
+    /// <summary>A click that should have pressed Start and did not: say what happened to it.</summary>
+    private void ReportMissedClick(Vector2 position)
+    {
+        if (reportsLeft <= 0 || startButton == null) return;
+
+        string problem = WhyStartMissed(position);
+        if (problem == null) return;
+
+        reportsLeft--;
+        Debug.LogWarning("[AssessmentIntroPanel] A click did not reach the Start button: " + problem +
+                         (reportsLeft == 0 ? "\n(Last report.)" : ""), this);
+    }
+
+    /// <summary>Null when the click reached Start, or was not aimed at it.</summary>
+    private string WhyStartMissed(Vector2 position)
+    {
+        // A captured cursor reports the centre of the screen, whatever the mouse is over.
+        if (Cursor.lockState == CursorLockMode.Locked)
+            return "the cursor was LOCKED, so the click landed in the centre of the screen. Something " +
+                   "locks it every frame after this panel frees it." + CursorLockCulprits();
+
+        if (EventSystem.current == null)
+            return "this scene has no EventSystem, so nothing on any canvas can be clicked. " +
+                   "Add one: GameObject > UI > Event System.";
+
+        if (!startButton.IsActive())
+            return "the Start button is switched off.";
+
+        if (!startButton.IsInteractable())
+            return "the Start button is not interactable. Tick Interactable on it, and on any " +
+                   "CanvasGroup above it.";
+
+        foreach (CanvasGroup g in startButton.GetComponentsInParent<CanvasGroup>())
+        {
+            if (!g.blocksRaycasts)
+                return "the CanvasGroup on '" + g.name + "' has Blocks Raycasts off, so the Start " +
+                       "button cannot be hit. Tick it.";
+            if (g.ignoreParentGroups) break;
+        }
+
+        var rect = (RectTransform)startButton.transform;
+        Canvas canvas = startButton.GetComponentInParent<Canvas>();
+        Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? (canvas.worldCamera != null ? canvas.worldCamera : Camera.main) : null;
+
+        if (!RectTransformUtility.RectangleContainsScreenPoint(rect, position, cam))
+            return null;   // aimed somewhere else on the screen - nothing to report
+
+        var data = new PointerEventData(EventSystem.current) { position = position };
+        hits.Clear();
+        EventSystem.current.RaycastAll(data, hits);
+
+        if (hits.Count == 0)
+            return "nothing was hit at the Start button. The canvas holding the briefing needs a " +
+                   "GraphicRaycaster, and the Start button's Image needs Raycast Target ticked.";
+
+        GameObject front = hits[0].gameObject;
+        if (front.transform.IsChildOf(startButton.transform)) return null;   // Start got it
+
+        Canvas frontCanvas = front.GetComponentInParent<Canvas>();
+        string where = frontCanvas != null
+            ? " (canvas '" + frontCanvas.rootCanvas.name + "', sort order " + frontCanvas.sortingOrder + ")"
+            : "";
+
+        return "'" + PathOf(front.transform) + "'" + where + " is in front of it and took the click. " +
+               "Hide it while the briefing is up (Hide Until Start), or untick Raycast Target on its Image.";
+    }
+
+    private string CursorLockCulprits()
+    {
+        var sb = new StringBuilder();
+
+        MouseLook look = FindAnyObjectByType<MouseLook>();
+        if (look != null && look.isActiveAndEnabled)
+            sb.Append("\n  - MouseLook on '").Append(look.name)
+              .Append("' is still switched on. Add it to Freeze Until Start.");
+
+        if (!holdPlayer)
+            sb.Append("\n  - Hold Player is off, so CursorKeeper locks the cursor while MouseLook is on. Tick it.");
+
+        if (!manageCursor)
+            sb.Append("\n  - Manage Cursor is off, so this panel does not free the cursor at all. Tick it.");
+
+        if (sb.Length == 0)
+            sb.Append("\n  - Another script sets Cursor.lockState every frame. If the scene has a " +
+                      "CursorArbiter, tick its Log Changes to see its reason.");
+
+        return sb.ToString();
+    }
+
+    private static string PathOf(Transform t)
+    {
+        string path = t.name;
+        while (t.parent != null)
+        {
+            t = t.parent;
+            path = t.name + "/" + path;
+        }
+        return path;
     }
 
     // ==================================================================

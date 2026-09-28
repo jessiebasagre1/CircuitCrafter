@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using CSSSimulation.Interaction;
 
 namespace CSSSimulation.Networking
 {
@@ -36,6 +37,13 @@ namespace CSSSimulation.Networking
     ///
     /// ORDER IS NOT FORCED. The learner may build either type first; they are then required to
     /// build the other. Add a third CableTypeSO and it will require three.
+    ///
+    /// WHEN BOTH ARE DONE, cable-making is closed for good: the "step complete" dialog plays and the
+    /// learner is taken out of the tester close-up back to walking. From then on the crimping station
+    /// and the cable tester answer E with a short "this stage is complete" dialog instead of opening
+    /// (they call RefuseBecauseComplete() at the top of their Interact), and the finished-cable
+    /// pickup is switched off. Nothing sends them back to a station for a job that is finished.
+    /// Both behaviours can be switched off below.
     /// </summary>
     public class COC2BothCablesGate : MonoBehaviour
     {
@@ -87,15 +95,37 @@ namespace CSSSimulation.Networking
             "Take a fresh length of cable and choose it from the panel."
         };
 
-        [Tooltip("Shown when every required type has passed. {count} is the number of cables built.")]
+        [Tooltip("Shown when every required type has passed - in Story Mode AND in an assessment, so " +
+                 "keep it to the fact that the step is complete. {count} is the number of cables built.")]
         [TextArea(2, 6)]
         public string[] allDoneLines =
         {
-            "Both cables pass. That's the competency: you've stripped, arranged, crimped and tested " +
-            "a straight-through and a crossover, and the tester agrees with both.",
+            "Both cables passed the tester. Your straight-through and crossover cables are complete.",
 
-            "That completes the cable assembly and testing module."
+            "The cable-making step is finished, so the crimping station and the cable tester are now closed."
         };
+
+        [Tooltip("Story Mode only - added after All Done Lines. A short recap of what was learned. " +
+                 "Left out in an assessment.")]
+        [TextArea(2, 6)]
+        public string[] storyRecapLines =
+        {
+            "Remember: a straight-through cable connects unlike devices, like a PC to a switch. " +
+            "A crossover cable connects like devices, like PC to PC or switch to switch."
+        };
+
+        [Tooltip("Story Mode only - added last, while the task in Next Step Task Id is still to do. " +
+                 "Tells the learner where to go next. Left out in an assessment, and left out once that " +
+                 "task is already done (the patch panel can be finished before the cables).")]
+        [TextArea(2, 6)]
+        public string[] nextStepLines =
+        {
+            "Next, go to the patch panel and terminate the cable run."
+        };
+
+        [Tooltip("The task Next Step Lines point to. Must match COC2TaskSetup's patch panel task id. " +
+                 "Leave empty to always add the Next Step Lines.")]
+        public string nextStepTaskId = "punch_patch_panel";
 
         [Tooltip("Shown when the learner picks a cable type they have already passed. " +
                  "{done} is that cable's display name.")]
@@ -104,6 +134,29 @@ namespace CSSSimulation.Networking
         {
             "You've already built and passed a {done}. Pick the other one."
         };
+
+        [Header("When both cables are done")]
+        [Tooltip("Take the learner out of the tester close-up (and any other cable-making view) as " +
+                 "soon as the 'step complete' dialog closes, back to walking.")]
+        public bool exitStationWhenDone = true;
+
+        [Tooltip("Close cable-making: the crimping station and the cable tester answer E with the " +
+                 "Stage Complete Lines instead of opening, and the finished-cable pickup is switched off.")]
+        public bool lockStationsWhenDone = true;
+
+        [Tooltip("Shown when the learner tries to use the crimping station or the tester again after both " +
+                 "cables have passed. In Story Mode the Next Step Lines are added while that task is still to do.")]
+        [TextArea(2, 6)]
+        public string[] stageCompleteLines =
+        {
+            "This stage is already complete. Both of your cables passed the tester, so there is nothing " +
+            "more to do at this station."
+        };
+
+        [Tooltip("Any other pickup or station that belongs to cable-making and should close as well. " +
+                 "These are switched off (no prompt at all). The crimping station, tester and cable " +
+                 "pickup are handled automatically - leave them out of this list.")]
+        public Interactable[] alsoLock = new Interactable[0];
 
         [Header("Events")]
         [Tooltip("Fires once, when the last required cable type passes. Wire scene completion here.")]
@@ -302,7 +355,125 @@ namespace CSSSimulation.Networking
 
             OnAllCablesComplete?.Invoke();
 
-            Show(Build(allDoneLines, null, null), null);
+            // Closed straight away, so the finished-cable pickup never offers itself again.
+            if (lockStationsWhenDone) LockCableStations();
+
+            Show(Build(AllDoneLines(), null, null), null);
+
+            // Not the dialog's callback: if anything else takes the dialog box over (a quiz, a task
+            // dialog fired by the same task completing), that callback would never run and the learner
+            // would be left in the tester. Waiting for the box to be clear works either way.
+            if (exitStationWhenDone) StartCoroutine(LeaveStationsWhenDialogsClose());
+        }
+
+        /// <summary>All Done Lines, plus - in Story Mode - the recap and, while it is still to do,
+        /// where to go next.</summary>
+        private string[] AllDoneLines()
+        {
+            var lines = new List<string>();
+            if (allDoneLines != null) lines.AddRange(allDoneLines);
+
+            if (!AssessmentMode.IsActive)
+            {
+                if (storyRecapLines != null) lines.AddRange(storyRecapLines);
+                if (NextStepStillToDo() && nextStepLines != null) lines.AddRange(nextStepLines);
+            }
+
+            return lines.ToArray();
+        }
+
+        /// <summary>True while the task Next Step Lines point to has not been done yet.</summary>
+        private bool NextStepStillToDo()
+        {
+            if (string.IsNullOrEmpty(nextStepTaskId) || TaskManager.Instance == null) return true;
+            return !TaskManager.Instance.IsTaskComplete(nextStepTaskId);
+        }
+
+        // ------------------------------------------------------------------
+        // A closed station being used again
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Call at the top of a cable-making station's Interact(). Returns true - after showing the
+        /// "this stage is complete" dialog - when both cables have passed and the station must not
+        /// open; the station then simply returns. False at every other time, so it changes nothing
+        /// before cable-making is finished, and nothing in a scene without this gate.
+        /// </summary>
+        public static bool RefuseBecauseComplete()
+        {
+            COC2BothCablesGate gate = Instance;
+            if (gate == null || !gate.completed || !gate.lockStationsWhenDone) return false;
+
+            gate.ShowStageComplete();
+            return true;
+        }
+
+        private void ShowStageComplete()
+        {
+            // One message at a time - a second press while it is up does nothing.
+            if (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen) return;
+
+            var lines = new List<string>();
+            if (stageCompleteLines != null) lines.AddRange(stageCompleteLines);
+            if (!AssessmentMode.IsActive && NextStepStillToDo() && nextStepLines != null)
+                lines.AddRange(nextStepLines);
+
+            Show(Build(lines.ToArray(), null, null), null);
+        }
+
+        private IEnumerator LeaveStationsWhenDialogsClose()
+        {
+            yield return null;
+
+            while (DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen)
+                yield return null;
+
+            var tester = NetworkTestStation.Instance;
+            if (tester != null && tester.InTesterView)
+            {
+                // The test itself has finished by now; RequestExit refuses only while one is running.
+                while (tester.IsTesting) yield return null;
+                tester.RequestExit();
+            }
+
+            if (cableTypeSelection != null && cableTypeSelection.IsOpen)
+                cableTypeSelection.Cancel();
+
+            if (CrimpingViewController.Instance != null)
+                CrimpingViewController.Instance.ExitCrimpingView();
+
+            if (StrippingViewController.Instance != null)
+                StrippingViewController.Instance.ExitStrippingView();
+
+            // Again after leaving, in case a view switched anything back on on the way out.
+            if (lockStationsWhenDone) LockCableStations();
+
+            Debug.Log("[COC2BothCablesGate] Cable-making finished - the learner is back to walking.", this);
+        }
+
+        /// <summary>
+        /// Switches off the finished-cable pickup (and anything in Also Lock). PlayerInteractor treats
+        /// an interactable with no live trigger as out of reach - no prompt, no key, no button.
+        ///
+        /// The crimping station and the tester are NOT switched off: they stay usable so that pressing
+        /// E at them can say the stage is complete (RefuseBecauseComplete) rather than doing nothing.
+        /// </summary>
+        private void LockCableStations()
+        {
+            var targets = new List<Interactable>();
+            targets.AddRange(FindObjectsByType<CrimpedCablePickup>(FindObjectsInactive.Include, FindObjectsSortMode.None));
+            if (alsoLock != null) targets.AddRange(alsoLock);
+
+            int closed = 0;
+            foreach (Interactable station in targets)
+            {
+                if (station == null || station.Trigger == null || !station.Trigger.enabled) continue;
+                station.Trigger.enabled = false;
+                closed++;
+            }
+
+            if (closed > 0)
+                Debug.Log("[COC2BothCablesGate] Switched off " + closed + " cable-making pickup(s).", this);
         }
 
         // ------------------------------------------------------------------
@@ -334,7 +505,14 @@ namespace CSSSimulation.Networking
         {
             if (type == null || forward == null) return;
 
-            if (!completed && HasPassed(type))
+            // Cable-making is finished - a third cable is not part of the job.
+            if (completed)
+            {
+                if (cableTypeSelection != null && cableTypeSelection.IsOpen) cableTypeSelection.Cancel();
+                return;
+            }
+
+            if (HasPassed(type))
             {
                 Show(Build(alreadyBuiltLines, type, NextRequired()), null);
                 return;

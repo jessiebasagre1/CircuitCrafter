@@ -222,6 +222,73 @@ namespace CircuitCrafter.Assessment.UI
                 bestScoreText.text = "Best: -";
                 bestScoreText.color = notMetColour;
             }
+
+            // Written first, measured second. See FitLabel - the text has to be in place before
+            // anything can ask how wide it needs to be.
+            FitLabel(bestScoreText);
+        }
+
+        /// <summary>
+        /// Makes sure a short label is never clipped to "Best: 10...".
+        ///
+        /// WHY THE THREE DIGITS WERE THE ONES TO GO. The label's box was built wide enough for
+        /// "Best: 92%" and the only score that does not fit it is 100% - one character longer, and
+        /// the one every learner most wants to see. With Overflow set to Ellipsis, TMP does not
+        /// shrink the text to fit or spill it over the edge: it draws what fits and replaces the
+        /// rest with dots, so the reader is shown "10..." and left to guess whether that is 100 or
+        /// 10. A percentage is the one kind of text where truncation changes the meaning rather
+        /// than just hiding some of it.
+        ///
+        /// THREE STEPS, EACH FOR A DIFFERENT FAILURE:
+        ///   1. NoWrap + Overflow, so TMP stops abbreviating. On its own this is already enough to
+        ///      show "100%" - it would simply draw slightly past its box.
+        ///   2. A LayoutElement carrying the width the text actually needs, for the usual case
+        ///      where this label sits in a HorizontalLayoutGroup and the group, not the label,
+        ///      decides how much room it gets. Without this the neighbours keep the space.
+        ///   3. Widening the rect itself, for a group that does not control its children's width
+        ///      (or no group at all), where a LayoutElement is ignored. Checked AFTER forcing the
+        ///      rebuild, so it only happens when step 2 did not take.
+        ///
+        /// Auto-sizing is deliberately switched OFF rather than used to shrink the text: a score
+        /// that silently gets smaller when it reaches three digits looks like a rendering fault,
+        /// and this label is small enough already on a phone.
+        /// </summary>
+        private static void FitLabel(TMP_Text label)
+        {
+            if (label == null) return;
+
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.enableAutoSizing = false;
+
+            // preferredWidth is stale until the mesh has been rebuilt for the text just assigned.
+            label.ForceMeshUpdate();
+
+            var rect = label.transform as RectTransform;
+            if (rect == null) return;
+
+            float needed = label.preferredWidth + 4f;   // 4px so the last glyph is not shaved
+            if (needed <= 0f) return;
+
+            var parent = rect.parent as RectTransform;
+            LayoutGroup group = parent != null ? parent.GetComponent<LayoutGroup>() : null;
+
+            if (group != null)
+            {
+                LayoutElement element = label.GetComponent<LayoutElement>();
+                if (element == null) element = label.gameObject.AddComponent<LayoutElement>();
+
+                if (element.minWidth < needed) element.minWidth = needed;
+                if (element.preferredWidth < needed) element.preferredWidth = needed;
+
+                // Immediate, so the width below is measured after the group has had its say rather
+                // than at the end of the frame.
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parent);
+            }
+
+            if (rect.rect.width + 0.5f < needed)
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x + (needed - rect.rect.width),
+                                             rect.sizeDelta.y);
         }
     }
 }

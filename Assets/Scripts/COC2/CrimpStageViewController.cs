@@ -143,7 +143,7 @@ namespace CSSSimulation.Networking
                 if (CrimpToolCrimpController.Instance != null && CrimpToolCrimpController.Instance.IsCrimping)
                     return;
 
-                if (Input.GetKeyDown(KeyCode.Escape))
+                if (!CrimpingStationController.ExitLocked && Input.GetKeyDown(KeyCode.Escape))
                     RequestBack();
 
                 return;
@@ -219,6 +219,16 @@ namespace CSSSimulation.Networking
         public void RequestBack()
         {
             if (!InCrimpView) return;
+
+            // While leaving is locked there is no Back from here either. Going back to wiring with all
+            // sixteen pins still seated would leave the player in the wiring view with nothing to do and
+            // no way out: this stage only re-opens once a wire is moved. See CrimpingStationController.
+            // Lock Player In Until Crimped.
+            if (CrimpingStationController.ExitLocked)
+            {
+                Debug.Log("[CrimpStageViewController] Back is locked until both ends are crimped.", this);
+                return;
+            }
 
             if (CrimpToolCrimpController.Instance != null && CrimpToolCrimpController.Instance.IsCrimping)
             {
@@ -324,6 +334,9 @@ namespace CSSSimulation.Networking
             {
                 if (obj != null) obj.SetActive(active);
             }
+
+            // No Back button while leaving is locked. A Crimp button in the same list stays.
+            if (active) CrimpingStationController.HideExitButtons(mobileCrimpControls, crimpUI);
 
             // Wires are finished being arranged - don't let a stray tap into the connector start a
             // drag from this camera.

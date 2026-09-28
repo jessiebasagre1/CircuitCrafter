@@ -1823,7 +1823,7 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 14
   m_fontSizeMax: 25
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -1884,11 +1884,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 642114510}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 959.99994, y: -258}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -100}
   m_SizeDelta: {x: 500, y: 50}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &57892902
 GameObject:
   m_ObjectHideFlags: 0
@@ -3985,6 +3985,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.PunchStageBoard
   stageCamera: {fileID: 1738508547}
   targetStandard: {fileID: 11400000, guid: b919520497da33c4d844063c7d8134d2, type: 2}
+  workInPinOrder: 0
   requirePunchBeforeNextWire: 1
   allowRepositioningBeforePunch: 1
   snapDistance: 0.05
@@ -19209,6 +19210,7 @@ MonoBehaviour:
   targetCableType: {fileID: 11400000, guid: 745265f13f6d7ac4f929692b2057c64f, type: 2}
   autoCheckMode: 1
   taskId: crimp_cable
+  lockPlayerInUntilCrimped: 1
   crimpKey: 99
   OnCrimpResult:
     m_PersistentCalls:
@@ -31531,6 +31533,143 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 906833497}
   m_Mesh: {fileID: 8178494132571879075, guid: 6d8ecfc391735df4496699a4db1088cf, type: 3}
+--- !u!1 &909148430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 909148431}
+  - component: {fileID: 909148433}
+  - component: {fileID: 909148432}
+  m_Layer: 0
+  m_Name: Label
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &909148431
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 909148430}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2078004190}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &909148432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 909148430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Next COC
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 19
+  m_fontSizeBase: 19
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &909148433
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 909148430}
+  m_CullTransparentMesh: 1
 --- !u!1 &912987645
 GameObject:
   m_ObjectHideFlags: 0
@@ -31913,7 +32052,12 @@ MonoBehaviour:
   hideWhenAvailable: []
   requireCrimpingFinished: 1
   availableDialog: {fileID: 11400000, guid: f7cbcc0a3f344e248814c619cb82fc37, type: 2}
-  showDialogOnlyOnce: 1
+  availableLines:
+  - Both ends are crimped. Your finished cable is on the workbench - pick it up.
+  - A cable isn't finished until it has been tested. Take it to the cable tester
+    and plug it in.
+  availableSpeaker: Guide
+  showDialogOnlyOnce: 0
 --- !u!65 &928496345
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33722,6 +33866,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 988095420}
+  - component: {fileID: 988095455}
+  - component: {fileID: 988095454}
   - component: {fileID: 988095453}
   - component: {fileID: 988095452}
   - component: {fileID: 988095449}
@@ -33977,6 +34123,13 @@ MonoBehaviour:
     off and rebuild the cable from the jacket up - so that's exactly what we're going
     to do.
   - Back to stripping. Take your time with the colour order this run.
+  assessmentFailLines:
+  - The cable failed the tester.
+  - A crimped connector cannot be reopened. Cut both ends off and build the cable
+    again.
+  assessmentPanelFailLines:
+  - That termination did not pass inspection.
+  - The conductors are back in the tray. Terminate the port again.
   panelPassLines:
   - All eight conductors follow the standard, seated in their contacts and trimmed
     flush. That port is ready to patch.
@@ -34094,11 +34247,23 @@ MonoBehaviour:
   - 'So: same procedure again, this time for a {next}. Strip, arrange, crimp, test.
     Take a fresh length of cable and choose it from the panel.'
   allDoneLines:
-  - 'Both cables pass. That''s the competency: you''ve stripped, arranged, crimped
-    and tested a straight-through and a crossover, and the tester agrees with both.'
+  - Both cables passed the tester. Your straight-through and crossover cables are
+    complete.
   - That completes the cable assembly and testing module.
+  storyRecapLines:
+  - 'Remember: a straight-through cable connects unlike devices, like a PC to a switch.
+    A crossover cable connects like devices, like PC to PC or switch to switch.'
+  nextStepLines:
+  - Next, go to the patch panel and terminate the cable run.
+  nextStepTaskId: punch_patch_panel
   alreadyBuiltLines:
   - You've already built and passed a {done}. Pick the other one.
+  exitStationWhenDone: 1
+  lockStationsWhenDone: 1
+  stageCompleteLines:
+  - This stage is already complete. Both of your cables passed the tester, so there
+    is nothing more to do at this station.
+  alsoLock: []
   OnAllCablesComplete:
     m_PersistentCalls:
       m_Calls: []
@@ -34475,6 +34640,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.COC2AssessmentHooks
   logWhatIsWatched: 1
+  countFailedInspection: 1
 --- !u!114 &988095450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34676,6 +34842,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.StationPromptHider
   hidePromptInStations: 1
+--- !u!114 &988095454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 988095418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e67719fd64ea5f542a2196f0d580c6d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.COC2StationArrowHider
+  arrow: {fileID: 0}
+  hideLabelToo: 1
+  labelRoot: {fileID: 0}
+  extraViews: []
+  logChanges: 0
+--- !u!114 &988095455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 988095418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0697d36b1fb586b44ba6477267ed5d83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.COC2AssessmentDialogs
+  allowWarnings: 1
+  allowResults: 1
+  showFailureDetails: 0
+  alsoAllow: []
+  logWhatIsAllowed: 1
 --- !u!1 &991905040
 GameObject:
   m_ObjectHideFlags: 0
@@ -40140,6 +40340,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5422976110127948584, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+      propertyPath: nextButton
+      value: 
+      objectReference: {fileID: 2078004191}
+    - target: {fileID: 5422976110127948584, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+      propertyPath: retrySceneName
+      value: COC2-StoryMode
+      objectReference: {fileID: 0}
+    - target: {fileID: 5422976110127948584, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+      propertyPath: assessmentSceneName
+      value: COC2-StoryMode
+      objectReference: {fileID: 0}
     - target: {fileID: 7311273260439103889, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -40187,12 +40399,24 @@ PrefabInstance:
     - target: {fileID: 9016860037742834283, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9141127724041108027, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1030
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 448386014508168819, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+      insertIndex: 2
+      addedObject: {fileID: 2078004190}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+--- !u!224 &1199283009 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 448386014508168819, guid: dd8acaddd5b554543b31020b8e55ba5e, type: 3}
+  m_PrefabInstance: {fileID: 1199283008}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1204797729
 GameObject:
   m_ObjectHideFlags: 0
@@ -58726,11 +58950,11 @@ RectTransform:
   - {fileID: 1514123743}
   m_Father: {fileID: 642114510}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -56}
-  m_SizeDelta: {x: 600, y: 200}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -131, y: -60}
+  m_SizeDelta: {x: 500, y: 150}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &1820906942
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67770,6 +67994,127 @@ RectTransform:
   m_AnchoredPosition: {x: 12, y: 62}
   m_SizeDelta: {x: 400, y: 470}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &2078004189
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2078004190}
+  - component: {fileID: 2078004193}
+  - component: {fileID: 2078004192}
+  - component: {fileID: 2078004191}
+  m_Layer: 0
+  m_Name: NextButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2078004190
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078004189}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 909148431}
+  m_Father: {fileID: 1199283009}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 250, y: 60}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2078004191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078004189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 2078004192}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2078004192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078004189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.106, g: 0.494, b: 0.365, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &2078004193
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078004189}
+  m_CullTransparentMesh: 1
 --- !u!1001 &2079269415
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -68309,6 +68654,10 @@ PrefabInstance:
     - target: {fileID: 2525780263036310275, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4517655982018847914, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
+      propertyPath: m_text
+      value: Tap to continue
       objectReference: {fileID: 0}
     - target: {fileID: 6818330433238451798, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_Name
@@ -81452,7 +81801,11 @@ PrefabInstance:
       objectReference: {fileID: 1836469120}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: arrivalDistance
-      value: 2
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
+      propertyPath: allowInAssessment
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8359260494268656333, guid: 607e2c9f05fb95f4bba0dcbdbaadf6df, type: 3}
       propertyPath: steps.Array.data[4].phase

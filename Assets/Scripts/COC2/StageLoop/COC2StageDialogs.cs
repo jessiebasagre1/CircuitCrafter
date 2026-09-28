@@ -219,6 +219,26 @@ namespace CSSSimulation.Networking
             "Back to stripping. Take your time with the colour order this run."
         };
 
+        [Tooltip("ASSESSMENT ONLY - shown instead of the fail dialog above, which explains the fault and is " +
+                 "withheld in an assessment. It states the result, never the cause, and holds the rebuild " +
+                 "until the learner has read it. Without it the cable silently reset the moment it failed.")]
+        [TextArea(2, 6)]
+        public string[] assessmentFailLines =
+        {
+            "The cable failed the tester.",
+            "A crimped connector cannot be reopened. Cut both ends off and build the cable again."
+        };
+
+        [Tooltip("ASSESSMENT ONLY - shown instead of the patch panel fail dialog, which names the positions " +
+                 "that are wrong. States the result, never the cause. COC2AssessmentDialogs > Show Failure " +
+                 "Details switches the full message back on.")]
+        [TextArea(2, 6)]
+        public string[] assessmentPanelFailLines =
+        {
+            "That termination did not pass inspection.",
+            "The conductors are back in the tray. Terminate the port again."
+        };
+
         [Header("Result - PATCH PANEL")]
         [Tooltip("Shown when the punch-down follows the standard.")]
         [TextArea(2, 6)]
@@ -480,6 +500,15 @@ namespace CSSSimulation.Networking
             // change underneath us and must register as a fresh entry, not "no change".
             if (!passed) currentStage = Stage.None;
 
+            if (AssessmentMode.IsActive)
+            {
+                if (passed) ShowResult(sequence, onClosed);
+                else if (COC2AssessmentDialogs.FailureDetailsShown) ShowFailure(sequence, onClosed);
+                // Result only - and always shown, or the port would reset with no word of why.
+                else ShowFailure(Build(assessmentPanelFailLines), onClosed);
+                return;
+            }
+
             Show(sequence, onClosed);
         }
 
@@ -512,7 +541,7 @@ namespace CSSSimulation.Networking
             OnTestPassed?.Invoke();
 
             DialogSequence sequence = passAsset != null ? passAsset : Build(passLines);
-            Show(sequence, null);
+            ShowResult(sequence, null);
         }
 
         void HandleFail()
@@ -522,7 +551,44 @@ namespace CSSSimulation.Networking
             // Built fresh each time - the diagnosis line changes with the fault.
             DialogSequence sequence = failAsset != null ? failAsset : BuildFailSequence();
 
-            Show(sequence, restartAutomaticallyOnFail ? (System.Action)Restart : null);
+            System.Action afterwards = restartAutomaticallyOnFail ? (System.Action)Restart : null;
+
+            // In an assessment the fail dialog is withheld (it explains the fault), and a withheld
+            // dialog fires its callback at once - so the cable used to reset the instant it failed,
+            // with no word to the learner. Say the result, not the cause, and let them read it first.
+            if (AssessmentMode.IsActive)
+            {
+                // Show Failure Details (COC2AssessmentDialogs): the full message, tester reading and all.
+                if (COC2AssessmentDialogs.FailureDetailsShown) { ShowFailure(sequence, afterwards); return; }
+
+                if (assessmentFailLines != null && assessmentFailLines.Length > 0)
+                {
+                    ShowFailure(Build(assessmentFailLines), afterwards);
+                    return;
+                }
+            }
+
+            Show(sequence, afterwards);
+        }
+
+        /// <summary>A pass or complete message. In an assessment it is shown only while
+        /// COC2AssessmentDialogs > Allow Results is ticked; in Story Mode it is shown as always.</summary>
+        void ShowResult(DialogSequence sequence, System.Action onComplete)
+        {
+            if (AssessmentMode.IsActive && COC2AssessmentDialogs.ResultsAllowed && DialogManager.Instance != null)
+            {
+                DialogManager.Instance.ShowDialog(sequence, onComplete, true);
+                return;
+            }
+            Show(sequence, onComplete);
+        }
+
+        /// <summary>A failure message in an assessment. Always shown: the reset waits for the learner to
+        /// close it, so without it the cable or port would reset with nothing said.</summary>
+        void ShowFailure(DialogSequence sequence, System.Action onComplete)
+        {
+            if (DialogManager.Instance == null) { onComplete?.Invoke(); return; }
+            DialogManager.Instance.ShowDialog(sequence, onComplete, true);
         }
 
         /// <summary>

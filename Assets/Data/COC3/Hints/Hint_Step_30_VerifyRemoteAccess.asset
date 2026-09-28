@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogSequence
   lines:
   - speakerName: Required input
-    text: Nothing to enter. Run the ping and watch the replies.
+    text: ping 192.168.10.10

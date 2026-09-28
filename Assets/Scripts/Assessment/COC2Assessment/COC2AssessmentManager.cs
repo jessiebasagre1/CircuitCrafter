@@ -187,6 +187,13 @@ namespace CSSSimulation.Networking
         private readonly List<string> log = new List<string>();
         private bool reportPending;
 
+        // The cable most recently counted as failed - its crimped pinout snapshot, which is a new array
+        // for every cable crimped. Lets NotifyTestFailed be reached from more than one place (the
+        // tester's own event, via COC2AssessmentHooks, and an old Inspector wire from COC2StageDialogs)
+        // without one failure being counted twice.
+        private object lastFailedCable;
+        private int lastFailedFrame = -1;
+
         // ==================================================================
 
         private void Awake()
@@ -246,6 +253,10 @@ namespace CSSSimulation.Networking
 
             // GUIDANCE: a fresh journal for this run's mistakes and their withheld explanations.
             MistakeJournal.BeginRun(ModeId);
+
+            lastFailedCable = null;
+            lastFailedFrame = -1;
+            EnsureHooks();
 
             if (TaskManager.Instance != null)
                 TaskManager.Instance.OnTaskCompleted += HandleTaskCompleted;
@@ -520,6 +531,13 @@ namespace CSSSimulation.Networking
         {
             if (!IsRunning) return;
 
+            // One failed cable, one mistake - however many routes the news arrives by.
+            var failedStation = CrimpingStationController.Instance;
+            object cable = failedStation != null ? failedStation.GetCrimpedArrangement(1) : null;
+            if (cable != null ? ReferenceEquals(cable, lastFailedCable) : Time.frameCount == lastFailedFrame) return;
+            lastFailedCable = cable;
+            lastFailedFrame = Time.frameCount;
+
             FailedCables++;
 
             string reason = DiagnoseFailure();
@@ -536,6 +554,30 @@ namespace CSSSimulation.Networking
 
             Debug.Log($"[COC2AssessmentManager] {description}", this);
             RefreshHud();
+        }
+
+        /// <summary>
+        /// COC2AssessmentHooks is what feeds every station's mistakes in here - the cable tester, the
+        /// punch-down, the patch cords, the device configuration, the ping and the final inspection.
+        /// Without it on the scene, only a hand-wired failure would ever be counted. So if the scene
+        /// does not have one, the manager adds it to itself.
+        /// </summary>
+        private void EnsureHooks()
+        {
+            if (FindAnyObjectByType<COC2AssessmentHooks>() == null)
+            {
+                gameObject.AddComponent<COC2AssessmentHooks>();
+                Debug.Log("[COC2AssessmentManager] No COC2AssessmentHooks in the scene - added one, so every " +
+                          "station's mistakes are recorded.", this);
+            }
+
+            // Same for the warnings and results the learner still sees in this assessment.
+            if (FindAnyObjectByType<COC2AssessmentDialogs>() == null)
+            {
+                gameObject.AddComponent<COC2AssessmentDialogs>();
+                Debug.Log("[COC2AssessmentManager] No COC2AssessmentDialogs in the scene - added one with its " +
+                          "defaults (warnings and results shown, failure details off).", this);
+            }
         }
 
         /// <summary>Optional. Wire to COC2StageDialogs > On Test Passed () for a log entry.</summary>

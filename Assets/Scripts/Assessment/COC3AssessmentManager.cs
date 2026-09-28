@@ -54,6 +54,7 @@ public class COC3AssessmentManager : MonoBehaviour
         public int mistakes;
         public float seconds;
         public bool completed;
+        public int hints;             // hints opened on this step (assessment with hints allowed)
     }
 
     [HeaderAttribute("Module")]
@@ -112,8 +113,10 @@ public class COC3AssessmentManager : MonoBehaviour
 
     public bool suppressTutorialDialogs = true;
 
-    [TooltipAttribute("Turns COC3Tutorial's tutorial mode off, so the Hint button gives nothing " +
-             "away. An assessment where the answer is one button press is not an assessment.")]
+    [TooltipAttribute("Ticked: COC3Tutorial's tutorial mode is turned off, so the Hint button gives nothing " +
+             "away.\n\nUnticked: the learner may open hints during the assessment. The hint opens only when " +
+             "asked for (see COC3Tutorial > Auto Hint In Assessment), and every step where one was opened " +
+             "is noted in the report. If the Hint button is in Disable In Assessment above, take it out.")]
     public bool disableHints = true;
 
     [HeaderAttribute("Report")]
@@ -144,6 +147,7 @@ public class COC3AssessmentManager : MonoBehaviour
     private StepRecord current;
 
     private int lastMistakeCount;
+    private int hintsUsed;
     private int localScore, localMistakes;
     private int stepCount;
     private bool sawAnyStep;
@@ -201,6 +205,8 @@ public class COC3AssessmentManager : MonoBehaviour
         DialogManager.SuppressTutorials = suppressTutorialDialogs;
 
         if (disableHints && tutorial != null) tutorial.SetTutorialMode(false);
+        if (tutorial != null) tutorial.HintsAllowedInAssessment = !disableHints;
+        hintsUsed = 0;
 
         records.Clear();
         current = null;
@@ -450,6 +456,18 @@ public class COC3AssessmentManager : MonoBehaviour
         PlayerInputLock.Release();
     }
 
+    /// <summary>Called by COC3Tutorial the first time a hint is opened on a step. Recorded, not
+    /// penalised - the report shows where help was used.</summary>
+    public void NoteHintUsed()
+    {
+        if (!IsRunning) return;
+
+        hintsUsed++;
+        if (current != null) current.hints++;
+        Debug.Log("[COC3AssessmentManager] Hint opened on " +
+                  (current != null ? "step " + current.number : "no step") + ".", this);
+    }
+
     private string BuildReport()
     {
         int completed = 0;
@@ -477,6 +495,8 @@ public class COC3AssessmentManager : MonoBehaviour
         sb.AppendLine($"Steps reached:  {records.Count} of {stepCount}");
         sb.AppendLine($"Steps complete: {completed} of {stepCount}");
         sb.AppendLine($"Clean first go: {cleanSteps} of {records.Count}");
+        if (!disableHints)
+            sb.AppendLine($"Hints used:     {hintsUsed} step" + (hintsUsed == 1 ? "" : "s"));
         sb.AppendLine();
 
         // The part that matters to whoever reads this: not the total, but which steps cost them.
@@ -501,7 +521,8 @@ public class COC3AssessmentManager : MonoBehaviour
         foreach (var r in records)
             sb.AppendLine($"  {r.number,2}. {Readable(r.stepId),-34} " +
                           $"{FormatTime(r.seconds)}   " +
-                          (r.mistakes == 0 ? "clean" : r.mistakes + " wrong"));
+                          (r.mistakes == 0 ? "clean" : r.mistakes + " wrong") +
+                          (r.hints > 0 ? "   (hint used)" : ""));
 
         return sb.ToString();
     }

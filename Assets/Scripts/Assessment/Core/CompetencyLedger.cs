@@ -64,6 +64,15 @@ namespace CircuitCrafter.Assessment
 
         [Tooltip("How many completed Assessment runs have been recorded for this module, whether or not they beat the record.")]
         public int assessmentAttempts;
+
+        [Tooltip("ScorePercent of the MOST RECENT completed Assessment run. -1 means none yet. The " +
+                 "high score above is what the learner has achieved; this is where they stand today.")]
+        public int latestScorePercent = -1;
+
+        [Tooltip("resultId of that most recent run.")]
+        public string latestResultId = "";
+
+        public string latestUtc = "";
     }
 
     /// <summary>
@@ -99,6 +108,19 @@ namespace CircuitCrafter.Assessment
                  "at all - and a row reading 'Best 0%' after a clean story playthrough is the one " +
                  "thing on this screen guaranteed to be read as a failure.")]
         public bool assessmentScored;
+
+        [Tooltip("ScorePercent from the MOST RECENT completed Assessment run - where the learner " +
+                 "stands NOW, which is not the same question as how well they have ever done.\n\n" +
+                 "Kept beside bestScorePercent rather than replacing it, because the two answer " +
+                 "different questions and the screen asks both: the bar shows where they are, the " +
+                 "label keeps what they achieved. A retry that scores 85 after a 100 must move the " +
+                 "bar - otherwise the screen says nothing happened - and must not touch the record.")]
+        public int latestScorePercent;
+
+        [Tooltip("True once latestScorePercent has been written by a graded run. Same reason " +
+                 "assessmentScored exists: 0 is both 'scored zero this time' and 'never measured', " +
+                 "and a ledger written before this field existed arrives with 0 in it.")]
+        public bool latestScored;
 
         [Tooltip("How much of this outcome's evidence was in place at the end of the best run so far, in ANY mode. Stored on the record rather than recomputed, because the competency screen usually runs on the main menu where there is no TaskManager to ask.")]
         public int evidenceSatisfied;
@@ -555,6 +577,11 @@ namespace CircuitCrafter.Assessment
 
             record.assessmentAttempts++;
 
+            // Where the learner stands after THIS run, kept whether or not it beat the record.
+            record.latestScorePercent = result.ScorePercent;
+            record.latestResultId = result.resultId;
+            record.latestUtc = result.finishedUtc;
+
             if (result.ScorePercent > record.bestScorePercent)
             {
                 record.bestScorePercent = result.ScorePercent;
@@ -654,6 +681,17 @@ namespace CircuitCrafter.Assessment
             {
                 record.bestScorePercent = result.ScorePercent;
                 record.assessmentScored = true;
+            }
+
+            // THE LATEST STANDING, WRITTEN ON EVERY GRADED RUN - including a worse one. This is the
+            // one figure in the ledger that is allowed to go down, and it has to be: a second run
+            // scoring 85 after a perfect first run is a real result, and a screen that cannot show
+            // it tells the learner their retry did not happen. The best above is untouched, so
+            // nothing they earned is lost - the two numbers simply answer different questions.
+            if (graded)
+            {
+                record.latestScorePercent = result.ScorePercent;
+                record.latestScored = true;
             }
 
             record.lastResultId = result.resultId;
@@ -865,6 +903,33 @@ namespace CircuitCrafter.Assessment
                 {
                     record.evidenceSatisfiedAssessment = record.evidenceSatisfied;
                     carried++;
+                }
+
+                // A file written before latestScorePercent existed arrives with 0 in it, which would
+                // empty the bar for a learner who really has scored. The best is the only figure
+                // that file kept, so it stands in as the latest until their next graded run replaces
+                // it - one run behind is recoverable, a bar reading zero beside "Best 92%" is not.
+                if (!record.latestScored && record.assessmentScored)
+                {
+                    record.latestScorePercent = record.bestScorePercent;
+                    record.latestScored = true;
+                    carried++;
+                }
+            }
+
+            if (ledger.moduleBests != null)
+            {
+                foreach (ModuleBestScore module in ledger.moduleBests)
+                {
+                    if (module == null) continue;
+
+                    if (module.latestScorePercent < 0 && module.bestScorePercent >= 0)
+                    {
+                        module.latestScorePercent = module.bestScorePercent;
+                        module.latestResultId = module.bestResultId;
+                        module.latestUtc = module.achievedUtc;
+                        carried++;
+                    }
                 }
             }
 

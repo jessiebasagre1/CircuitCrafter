@@ -16,13 +16,14 @@ MonoBehaviour:
   instructionText: 'LO3.1 - TEST 5. Still at CLIENT01.
 
 
-    Run the ping and watch
-    the replies. Nothing to type.
+    Start>Command Prompt.
+    In the console, type the ping command for the server''s address.
 
 
-    A reply proves the two machines can reach
-    each other. It proves nothing above that - which is why it is the last test,
-    not the first.'
+    A reply
+    proves the two machines can reach each other. It proves nothing above that -
+    which is why it is the last test, not the first.'
+  assessmentPrompt: 
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

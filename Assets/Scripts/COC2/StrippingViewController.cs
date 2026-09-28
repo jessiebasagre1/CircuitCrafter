@@ -121,6 +121,14 @@ namespace CSSSimulation.Networking
         /// <summary>Wire this to the mobile Cancel/Back button's OnClick.</summary>
         public void RequestExitStrippingView()
         {
+            // Leaving half-way sends the player back to stripping on the way in, with the cable already
+            // stripped - a dead end. See CrimpingStationController.Lock Player In Until Crimped.
+            if (CrimpingStationController.ExitLocked)
+            {
+                Debug.Log("[StrippingViewController] Leaving is locked until the cable is crimped.", this);
+                return;
+            }
+
             ExitStrippingView();
         }
 
@@ -132,7 +140,7 @@ namespace CSSSimulation.Networking
 
         void Update()
         {
-            if (InStrippingView && Input.GetKeyDown(KeyCode.Escape))
+            if (InStrippingView && !CrimpingStationController.ExitLocked && Input.GetKeyDown(KeyCode.Escape))
                 ExitStrippingView();
         }
 
@@ -172,6 +180,9 @@ namespace CSSSimulation.Networking
             {
                 if (obj != null) obj.SetActive(active);
             }
+
+            // No Cancel / Exit button while leaving is locked.
+            if (active) CrimpingStationController.HideExitButtons(mobileStrippingControls, strippingUI);
 
             Cursor.lockState = active ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = active;

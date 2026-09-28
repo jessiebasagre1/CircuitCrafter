@@ -14,6 +14,10 @@ namespace CSSSimulation.Networking
 
         public override void Interact()
         {
+            // Both cables built and passed: this stage is over. Says so, instead of starting a third
+            // cable. Does nothing before then, or in a scene without COC2BothCablesGate.
+            if (COC2BothCablesGate.RefuseBecauseComplete()) return;
+
             // If a cable type selector is set up, show it first - it's responsible for
             // calling StrippingViewController.EnterStrippingView() itself once the player
             // picks. Otherwise, fall back to entering stripping right away (CrimpingViewController
