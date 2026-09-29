@@ -19,6 +19,7 @@ MonoBehaviour:
 
     You ticked
     it at step 5. Press NEXT.'
+  assessmentPrompt: Check Print and Document Services role, then press NEXT
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

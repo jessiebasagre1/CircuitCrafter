@@ -22,6 +22,7 @@ MonoBehaviour:
 
     Check the LOCATION tab. A redirected folder
     looks completely normal until you look there.'
+  assessmentPrompt: Verify folder redirection on client
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

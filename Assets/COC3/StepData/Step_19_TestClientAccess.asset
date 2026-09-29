@@ -22,6 +22,7 @@ MonoBehaviour:
 
     The test passes when the
     folder opens.'
+  assessmentPrompt: Test shared folder access from client
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

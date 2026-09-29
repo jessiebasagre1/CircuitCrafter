@@ -20,6 +20,7 @@ MonoBehaviour:
     Start > DNS Manager. Select Reverse
     Lookup Zones in the tree, then New Zone. Choose the IPv4 reverse zone and enter
     the network ID.'
+  assessmentPrompt: Create DNS reverse lookup zone
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

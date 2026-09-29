@@ -26,6 +26,11 @@ using UnityEngine;
 ///
 /// Because it reads Cursor.lockState rather than trusting a flag, it heals whatever any other
 /// script did without any of them being modified.
+///
+/// BUILT-IN "FREE" CONDITIONS (no list to fill in): the pause menu, a PlayerInputLock (settings,
+/// briefing, report), a CursorKeeper claim, a station step view, a dialog, a quiz. Without the
+/// pause-menu check this captured the cursor every frame while the menu was open, so the first
+/// click on Resume, Retry, Settings or Main Menu locked the cursor instead of pressing the button.
 /// </summary>
 [DefaultExecutionOrder(1000)]
 public class CursorArbiter : MonoBehaviour
@@ -58,6 +63,20 @@ public class CursorArbiter : MonoBehaviour
 
     [TooltipAttribute("Free while a quiz is on screen.")]
     public bool freeDuringQuiz = true;
+
+    [TooltipAttribute("Free while the pause menu is open (Escape or the Menu button), so Resume, Retry, " +
+             "Settings and Main Menu can be clicked. Works without listing the pause panel above.")]
+    public bool freeWhilePaused = true;
+
+    [TooltipAttribute("Free while something is holding the player still with PlayerInputLock - the " +
+             "settings panel, the assessment briefing, the assessment report. Anything that stops " +
+             "the learner walking is showing them something to read or click.")]
+    public bool freeWhilePlayerHeld = true;
+
+    [TooltipAttribute("Free while a panel has claimed the cursor through CursorKeeper.Claim() - the AI " +
+             "tutor, the assessment briefing. The same rule CursorKeeper follows, so the two never " +
+             "disagree about who owns the cursor.")]
+    public bool freeWhileClaimed = true;
 
     [HeaderAttribute("World prompt")]
     [TooltipAttribute("Hide 'Press E to enter station' whenever the cursor is free.\n\n" +
@@ -96,6 +115,16 @@ public class CursorArbiter : MonoBehaviour
     /// </summary>
     public string WhyFree()
     {
+        // The pause menu first: it sits on top of everything else, including a step view.
+        if (freeWhilePaused && PauseMenuController.AnyPaused)
+            return "pause menu";
+
+        if (freeWhilePlayerHeld && PlayerInputLock.IsLocked)
+            return "player held (PlayerInputLock)";
+
+        if (freeWhileClaimed && CursorKeeper.ClaimCount > 0)
+            return "cursor claimed (CursorKeeper)";
+
         if (freeInStepView && CurrentStation() != null && CurrentStation().InStepView)
             return "station step view";
 

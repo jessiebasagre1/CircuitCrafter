@@ -274,6 +274,10 @@ public class CursorKeeper : MonoBehaviour
 
     private bool PauseIsOpen()
     {
+        // Any pause menu at all - a scene holding two (one carried over on a DontDestroyOnLoad root,
+        // say) would otherwise be read through whichever one was found first.
+        if (PauseMenuController.AnyPaused) return true;
+
         // Cached, but re-found when it goes away - the reference does not survive a scene change,
         // and a stale one would report "not paused" forever in the new scene.
         if (pause == null)

@@ -23,6 +23,7 @@ MonoBehaviour:
 
     Type only
     the folder''s own name.'
+  assessmentPrompt: Create folder redirection target on server
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

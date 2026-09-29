@@ -22,6 +22,7 @@ MonoBehaviour:
 
     The sheet opens on
     General. Go to the SHARING tab, then Advanced Sharing.'
+  assessmentPrompt: Share user data folder
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

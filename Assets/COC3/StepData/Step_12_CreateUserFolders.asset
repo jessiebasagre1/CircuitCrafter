@@ -23,6 +23,7 @@ MonoBehaviour:
 
     Press New folder and type the folder''s own name - not
     the whole path.'
+  assessmentPrompt: Create user data folder on server
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

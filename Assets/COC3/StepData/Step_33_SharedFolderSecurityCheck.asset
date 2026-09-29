@@ -23,6 +23,7 @@ MonoBehaviour:
     An
     entry inherited from the parent folder cannot be removed while inheritance is
     on - it comes straight back. Disable inheritance first.'
+  assessmentPrompt: Remove unintended access to shared folder
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

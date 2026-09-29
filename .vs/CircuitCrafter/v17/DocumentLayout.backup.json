@@ -3,15 +3,47 @@
   "WorkspaceRootPath": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\coc3completionnotifier.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3completionnotifier.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\02story_completion\\storycompletetrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\02story_completion\\storycompletetrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\coc3stationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3stationcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc3assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\mobile\\cursorkeeper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\mobile\\cursorkeeper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\manager\\pausemenucontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\pausemenucontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\new\\cursorarbiter_1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\new\\cursorarbiter_1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\assessmentintropanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\assessmentintropanel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc3\\coc3tutorial.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\testing\\networktester\\crimpedcablepickup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -19,11 +51,7 @@
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc2\\stageloop\\coc2stagedialogs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\assessment\\coc2assessment\\coc2assessmentmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|c:\\users\\client\\desktop\\my unity projects\\circuitcrafter\\assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2879106C-6E4C-298F-9975-FC7FEAA37326}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\coc1\\manager\\dialogmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -34,24 +62,111 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "StoryCompleteTrigger.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
+              "RelativeToolTip": "Assets\\Scripts\\02Story_Completion\\StoryCompleteTrigger.cs",
+              "ViewState": "AgIAAGYBAAAAAAAAAAAYwHcBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T07:50:59.86Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "COC3CompletionNotifier.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3CompletionNotifier.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3CompletionNotifier.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3CompletionNotifier.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3CompletionNotifier.cs",
+              "ViewState": "AgIAAJQAAAAAAAAAAAAYwKEAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T07:50:45.511Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "COC3StationController.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3StationController.cs",
+              "ViewState": "AgIAAEIDAAAAAAAAAAAIwE0DAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T07:08:51.738Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "CursorKeeper.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Mobile\\CursorKeeper.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Mobile\\CursorKeeper.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Mobile\\CursorKeeper.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Mobile\\CursorKeeper.cs",
+              "ViewState": "AgIAABwBAAAAAAAAAAAIwCUBAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T06:30:28.603Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PauseMenuController.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\PauseMenuController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\PauseMenuController.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\PauseMenuController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\PauseMenuController.cs",
+              "ViewState": "AgIAALgAAAAAAAAAAAAIwMoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T06:30:12.343Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "CursorArbiter_1.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\CursorArbiter_1.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\New\\CursorArbiter_1.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\New\\CursorArbiter_1.cs",
+              "RelativeToolTip": "Assets\\Scripts\\COC3\\New\\CursorArbiter_1.cs",
+              "ViewState": "AgIAALsAAAAAAAAAAAAIwM0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-29T06:29:54.171Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AssessmentIntroPanel.cs",
+              "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
+              "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Assessment\\AssessmentIntroPanel.cs",
+              "ViewState": "AgIAADcCAAAAAAAAAAAIwEYCAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-28T12:28:41.154Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "COC3AssessmentManager.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC3AssessmentManager.cs",
-              "ViewState": "AgIAAFMCAAAAAAAAAAAAAF4CAAASAAAAAAAAAA==",
+              "ViewState": "AgIAAGkCAAAAAAAAAAAIwHsCAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-09-28T12:24:50.895Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 9,
               "Title": "COC3Tutorial.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC3\\COC3Tutorial.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
@@ -59,12 +174,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC3\\COC3Tutorial.cs",
               "ViewState": "AgIAAPUBAAAAAAAAAAAAAAgCAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-28T12:24:11.473Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-28T12:24:11.473Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 10,
               "Title": "CrimpedCablePickup.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
@@ -72,12 +186,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC2\\Testing\\NetworkTester\\CrimpedCablePickup.cs",
               "ViewState": "AgIAACsBAAAAAAAAAAAAADYBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-28T12:07:23.962Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-28T12:07:23.962Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 12,
               "Title": "DialogManager.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
@@ -85,12 +198,11 @@
               "RelativeToolTip": "Assets\\Scripts\\COC1\\Manager\\DialogManager.cs",
               "ViewState": "AgIAAGoBAAAAAAAAAAAAAH0BAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-28T12:06:17.39Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-28T12:06:17.39Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 11,
               "Title": "COC2StageDialogs.cs",
               "DocumentMoniker": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
@@ -98,8 +210,7 @@
               "RelativeToolTip": "Assets\\Scripts\\COC2\\StageLoop\\COC2StageDialogs.cs",
               "ViewState": "AgIAAPsCAAAAAAAAAAAqwA4DAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-28T11:28:23.719Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-28T11:28:23.719Z"
             },
             {
               "$type": "Document",
@@ -109,10 +220,9 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
               "ToolTip": "C:\\Users\\CLienT\\Desktop\\My Unity Projects\\CircuitCrafter\\Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\Assessment\\COC2Assessment\\COC2AssessmentManager.cs",
-              "ViewState": "AgIAAB0DAAAAAAAAAAAqwDADAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAB0DAAAAAAAAAAA6wDADAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-28T11:27:57.557Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-28T11:27:57.557Z"
             }
           ]
         }

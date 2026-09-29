@@ -22,6 +22,7 @@ MonoBehaviour:
 
 
     Check the account, not the group.'
+  assessmentPrompt: Check user's effective access
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

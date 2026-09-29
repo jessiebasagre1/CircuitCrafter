@@ -378,6 +378,16 @@ public class COC3AssessmentManager : MonoBehaviour
 
         if (manager.completionScreen != null && manager.completionScreen.activeSelf) return true;
 
+        // WALKING BETWEEN MACHINES IS NOT THE END OF THE MODULE.
+        //
+        // COC3StationController switches its Step UI Root off whenever the learner stands up -
+        // including the automatic exit when the next step belongs to the other PC - and every
+        // step panel goes with it. "No step panel on screen" was read as "finished": the run
+        // ended on the spot, the timer stopped, the player was locked for a report that sat
+        // inside the hidden UI, and the learner was left frozen on the way to the client.
+        if (COC3StationController.Instance != null && !COC3StationController.Instance.InStepView)
+            return false;
+
         return sawAnyStep && ActiveStep() == null;
     }
 
@@ -432,6 +442,17 @@ public class COC3AssessmentManager : MonoBehaviour
 
         if (reportPanel != null) reportPanel.SetActive(true);
         if (reportText != null) reportText.text = BuildReport();
+
+        // A report inside the station's Step UI Root cannot be seen while the learner is walking
+        // (a run that times out between machines). Say where it is rather than leave them frozen.
+        if (reportPanel != null && !reportPanel.activeInHierarchy)
+        {
+            Transform off = reportPanel.transform.parent;
+            while (off != null && off.gameObject.activeSelf) off = off.parent;
+            Debug.LogWarning("[COC3AssessmentManager] The report is switched on but cannot be seen: its " +
+                             "parent '" + (off != null ? off.name : "?") + "' is switched off. Move Report " +
+                             "Panel out of the station's Step UI Root, onto a canvas that is always on.", reportPanel);
+        }
 
         if (reportPanel == null && reportText == null)
             Debug.LogWarning("[COC3AssessmentManager] Finished, but neither Report Panel nor " +

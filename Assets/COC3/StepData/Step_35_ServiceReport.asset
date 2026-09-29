@@ -19,6 +19,7 @@ MonoBehaviour:
 
     Undocumented work cannot be handed over or verified by
     whoever comes next. Press NEXT to finish.'
+  assessmentPrompt: Complete service report, then press NEXT
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

@@ -23,6 +23,7 @@ MonoBehaviour:
 
     On the Server Roles page tick all five roles,
     then Install.'
+  assessmentPrompt: Install server roles
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

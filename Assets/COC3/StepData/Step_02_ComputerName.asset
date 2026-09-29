@@ -19,6 +19,7 @@ MonoBehaviour:
 
     Start > System, then Change. Enter the computer name from the
     job order.'
+  assessmentPrompt: Change server computer name
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

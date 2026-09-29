@@ -21,6 +21,7 @@ MonoBehaviour:
     from the client\n  5. Connectivity confirmed by ping\n\nEach one is performed
     on CLIENT01, because a service checked only on the server has not been tested
     at all.\n\nPress NEXT to begin testing."
+  assessmentPrompt: Prepare test plan, then press NEXT
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

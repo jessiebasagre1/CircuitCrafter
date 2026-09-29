@@ -22,6 +22,7 @@ MonoBehaviour:
 
     Sign-in is as
     the student account, not as an administrator.'
+  assessmentPrompt: Connect to server by Remote Desktop from client
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

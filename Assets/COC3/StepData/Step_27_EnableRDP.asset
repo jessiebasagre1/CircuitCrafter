@@ -22,6 +22,7 @@ MonoBehaviour:
 
     Allow remote connections and apply. Enabling
     the service is not the same as permitting anyone to use it.'
+  assessmentPrompt: Enable Remote Desktop on server
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -24,6 +24,7 @@ MonoBehaviour:
     Share it, and list it in
     the directory. Sharing puts it on the network; listing is what lets a domain
     client find it.'
+  assessmentPrompt: Share and publish printer
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

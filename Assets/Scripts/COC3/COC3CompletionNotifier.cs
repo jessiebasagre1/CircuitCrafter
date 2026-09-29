@@ -15,6 +15,9 @@ using UnityEngine;
 ///
 /// IT CAN ALSO HAND THE ENDING TO THE STORY COMPLETE PANEL, so COC3 finishes the way COC1 and COC2
 /// do instead of on its own screen. See Story Complete Trigger below.
+///
+/// IN AN ASSESSMENT IT DOES NEITHER. No Story save, no Story Complete panel - it hides its own
+/// visuals and leaves the ending to COC3AssessmentManager's report.
 /// </summary>
 [DisallowMultipleComponent]
 public class COC3CompletionNotifier : MonoBehaviour
@@ -35,8 +38,39 @@ public class COC3CompletionNotifier : MonoBehaviour
              "endings do not stack. Leave ON when you are using the trigger above.")]
     public bool hideOwnVisualsWhenHandingOver = true;
 
+    [Header("Assessment mode")]
+    [Tooltip("During a COC3 assessment, hide this screen's own visuals so the ASSESSMENT REPORT " +
+             "(COC3AssessmentManager > Report Panel) is the only ending on screen.\n\n" +
+             "In an assessment this screen never hands over to the Story Complete panel and never " +
+             "marks COC3 complete in the Story save, whatever this box says.")]
+    public bool hideOwnVisualsInAssessment = true;
+
+    [Tooltip("OPTIONAL. The assessment report panel, so it is never hidden with this screen's visuals. " +
+             "Leave empty - it is read from COC3AssessmentManager > Report Panel automatically.")]
+    public GameObject assessmentReportPanel;
+
     private void OnEnable()
     {
+        // AN ASSESSMENT ENDS WITH THE ASSESSMENT REPORT, NOT THE STORY ENDING.
+        //
+        // COC3Manager raises this completion screen in both modes - it does not know which one it
+        // is in - and this used to treat every finish as a Story finish: mark COC3 complete, then
+        // Fire() the Story Complete panel. StoryCompleteTrigger switches itself off in an
+        // assessment, but Fire() still ran on the switched-off component (a coroutine starts on
+        // any component whose GameObject is active), so "Module complete!" landed on top of the
+        // graded report.
+        //
+        // COC3AssessmentManager still sees this object switch on - that is its own "the module is
+        // over" signal - so only the visuals go, never this object.
+        if (AssessmentMode.IsActive)
+        {
+            if (hideOwnVisualsInAssessment) HideOwnVisuals(keepAssessmentReport: true);
+
+            Debug.Log("[COC3CompletionNotifier] Assessment run - Story ending skipped: COC3 is not " +
+                      "marked complete in the Story save, and COC3AssessmentManager shows the report.", this);
+            return;
+        }
+
         if (completionManager == null)
         {
 #if UNITY_2023_1_OR_NEWER
@@ -72,15 +106,61 @@ public class COC3CompletionNotifier : MonoBehaviour
     {
         if (storyCompleteTrigger == null) return;
 
-        if (hideOwnVisualsWhenHandingOver)
-        {
-            // The CHILDREN, not this object. This one has to stay active - its OnEnable is the
-            // signal, and COC3WaypointBridge's step may be watching it to know the module is over.
-            // Switching it off here would undo the very thing that just ran.
-            for (int i = 0; i < transform.childCount; i++)
-                transform.GetChild(i).gameObject.SetActive(false);
-        }
+        if (hideOwnVisualsWhenHandingOver) HideOwnVisuals(keepAssessmentReport: false);
 
         storyCompleteTrigger.Fire();
+    }
+
+    /// <summary>
+    /// Switches off this screen's CHILDREN, not this object. This one has to stay active - its
+    /// OnEnable is the signal, and COC3WaypointBridge's step and COC3AssessmentManager both watch it
+    /// to know the module is over. Switching it off here would undo the very thing that just ran.
+    ///
+    /// keepAssessmentReport leaves alone any child that holds COC3AssessmentManager's Report Panel,
+    /// in case the report was built inside this screen.
+    /// </summary>
+    private void HideOwnVisuals(bool keepAssessmentReport)
+    {
+        Transform report = null;
+        if (keepAssessmentReport)
+        {
+            GameObject panel = assessmentReportPanel != null ? assessmentReportPanel : FindAssessmentReport();
+            if (panel != null) report = panel.transform;
+        }
+
+        // This screen IS the report, or sits inside it - hiding its children would blank the report.
+        if (report != null && transform.IsChildOf(report)) return;
+
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (report != null && report.IsChildOf(child)) continue;
+            child.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// COC3AssessmentManager's Report Panel, looked up BY NAME rather than by type.
+    ///
+    /// Naming the type in code does not compile in every project: where this script is built into
+    /// a different assembly from Assets/Scripts/Assessment, COC3AssessmentManager "does not exist in
+    /// the current context". Reading the field by name works either way, and runs once, at the end
+    /// of the module.
+    /// </summary>
+    private static GameObject FindAssessmentReport()
+    {
+        var all = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        if (all == null) return null;
+
+        foreach (MonoBehaviour mb in all)
+        {
+            if (mb == null || mb.GetType().Name != "COC3AssessmentManager") continue;
+
+            System.Reflection.FieldInfo field = mb.GetType().GetField("reportPanel");
+            return field != null ? field.GetValue(mb) as GameObject : null;
+        }
+
+        return null;
     }
 }

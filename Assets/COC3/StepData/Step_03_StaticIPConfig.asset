@@ -24,6 +24,7 @@ MonoBehaviour:
     Choose ''Use the following
     IP address'' and ''Use the following DNS server addresses then enter the static
     configuration and Prefered DNS server.'
+  assessmentPrompt: Set server static IP address
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 192.168.10.10

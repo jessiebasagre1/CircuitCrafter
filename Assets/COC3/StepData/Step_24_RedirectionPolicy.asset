@@ -19,6 +19,7 @@ MonoBehaviour:
     Start
     > Group Policy Management. Under User Configuration > Policies > Windows Settings
     > Folder Redirection, select Documents and press Properties.'
+  assessmentPrompt: Configure Documents folder redirection
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

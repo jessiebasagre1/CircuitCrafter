@@ -24,6 +24,7 @@ MonoBehaviour:
 
     Turning the firewall off would also make it work, and
     would be wrong. The rule is the fix, not the firewall.'
+  assessmentPrompt: Allow Remote Desktop through server firewall
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

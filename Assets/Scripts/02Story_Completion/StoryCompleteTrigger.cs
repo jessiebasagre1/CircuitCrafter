@@ -95,7 +95,7 @@ public class StoryCompleteTrigger : MonoBehaviour
         if (AssessmentMode.IsActive)
         {
             Debug.Log("[StoryCompleteTrigger] Assessment run - the completion panel stays down; " +
-                      "COC2AssessmentManager shows the report instead.", this);
+                      "the module's assessment manager shows the report instead.", this);
             enabled = false;
             return;
         }
@@ -234,6 +234,20 @@ public class StoryCompleteTrigger : MonoBehaviour
     [ContextMenu("Fire now (test)")]
     public void Fire()
     {
+        // NEVER IN AN ASSESSMENT - whoever asks.
+        //
+        // Start() switches this component off in an assessment, but that only stops the task
+        // watching. Fire() is public, and a coroutine starts on a switched-off component as long
+        // as its GameObject is active - so COC3CompletionNotifier, which calls Fire() by hand,
+        // still put the Story Complete panel over the COC3 assessment report. Checked here, the
+        // one door every caller goes through.
+        if (AssessmentMode.IsActive)
+        {
+            Debug.Log("[StoryCompleteTrigger] Fire() ignored - an assessment is running, so the " +
+                      "assessment report is the ending, not the Story Complete panel.", this);
+            return;
+        }
+
         // Once per visit. Whatever calls this may call it more than once - a
         // button pressed twice, a task reported again - and without this the
         // learner watches the ending restart.

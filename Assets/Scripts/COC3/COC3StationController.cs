@@ -83,6 +83,11 @@ public class COC3StationController : MonoBehaviour
     [Tooltip("Hide the arrow while the player is actually using a machine.")]
     public bool hideWaypointWhileUsing = true;
 
+    [Header("Diagnostics")]
+    [Tooltip("Say in the Console whenever E at a computer is refused or redirected, and why. One " +
+             "line per press - the quickest answer to 'the station will not open'.")]
+    public bool logEntry = true;
+
     // --- runtime state -------------------------------------------------
     public bool InStepView { get; private set; }
     public COC3Workstation CurrentStation { get; private set; }
@@ -96,6 +101,10 @@ public class COC3StationController : MonoBehaviour
     /// <summary>Frame on which the learner last left a step view, so the same keypress cannot sit
     /// them straight back down. -1 means never.</summary>
     private int leftOnFrame = -1;
+
+    /// <summary>Frame on which the learner last sat down, so the same keypress cannot stand them
+    /// straight back up. -1 means never.</summary>
+    private int enteredOnFrame = -1;
 
     /// <summary>Reusable asset-less sequences for the generated dialogs, so we are not
     /// allocating a ScriptableObject every time the learner changes machines.</summary>
@@ -115,7 +124,54 @@ public class COC3StationController : MonoBehaviour
         generatedWrong = MakeRuntimeSequence();
 
         RebuildClientStepSet();
+        MatchStationsToSlots();
         SetStepViewActive(false, null);
+    }
+
+    /// <summary>
+    /// Makes each station's Machine setting agree with the slot it was dragged into.
+    ///
+    /// THE SLOT IS WHAT THE LEARNER FOLLOWS. The arrow points at whatever is in Client Station and
+    /// the dialogs name it, so that is the computer the learner walks to. Whether E then opened it
+    /// was decided by a different setting - Machine, on the COC3Workstation itself - which defaults
+    /// to Server. A Client PC left on that default refused every client step: "wrong machine" at the
+    /// very computer the arrow pointed to. In an assessment that refusal was a withheld dialog, so
+    /// it showed as E doing nothing at all.
+    ///
+    /// It never showed up earlier because, until the walking fix, leaving a station marked the
+    /// activity finished, and a finished activity skips the wrong-machine check altogether.
+    ///
+    /// Corrected for this run only, and reported, so the scene can be fixed properly too.
+    /// </summary>
+    private void MatchStationsToSlots()
+    {
+        if (serverStation != null && serverStation == clientStation)
+        {
+            Debug.LogError("[COC3StationController] Server Station and Client Station are the SAME " +
+                           "object ('" + serverStation.name + "'). Drag the Client PC into Client " +
+                           "Station, or every client step will send the learner back to this one.", this);
+            return;
+        }
+
+        MatchSlot(serverStation, COC3MachineType.Server);
+        MatchSlot(clientStation, COC3MachineType.Client);
+    }
+
+    private void MatchSlot(COC3Workstation station, COC3MachineType slot)
+    {
+        if (station == null || station.machine == slot) return;
+
+        Debug.LogWarning("[COC3StationController] '" + station.name + "' is in the " + slot +
+                         " Station slot, but its COC3Workstation has Machine = " + station.machine +
+                         ". Treating it as the " + slot + " for this run.\n\nTo fix the scene: select '" +
+                         station.name + "' and set COC3Workstation > Machine to " + slot + ".", station);
+
+        station.machine = slot;
+
+        // Display Name defaults to "Server PC" too, and would name the wrong computer in every dialog.
+        string otherDefault = slot == COC3MachineType.Client ? "Server PC" : "Client PC";
+        if (station.displayName == otherDefault)
+            station.displayName = slot == COC3MachineType.Client ? "Client PC" : "Server PC";
     }
 
     private void OnDestroy()
@@ -242,12 +298,26 @@ public class COC3StationController : MonoBehaviour
         if (manager == null || manager.steps == null) return;
 
         ScreenshotStep current = FindActiveStep();
-        int index = current == null ? -1 : manager.steps.IndexOf(current);
 
-        if (index != activeIndex || current != activeStep)
+        // WALKING IS NOT FINISHING.
+        //
+        // While the learner walks between machines this controller switches Step UI Root off, and
+        // with it every step panel - so FindActiveStep finds nothing. That used to be read as "no
+        // step panel, so the completion screen is up": activityFinished went true, the waypoint
+        // was cleared, and the wrong-machine check stopped working until the learner sat down again.
+        // A panel hidden by us is the same step as before; only a missing panel while AT a machine
+        // means the activity has ended.
+        bool hiddenWhileWalking = current == null && !InStepView;
+
+        if (!hiddenWhileWalking)
         {
-            OnStepChanged(current, index);
-            return;
+            int index = current == null ? -1 : manager.steps.IndexOf(current);
+
+            if (index != activeIndex || current != activeStep)
+            {
+                OnStepChanged(current, index);
+                return;
+            }
         }
 
         // TypingGuard is what makes a LETTER safe as the exit key.
@@ -258,9 +328,24 @@ public class COC3StationController : MonoBehaviour
         // stand them up mid-word - losing the dialog they were halfway through filling in.
         //
         // Costs one component lookup, and only on a frame where the exit key was actually pressed.
-        if (InStepView && Input.GetKeyDown(exitKey) && !TypingGuard.IsTyping)
+        //
+        // AND NOT ON THE FRAME THEY SAT DOWN.
+        //
+        // The exit key is E, and E is also the key that sat them down. PlayerInteractor handles
+        // the press first, this controller opens the machine, and then this Update runs on the
+        // same frame, where GetKeyDown(E) is still true - so it stood them straight back up. The
+        // step view was open for a single frame: the canvas flickered, the camera never changed,
+        // and pressing E again did the same thing.
+        //
+        // It only showed up after the auto-exit to the client. Sitting down on a NEW step returns
+        // early above (the step change), which skipped this check by luck. Sitting back down on
+        // the SAME step - the client, after the auto-exit - has no step change to hide behind.
+        // Script order between the two is not defined, so this is a frame number, not an ordering
+        // assumption: the same guard TryEnter already uses for the opposite direction.
+        if (InStepView && Time.frameCount != enteredOnFrame &&
+            Input.GetKeyDown(exitKey) && !TypingGuard.IsTyping)
         {
-            ExitStepView();
+            Leave("the exit key (" + exitKey + ") was pressed");
 
             // Escape is shared with PauseMenuController, which would otherwise open the pause menu
             // on the same press. Claiming it here is what stops that - PauseMenuController asks in
@@ -310,7 +395,7 @@ public class COC3StationController : MonoBehaviour
         {
             // The work has moved to the other computer - stand the learner up and send
             // them over. This is the moment the whole system exists for.
-            ExitStepView();
+            Leave("step " + (index + 1) + " is done on the " + needed);
             Announce(needed, machineChangedFromUse: true);
             return;
         }
@@ -358,23 +443,78 @@ public class COC3StationController : MonoBehaviour
 
         if (!activityFinished && station.machine != RequiredMachine)
         {
-            ShowWrongMachine(station);
-            return;
+            // STANDING AT BOTH MACHINES.
+            //
+            // The server and the client usually sit side by side, and their triggers can overlap.
+            // PlayerInteractor sends E to whichever trigger is NEAREST, and standing inside both
+            // that can be the server's while the learner is facing the client. The press was then
+            // refused as "wrong machine" - silently, in an assessment - and the client never opened.
+            //
+            // If the machine the step needs is ALSO claiming the player, that is the one they meant.
+            COC3Workstation needed = StationFor(RequiredMachine);
+
+            if (needed != null && needed != station && needed.isActiveAndEnabled && needed.IsPlayerInRange)
+            {
+                if (logEntry)
+                    Debug.Log("[COC3StationController] E reached '" + station.name + "', but the player " +
+                              "is also at '" + needed.name + "', which step " + (activeIndex + 1) +
+                              " needs - opening that one. (The two triggers overlap.)", needed);
+
+                station = needed;
+            }
+            else
+            {
+                if (logEntry)
+                    Debug.Log("[COC3StationController] E at '" + station.name + "' REFUSED - it is the " +
+                              station.machine + ", and step " + (activeIndex + 1) + " is done on the " +
+                              RequiredMachine + " (" + DescribeStation(needed) + ").", station);
+
+                ShowWrongMachine(station);
+                return;
+            }
         }
 
         EnterStepView(station);
     }
 
+    /// <summary>For the refusal line: which object the step needs, and whether the player is at it.</summary>
+    private static string DescribeStation(COC3Workstation s)
+    {
+        if (s == null) return "NO STATION IS ASSIGNED to that slot on COC3StationController";
+        if (!s.isActiveAndEnabled) return "'" + s.name + "', which is switched off";
+        return "'" + s.name + "', " + (s.IsPlayerInRange ? "player in range" : "player not in range");
+    }
+
     public void EnterStepView(COC3Workstation station)
     {
         if (InStepView) return;
+
+        // Stamped before anything else, for the exit-key check in Update. See the note there.
+        enteredOnFrame = Time.frameCount;
+
+        if (logEntry && station != null)
+            Debug.Log("[COC3StationController] Sat down at '" + station.name + "' (" + station.machine +
+                      ")" + (activeIndex >= 0 ? " for step " + (activeIndex + 1) : "") + ".", station);
+
         SetStepViewActive(true, station);
     }
 
     /// <summary>Wire an on-screen Exit button here for mobile.</summary>
     public void ExitStepView()
     {
+        Leave("ExitStepView was called - an on-screen Exit button, or another script");
+    }
+
+    /// <summary>Stands the learner up, and with Log Entry on says why - so a station that closes
+    /// by itself names what closed it.</summary>
+    private void Leave(string reason)
+    {
         if (!InStepView) return;
+
+        if (logEntry)
+            Debug.Log("[COC3StationController] Stood up from '" +
+                      (CurrentStation != null ? CurrentStation.name : "?") + "' - " + reason + ".",
+                      CurrentStation);
 
         // Stamped before anything else, so it is set no matter which path called this - the exit
         // key, the on-screen mobile button, or a step moving to the other machine.
@@ -633,6 +773,21 @@ public class COC3StationController : MonoBehaviour
 
     private void ShowWrongMachine(COC3Workstation station)
     {
+        // AN ASSESSMENT MUST STILL SAY "NOT HERE".
+        //
+        // Play() uses the ordinary ShowDialog, which withholds everything during an assessment - so a
+        // refused E did nothing at all and looked exactly like a broken station. This line is not a
+        // hint: it confirms the press was seen and names only the computer the learner is already
+        // standing at. It goes through the overload the assessment's own messages use.
+        if (AssessmentMode.IsActive || DialogManager.SuppressTutorials)
+        {
+            if (DialogManager.Instance == null || DialogManager.Instance.IsDialogOpen) return;
+
+            SetLine(generatedWrong, $"There is nothing to do on the {station.displayName} right now.");
+            DialogManager.Instance.ShowDialog(generatedWrong, RestoreCursorAfterDialog, true);
+            return;
+        }
+
         if (wrongMachineDialog != null) { Play(wrongMachineDialog); return; }
 
         var needed = StationFor(RequiredMachine);

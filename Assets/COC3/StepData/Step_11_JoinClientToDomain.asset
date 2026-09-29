@@ -23,6 +23,7 @@ MonoBehaviour:
 
     Start > System, then Change. Select
     Domain and enter the domain name.'
+  assessmentPrompt: Join client to domain
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

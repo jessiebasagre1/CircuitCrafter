@@ -23,6 +23,7 @@ MonoBehaviour:
     Filter
     for Audit Failure. A refused attempt is evidence the permissions are working;
     the successes are thousands of entries and no finding.'
+  assessmentPrompt: Check security log for failed access attempts
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

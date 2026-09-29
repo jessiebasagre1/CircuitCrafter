@@ -24,6 +24,7 @@ MonoBehaviour:
     Its Properties
     window opens by itself on the General tab. Click MEMBERS, type the account name
     in object name, then press ''Add'' not OK - that is what completes the step.'
+  assessmentPrompt: Create security group and add user
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

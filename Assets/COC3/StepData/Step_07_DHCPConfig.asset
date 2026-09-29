@@ -23,6 +23,7 @@ MonoBehaviour:
     Enter
     the starting address of the pool, the subnet mask, and the router address handed
     out with each lease. The pool must start clear of the server''s own static address.'
+  assessmentPrompt: Create DHCP scope
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 192.168.10.100

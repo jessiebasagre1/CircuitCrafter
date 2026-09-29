@@ -23,7 +23,7 @@ MonoBehaviour:
     A reply
     proves the two machines can reach each other. It proves nothing above that -
     which is why it is the last test, not the first.'
-  assessmentPrompt: 
+  assessmentPrompt: Verify client-server connectivity
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

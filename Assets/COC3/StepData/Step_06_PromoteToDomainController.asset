@@ -22,6 +22,7 @@ MonoBehaviour:
 
     Add
     a new forest, and enter the root domain name from the job order.'
+  assessmentPrompt: Promote server to domain controller
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

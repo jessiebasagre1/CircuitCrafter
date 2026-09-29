@@ -23,6 +23,7 @@ MonoBehaviour:
 
     Press Edit, select the group, and grant
     Modify. Not Full control.'
+  assessmentPrompt: Set shared folder permissions
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -24,6 +24,7 @@ MonoBehaviour:
 
     Tick ''Define this policy setting'' - the
     value alone does nothing.'
+  assessmentPrompt: Set password policy
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

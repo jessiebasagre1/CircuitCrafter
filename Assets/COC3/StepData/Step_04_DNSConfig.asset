@@ -19,6 +19,7 @@ MonoBehaviour:
 
     Nothing
     to configure here. Press NEXT.'
+  assessmentPrompt: Check server DNS setting, then press NEXT
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

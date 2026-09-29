@@ -22,6 +22,7 @@ MonoBehaviour:
 
     Remove Everyone first, then grant the group the
     Print permission. A permission granted underneath a broader one changes nothing.'
+  assessmentPrompt: Set printer permissions
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

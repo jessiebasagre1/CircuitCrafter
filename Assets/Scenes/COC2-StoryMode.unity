@@ -34332,6 +34332,10 @@ MonoBehaviour:
   - {fileID: 1743967174304883108}
   - {fileID: 8784337162738462955}
   manageCursor: 1
+  holdPlayer: 1
+  keepOnTop: 1
+  enterStarts: 1
+  reportMissedClicks: 1
   disableForAssessment:
   - {fileID: 1017459697}
   suppressDialogsDuringBriefing: 1

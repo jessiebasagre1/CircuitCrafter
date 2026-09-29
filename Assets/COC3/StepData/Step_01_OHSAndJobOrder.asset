@@ -18,6 +18,7 @@ MonoBehaviour:
 
     It
     names every value you will be asked for. Press NEXT when you have read it.'
+  assessmentPrompt: Read the job order, then press NEXT
   screenshotImage: {fileID: 0}
   stepType: 0
   expectedIP: 

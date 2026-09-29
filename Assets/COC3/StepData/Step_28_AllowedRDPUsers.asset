@@ -23,6 +23,7 @@ MonoBehaviour:
     An administrator
     can already connect without being listed - which is why testing as one would
     prove nothing.'
+  assessmentPrompt: Allow domain user to use Remote Desktop
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -37,6 +37,29 @@ public class PauseMenuController : MonoBehaviour
 
     public bool IsPaused { get; private set; }
 
+    /// <summary>
+    /// True while ANY pause menu in the scene is open. For scripts that decide the cursor every
+    /// frame (CursorKeeper, COC 3's CursorArbiter): while this is true the cursor must stay free,
+    /// or the Resume / Retry / Settings / Main Menu buttons cannot be clicked. A static, so no
+    /// script has to find "the" pause menu - a scene with two cannot fool it.
+    /// </summary>
+    public static bool AnyPaused => pausedCount > 0;
+
+    private static int pausedCount;
+    private bool countedAsPaused;
+
+    // A static survives entering Play mode when domain reload is off - a menu open when the last
+    // session stopped would otherwise count as open for ever.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetPausedCount() { pausedCount = 0; }
+
+    private void SetCountedAsPaused(bool paused)
+    {
+        if (paused == countedAsPaused) return;
+        countedAsPaused = paused;
+        pausedCount = Mathf.Max(0, pausedCount + (paused ? 1 : -1));
+    }
+
     // Whatever the cursor's lock/visibility state was right before we opened
     // the pause panel (Locked+hidden while walking via MouseLook/
     // StationCameraSwitch, or None+visible at the assembly station) � restored
@@ -51,6 +74,18 @@ public class PauseMenuController : MonoBehaviour
         if (mainMenuButton != null) mainMenuButton.onClick.AddListener(OnMainMenuClicked);
 
         if (pausePanel != null) pausePanel.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        if (IsPaused) SetCountedAsPaused(true);
+    }
+
+    private void OnDisable()
+    {
+        // Retry reloads the scene with this menu still open. Its count must go with it, or the next
+        // scene believes a pause menu is open and nothing ever captures the cursor again.
+        SetCountedAsPaused(false);
     }
 
     /// <summary>
@@ -103,7 +138,13 @@ public class PauseMenuController : MonoBehaviour
 
     private void OpenMenu()
     {
+        // The corner Menu button can be pressed while the menu is already open. Opening it twice
+        // would snapshot the FREE cursor as the one to restore, and Resume would leave the learner
+        // walking with a free cursor and no mouse look.
+        if (IsPaused) return;
+
         IsPaused = true;
+        SetCountedAsPaused(true);
         if (pausePanel != null) pausePanel.SetActive(true);
         if (freezeTimeWhilePaused) Time.timeScale = 0f;
 
@@ -113,18 +154,33 @@ public class PauseMenuController : MonoBehaviour
         // onto them to click.
         previousLockState = Cursor.lockState;
         previousCursorVisible = Cursor.visible;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+
+        // Through CursorControl, not Cursor.lockState directly. CursorControl.Captured is what the
+        // Settings panel reads to decide whether to capture the cursor again when it closes; set
+        // behind CursorControl's back it still said "captured", so closing Settings from this menu
+        // locked the cursor with the menu still on screen.
+        CursorControl.Free();
     }
 
     private void CloseMenu()
     {
         IsPaused = false;
+        SetCountedAsPaused(false);
         if (pausePanel != null) pausePanel.SetActive(false);
         if (freezeTimeWhilePaused) Time.timeScale = 1f;
 
-        Cursor.lockState = previousLockState;
-        Cursor.visible = previousCursorVisible;
+        // Put the cursor back as it was, through CursorControl for the same reason as OpenMenu
+        // (and so a phone, where capturing pins every tap to the screen centre, is left alone).
+        if (previousLockState == CursorLockMode.Locked)
+        {
+            CursorControl.Capture();
+        }
+        else
+        {
+            CursorControl.Free();
+            Cursor.lockState = previousLockState;
+            Cursor.visible = previousCursorVisible;
+        }
     }
 
     private void OnMainMenuClicked()

@@ -19,6 +19,7 @@ MonoBehaviour:
     Start > Devices and Printers.
     Select the printer shared from the server - not the local PDF printer - open
     Printer properties, and print a test page from the General tab.'
+  assessmentPrompt: Print test page from client
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 

@@ -23,6 +23,7 @@ MonoBehaviour:
     Select the Users container in the
     tree FIRST, then New > User. An account created elsewhere works, but nobody will
     find it where they expect.'
+  assessmentPrompt: Create domain user account
   screenshotImage: {fileID: 0}
   stepType: 3
   expectedIP: 
