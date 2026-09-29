@@ -293,10 +293,10 @@ namespace CircuitCrafter.Repair
 
                 if (!string.IsNullOrEmpty(stageId)) AssessmentRecorder.Stage(stageId);
 
-                // GUIDANCE: the option's feedback explains WHY this is the cause - teaching, so Story
+                // The option's feedback explains WHY this is the cause - teaching, so Story
                 // only. An assessment just confirms the diagnosis was accepted.
                 if (feedbackText != null)
-                    feedbackText.text = (CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                    feedbackText.text = (!(COC4AssessmentRun.IsActive || AssessmentMode.IsActive)
                                             ? option.feedback : "Diagnosis accepted.") +
                                         $"\n\nDiagnosed after {ServiceCallState.DiagnosisAttempts} attempt(s), {ServiceCallState.FormatTime()} on site.";
 
@@ -304,9 +304,9 @@ namespace CircuitCrafter.Repair
             }
             else
             {
-                // GUIDANCE: in an assessment the mistake is always recorded (a COC4 run has no stage
+                // In an assessment the mistake is always recorded (a COC4 run has no stage
                 // ids of its own), with the option's explanation kept for the review screen.
-                bool assessing = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+                bool assessing = COC4AssessmentRun.IsActive || AssessmentMode.IsActive;
                 if (!string.IsNullOrEmpty(stageId) || assessing)
                     AssessmentRecorder.Mistake("diagnosis", $"Incorrect cause offered: {option.label}", option.feedback);
 

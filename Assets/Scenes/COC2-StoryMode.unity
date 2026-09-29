@@ -5395,7 +5395,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ping 192.168.1.20
+  m_text: ping 192.168.1.10
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 0}
   m_sharedMaterial: {fileID: 0}
@@ -10950,26 +10950,47 @@ MonoBehaviour:
   - id: start
     panel: {fileID: 2076206257}
     title: Start
+    clickLabel: 
   - id: controlpanel
     panel: {fileID: 549281561}
     title: Control Panel
+    clickLabel: 
   - id: networkcenter
     panel: {fileID: 1156912708}
     title: Network and Sharing Center
+    clickLabel: 
   - id: adapters
     panel: {fileID: 697530607}
     title: Network Connections
+    clickLabel: 
   - id: ethernetprops
     panel: {fileID: 116111798}
     title: Ethernet Properties
+    clickLabel: 
   - id: tcpip
     panel: {fileID: 1749126590}
     title: Internet Protocol Version 4 (TCP/IPv4) Properties
+    clickLabel: 
   - id: cmd
     panel: {fileID: 396334578}
     title: Command Prompt
+    clickLabel: 
   breadcrumbText: {fileID: 214710506}
   breadcrumbSeparator: '  >  '
+  breadcrumbMode: 0
+  guideInAssessment: 0
+  pingPath:
+  - start
+  - cmd
+  guidePrefix: 'Click in order:   '
+  guideFinishConfig: Type the job order values, then click OK
+  guideFinishPing: Type the ping command, then press Enter
+  guideDoneText: This computer is done. Press E or click Leave PC to step away.
+  offRouteNote: This window is not on the route - press Escape to go back.
+  guideDoneColour: {r: 0.56078434, g: 0.6392157, b: 0.72156864, a: 1}
+  guideNextColour: {r: 1, g: 0.7882353, b: 0.23529412, a: 1}
+  guideAheadColour: {r: 0.9019608, g: 0.93333334, b: 0.9607843, a: 1}
+  guideWarnColour: {r: 1, g: 0.5411765, b: 0.5019608, a: 1}
   expectedPath:
   - start
   - controlpanel
@@ -27568,26 +27589,47 @@ MonoBehaviour:
   - id: start
     panel: {fileID: 1855817733}
     title: Start
+    clickLabel: 
   - id: controlpanel
     panel: {fileID: 1645496277}
     title: Control Panel
+    clickLabel: 
   - id: networkcenter
     panel: {fileID: 1849332701}
     title: Network and Sharing Center
+    clickLabel: 
   - id: adapters
     panel: {fileID: 2083522116}
     title: Network Connections
+    clickLabel: 
   - id: ethernetprops
     panel: {fileID: 926377556}
     title: Ethernet Properties
+    clickLabel: 
   - id: tcpip
     panel: {fileID: 729798130}
     title: Internet Protocol Version 4 (TCP/IPv4) Properties
+    clickLabel: 
   - id: cmd
     panel: {fileID: 1783160012}
     title: Command Prompt
+    clickLabel: 
   breadcrumbText: {fileID: 1314157967}
   breadcrumbSeparator: '  >  '
+  breadcrumbMode: 0
+  guideInAssessment: 0
+  pingPath:
+  - start
+  - cmd
+  guidePrefix: 'Click in order:   '
+  guideFinishConfig: Type the job order values, then click OK
+  guideFinishPing: Type the ping command, then press Enter
+  guideDoneText: This computer is done. Press E or click Leave PC to step away.
+  offRouteNote: This window is not on the route - press Escape to go back.
+  guideDoneColour: {r: 0.56078434, g: 0.6392157, b: 0.72156864, a: 1}
+  guideNextColour: {r: 1, g: 0.7882353, b: 0.23529412, a: 1}
+  guideAheadColour: {r: 0.9019608, g: 0.93333334, b: 0.9607843, a: 1}
+  guideWarnColour: {r: 1, g: 0.5411765, b: 0.5019608, a: 1}
   expectedPath:
   - start
   - controlpanel
@@ -33866,6 +33908,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 988095420}
+  - component: {fileID: 988095456}
   - component: {fileID: 988095455}
   - component: {fileID: 988095454}
   - component: {fileID: 988095453}
@@ -34108,6 +34151,18 @@ MonoBehaviour:
     panel and the outlet is how you build a crossover by accident.
   - Place all eight conductors into their positions, then drag the punch-down tool
     onto the panel to seat them.
+  patchCordsAsset: {fileID: 0}
+  patchCordsLines:
+  - 'Next: the patch cords ({phase}). The punch-down joined the cable run to the
+    BACK of the patch panel. Now the FRONT of each panel port has to be connected
+    to the switch.'
+  - 'Each short patch cord already has one end in a panel port. Drag its loose end
+    into the {socket} with the SAME number: panel port 1 to {socket} 1, port 2 to
+    {socket} 2, and so on.'
+  - Matching numbers keep the rack readable. When a user's connection fails, a technician
+    can follow panel port 3 straight to {socket} 3 without tracing the cable by hand.
+  patchCordsAnyPortLine: Each short patch cord already has one end in a panel port.
+    Drag its loose end into a free {socket}.
   passAsset: {fileID: 0}
   passLines:
   - Both rows lit 1 through 8 in step. Full continuity on all eight conductors, and
@@ -34143,6 +34198,17 @@ MonoBehaviour:
     comes out.
   - The conductors are back in the tray. Work the panel's printed code position by
     position.
+  cordPassLines:
+  - Every patch cord is in its matching {socket}, so each panel port now reaches
+    the switch.
+  cordFailLines:
+  - Some patch cords are not in the right {socket}.
+  cordFailClosingLines:
+  - The cords have been pulled back out. Run each one to the {socket} with the same
+    number as its panel port.
+  assessmentCordFailLines:
+  - The patch cords did not pass inspection.
+  - Run the patch cords again.
   procedureReset: {fileID: 988095433}
   restartAutomaticallyOnFail: 1
   replayTutorialsOnRetry: 1
@@ -34303,7 +34369,6 @@ MonoBehaviour:
   objectivesText: {fileID: 111326704}
   rulesText: {fileID: 111326703}
   startButton: {fileID: 111326702}
-  jobOrder: {fileID: 0}
   title: COC 2 - Cable Assembly and Testing
   objectives:
   - Collect the crimping tool from the workbench.
@@ -34880,6 +34945,218 @@ MonoBehaviour:
   showFailureDetails: 0
   alsoAllow: []
   logWhatIsAllowed: 1
+--- !u!114 &988095456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 988095418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 709eda1324ed75d49894a9e59ac540fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CSSSimulation.Networking.COC2StepGuide
+  speakerName: Guide
+  showOverview: 1
+  announceSteps: 1
+  desktopTips: 1
+  coverEmptyStationDialogs: 1
+  approachWarnings: 1
+  assessmentResults: 1
+  keepDialogAboveDesktop: 1
+  startDelay: 1.5
+  settleSeconds: 0.6
+  crimpTaskId: crimp_cable
+  testTaskId: test_cable
+  punchTaskId: punch_patch_panel
+  patchTaskId: patch_to_switch
+  logGuide: 1
+  overviewLines:
+  - 'Welcome to COC 2: Set Up Computer Networks. In this job you will build a small
+    wired network, from bare cable to a working link between two computers.'
+  - 'Here is the whole job, in order:
+
+    {steps}'
+  - '{controls}'
+  - Work in that order - a network is built from the cable up. I will explain each
+    step as you reach it.{arrow}
+  controlsKeyboard: 'Controls: walk with W A S D and look with the mouse. Press {interactKey}
+    to use a station, {pickupKey} to pick something up, and Space or a click to continue
+    a message like this one.'
+  controlsTouch: 'Controls: walk with the joystick and drag the screen to look around.
+    Tap Interact to use a station, Pick Up to pick something up, and tap a message
+    like this one to continue.'
+  toolLines:
+  - 'Step 1: get your tool. You need a crimping tool - one tool that cuts UTP cable,
+    strips its outer jacket and crimps the RJ45 connector on.'
+  - It is on the workbench.{arrow} Walk up to it and {pickup}.
+  crimpStationLines:
+  - Now go to the crimping station and {interact} to start your first cable.{arrow}
+  - 'First you choose which cable to build. A STRAIGHT-THROUGH cable has the same
+    colour order on both ends (T568B to T568B). It connects DIFFERENT kinds of device:
+    a PC to a switch, or a switch to a router.'
+  - 'A CROSSOVER cable has T568A on one end and T568B on the other, which swaps the
+    send and receive pairs. It connects the SAME kind of device: PC to PC, or switch
+    to switch.'
+  crimpBothLine: You must build both cables and pass the tester with each, in either
+    order.
+  crimpFourStepsLine: 'Every cable takes the same four steps: strip the jacket, arrange
+    the eight wires in colour order, crimp the connector, and test it.'
+  punchLines:
+  - Your cable work is done. Next, go to the patch panel and {interact} to terminate
+    the cable run with the punch-down tool.{arrow}
+  patchReturnLines:
+  - The punch-down is done, but the patch cords are not in yet. Go back to the patch
+    panel and {interact} to patch each panel port to the switch.{arrow}
+  cableReadyLines:
+  - 'Next: connect the {device} to the network. The {cable} - a {type} cable - is
+    ready on the bench.{arrow}'
+  - '{Pickup} to pick it up. Carry the plug to the {first} and, when it is close
+    to a free port, {plug}. Then walk the other end to the {device} and {plug} again.'
+  cableReadyTeachLines:
+  - 'Why the patch panel? In a real building a computer never plugs straight into
+    the switch. It plugs into the patch panel, and that panel port is already patched
+    through to the switch. This cable finishes the path: computer, patch panel, switch.'
+  - A computer-to-panel cable is always straight-through, because a computer and
+    a switch are different kinds of device.
+  cablePickedUpLines:
+  - You are carrying the {cable}. Take the plug to the {first} and {plug} when it
+    is close to a free port.
+  cableFirstEndLines:
+  - One end is in the {first}. Now carry the other end to the {device} and {plug}.
+    If you need your hands free, {drop} to put the cable down.
+  cableCompleteLines:
+  - Done - the {cable} now links the {device} to the patch panel.
+  configureLines:
+  - 'The cabling is finished: every computer now has a physical path to the switch.
+    But a cable alone does not make a network. Each computer also needs an IP address
+    before they can talk to each other.'
+  - 'Your job order:
+
+    {joborder}'
+  - Go to the {first} and {interact} to sit down at it.{arrow}
+  tipDesktopLines:
+  - You are at the {machine}'s Windows desktop. To give it a fixed (static) IP address,
+    go through Control Panel.
+  - Click Start at the bottom-left of the screen. (Escape goes back one window. When
+    you are finished, {leave}.)
+  tipStartConfigLines:
+  - Click Control Panel. It holds the settings for the whole computer, networking
+    included.
+  tipControlPanelLines:
+  - Click Network and Sharing Center - this is where Windows keeps everything about
+    network connections.
+  tipNetworkCenterLines:
+  - Click Change adapter settings. An adapter is a network card, and the IP address
+    is a setting of the card.
+  tipAdaptersLines:
+  - Ethernet is the wired network card - the one your cable is plugged into. Click
+    Ethernet to open its Properties. (Wi-Fi is not used in this job.)
+  tipEthernetLines:
+  - This list shows what the card can use. Click Internet Protocol Version 4 (TCP/IPv4)
+    to open its Properties. IPv4 addresses are four numbers separated by dots, like
+    192.168.1.10.
+  tipTcpIpLines:
+  - 'Select "Use the following IP address", then type the {machine}''s values from
+    the job order:
+
+    {values}
+
+    Then click OK.'
+  teachIpLine: 'IP address ({ip}): this computer''s own address. No two devices on
+    a network may share one - like house numbers on one street.'
+  teachMaskLine: 'Subnet mask ({mask}): it marks which part of the address is the
+    network. Here the first three numbers ({net}) are the network and the last number
+    is the computer, so every machine on this network must start with {net}.'
+  teachGatewayLine: 'Default gateway ({gateway}): the router''s address. A computer
+    sends anything meant for another network there, so it is the same on every computer
+    in this network.'
+  teachDnsLine: 'DNS server ({dns}): the server that turns website names into IP
+    addresses.'
+  tipDesktopRecapLines:
+  - 'This is the {machine}''s desktop. Same route as before: Start > Control Panel
+    > Network and Sharing Center > Change adapter settings > Ethernet > Internet
+    Protocol Version 4 (TCP/IPv4). This time use the {machine}''s own values.'
+  tipDesktopDoneLines:
+  - 'The {machine} is already configured. Next, set up the {other}: {leave}, then
+    walk to the {other} and {interact}.'
+  tipDesktopPingLines:
+  - To test the link, click Start and open Command Prompt.
+  tipStartPingLines:
+  - Click Command Prompt.
+  tipCmdReadyLines:
+  - Type  ping {target}  and press Enter (or click Ping).
+  tipCmdTeachLines:
+  - Ping sends small test messages to the {targetName} and waits for it to answer.
+    "Reply from {target}" means the whole path works. "Request timed out" means something
+    on the way is broken - the line under it tells you what.
+  tipCmdNoAddressLines:
+  - 'This computer has no IP address yet, so a ping cannot work. Close the Command
+    Prompt (X) and set the address first: Start > Control Panel > Network and Sharing
+    Center.'
+  tipCmdPeerNotReadyLines:
+  - The {machine} is ready, but the {other} has no IP address yet. A ping is a round
+    trip, so configure the {other} first, then come back.
+  configPassLines:
+  - 'The {machine} is configured: {values}.'
+  configNextLines:
+  - Next, set up the {other}. {Leave}, then walk to the {other} and {interact}.{arrow}
+  configFailLines:
+  - 'The settings were not applied. Check these against the job order:
+
+    {problems}'
+  - Fix them and click OK again.
+  verifyLines:
+  - Both computers have their IP addresses. Now prove the network works, with the
+    ping command.
+  - 'Ping sends a small message to another computer and waits for it to answer. An
+    answer proves the whole path: both cables, the patch panel, the switch and both
+    IP settings.'
+  - '{where}'
+  verifyHereLine: 'You are at the {here} now, so start here: click Start, open Command
+    Prompt and type  ping {target}. Then go to the {other} and ping {hereIp} back.'
+  verifyWalkLine: Go back to the {first} and {interact}. Click Start, open Command
+    Prompt and type  ping {target}. Then do the same from the {other}.{arrow}
+  pingPassLines:
+  - Reply from {target}! The {machine} reached the {targetName} and got an answer
+    back.
+  pingOtherWayLines:
+  - 'Now test the other direction: go to the {other}, open its Command Prompt and
+    type  ping {otherTarget}.'
+  allVerifiedLines:
+  - Both computers answer each other. Your network is up and working - from bare
+    cable to a verified link.
+  pingFailLines:
+  - Request timed out - no reply came back.
+  - '{reason}'
+  - Fix that, then run the ping again.
+  inspectLines:
+  - 'Last step: the final inspection. Walk to the inspection point and {interact}
+    to read the report.{arrow}'
+  - An inspector checks every part of the job against the job order. Each line says
+    PASS or FAIL, and a FAIL line tells you what to put right.
+  inspectPassedLines:
+  - The inspection passed. Every checkpoint meets the job order, so the installation
+    is signed off.
+  inspectFailedLines:
+  - The inspection found work that does not meet the job order yet. Read the FAIL
+    lines on the report - each one says what to put right - then inspect again.
+  warnNoToolLines:
+  - You need the crimping tool before you can make a cable. It is on the workbench
+    - walk up to it and {pickup}.
+  warnNoCableLines:
+  - The cable tester needs a finished cable. Make one at the crimping station first,
+    pick it up, then bring it here.
+  warnPanelLockedLines:
+  - The patch panel is not ready for you yet. Finish your cables and pass the tester
+    with each one first.
+  assessmentConfigPass: '{machine} configured.'
+  assessmentConfigFail: The {machine}'s settings were not accepted.
+  assessmentPingPass: Reply received from {target}.
+  assessmentPingFail: Request timed out.
+  assessmentInspectPass: Final inspection passed.
+  assessmentInspectFail: Final inspection not passed.
 --- !u!1 &991905040
 GameObject:
   m_ObjectHideFlags: 0
@@ -35213,7 +35490,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1017459697}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9703c543524e884e9cfd5c528ab382d, type: 3}
   m_Name: 
@@ -68579,6 +68856,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 504485836}
     m_Modifications:
+    - target: {fileID: 152546974546318974, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
+      propertyPath: m_fontSizeMin
+      value: 40
+      objectReference: {fileID: 0}
     - target: {fileID: 2525780263036310275, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -68661,7 +68942,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4517655982018847914, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_text
-      value: Tap to continue
+      value: Press Space to continue
       objectReference: {fileID: 0}
     - target: {fileID: 6818330433238451798, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_Name

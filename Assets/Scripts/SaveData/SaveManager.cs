@@ -572,10 +572,10 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        // GUIDANCE: an assessment is a separate, recorded run - it must not overwrite the learner's
+        // An assessment is a separate, recorded run - it must not overwrite the learner's
         // Story progress (a half-built PC from an exam would greet them on Continue). Its evidence is
         // saved by ResultsRepository instead.
-        if (CircuitCrafter.Guidance.GuidancePolicy.IsAssessment)
+        if (AssessmentMode.IsActive)
         {
             Debug.Log("[SaveManager] Ignored SaveCheckpoint() during an assessment - Story progress is untouched.");
             return;

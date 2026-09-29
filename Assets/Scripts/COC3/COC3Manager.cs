@@ -134,9 +134,9 @@ public class COC3Manager : MonoBehaviour
             // GUIDANCE: "Please check: Subnet Mask" names the wrong field - corrective feedback,
             // Story only. An assessment says only that it was not accepted; the detail and the
             // expected values wait for the review screen.
-            bool explain = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback);
+            bool explain = !AssessmentMode.IsActive;
             if (feedbackManager != null)
-                feedbackManager.ShowFailure(!explain ? CircuitCrafter.Guidance.GuidancePolicy.NeutralRejection
+                feedbackManager.ShowFailure(!explain ? "Action not accepted."
                                           : string.IsNullOrEmpty(message) ? "Try again." : message);
 
             stepLog.Add($"Step {currentStepIndex + 1} ({step.stepData.stepId}): RETRY");
@@ -144,7 +144,7 @@ public class COC3Manager : MonoBehaviour
         }
     }
 
-    /// <summary>GUIDANCE: the values this step wanted, for the assessment review screen only.</summary>
+    /// <summary>The values this step wanted, for the assessment review screen only.</summary>
     private static string ExpectedFor(ScreenshotStepData d)
     {
         if (d == null) return null;

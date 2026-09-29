@@ -1,0 +1,999 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+namespace CircuitCrafter.Assessment
+{
+    /// <summary>
+    /// A learner's standing on one module's UNDERPINNING KNOWLEDGE - the quiz.
+    ///
+    /// Kept beside the outcome records rather than inside them because TESDA issues one written
+    /// test per unit of competency, not one per learning outcome. Best-ever is stored, matching
+    /// how OutcomeRecord keeps the best evidence position: a rushed retry must not make a learner
+    /// look like they have gone backwards.
+    /// </summary>
+    [Serializable]
+    public class KnowledgeRecord
+    {
+        public string moduleId = "";
+
+        [Tooltip("Best percentage achieved so far. -1 means the quiz has never been taken.")]
+        public int bestPercent = -1;
+
+        [Tooltip("True once a GRADED run's quiz reached the knowledge threshold. Never goes back to false.")]
+        public bool passed;
+
+        public int attempts;
+
+        [Tooltip("resultId of the run that produced bestPercent, so the evidence file can be found.")]
+        public string evidenceResultId = "";
+
+        public string achievedUtc = "";
+
+        [Tooltip("Percentage from the MOST RECENT quiz attempt, in ANY mode. This is the one that " +
+                 "moves every time the learner takes the quiz again - including downwards.\n\n" +
+                 "The quiz in this project only runs in Story mode, so 'best ever' alone would " +
+                 "freeze after one good attempt and the screen would stop responding to practice " +
+                 "entirely. The best above is what the module header shows; this is what the bar " +
+                 "follows.")]
+        public int latestPercent = -1;
+
+        [Tooltip("True once latestPercent has been written. A ledger saved before this field " +
+                 "existed arrives with -1 and falls back to the best, which the migration does.")]
+        public bool latestScored;
+    }
+
+    /// <summary>
+    /// A learner's all-time high score for one module - deliberately its OWN record rather than
+    /// something read back off OutcomeRecord.bestScorePercent.
+    ///
+    /// OutcomeRecord's bestScorePercent is a side effect of evidencing a particular outcome: every
+    /// outcome a run touches gets stamped with that run's ScorePercent, so a module's true best
+    /// COULD be recovered by taking the max across its outcomes - but that goes silent the moment
+    /// a module has no CompetencyDefinition yet, or a run happens to evidence nothing. A high
+    /// score is a simple enough idea that it deserves its own small, always-reliable record,
+    /// exactly the way KnowledgeRecord exists beside OutcomeRecord rather than being inferred from
+    /// it.
+    ///
+    /// ASSESSMENT MODE, COMPLETED, ONLY. A Guided or Practice run must not be able to set the
+    /// number a learner is racing against, for the same reason those modes can never award
+    /// Competent - being led through it, or replaying it untimed with hints, is not the same
+    /// contest as the graded run.
+    /// </summary>
+    [Serializable]
+    public class ModuleBestScore
+    {
+        public string moduleId = "";
+
+        [Tooltip("Best ScorePercent from a completed Assessment run. -1 means no qualifying run has happened yet.")]
+        public int bestScorePercent = -1;
+
+        [Tooltip("resultId of the run that set the record, so the evidence file can be found.")]
+        public string bestResultId = "";
+
+        public string achievedUtc = "";
+
+        [Tooltip("How many completed Assessment runs have been recorded for this module, whether or not they beat the record.")]
+        public int assessmentAttempts;
+
+        [Tooltip("ScorePercent of the MOST RECENT completed Assessment run. -1 means none yet. The " +
+                 "high score above is what the learner has achieved; this is where they stand today.")]
+        public int latestScorePercent = -1;
+
+        [Tooltip("resultId of that most recent run.")]
+        public string latestResultId = "";
+
+        public string latestUtc = "";
+    }
+
+    /// <summary>
+    /// One learner's standing on one learning outcome, accumulated across every run they've ever
+    /// done.
+    ///
+    /// TWO HALVES, AND THE SPLIT IS THE POINT. Everything named plainly - evidenceSatisfied,
+    /// attempts - is "across all modes", and everything named ...Assessment is "in a completed
+    /// graded run only". They are stored separately rather than one being derived from the other
+    /// because the competency screen asks BOTH questions: the Story tab asks what the learner has
+    /// worked through, the Assessment tab asks what they have proven. Before this split, a story
+    /// run stamped the only copy there was, so a screen showing proof had nothing but story figures
+    /// to draw.
+    /// </summary>
+    [Serializable]
+    public class OutcomeRecord
+    {
+        public string moduleId = "";
+        public string outcomeCode = "";
+        public string outcomeTitle = "";
+
+        [Tooltip("CompetencyStatus as an int.")]
+        public int status = (int)CompetencyStatus.NotAttempted;
+
+        public int attempts;
+
+        [Tooltip("Best ScorePercent from a COMPLETED ASSESSMENT run - see assessmentScored. " +
+                 "Meaningless on its own, because 0 is both 'scored zero' and 'never graded'.")]
+        public int bestScorePercent;
+
+        [Tooltip("True once a completed Assessment run has stamped bestScorePercent. Without this " +
+                 "flag there is no way to tell a genuine 0% from a story run that was never marked " +
+                 "at all - and a row reading 'Best 0%' after a clean story playthrough is the one " +
+                 "thing on this screen guaranteed to be read as a failure.")]
+        public bool assessmentScored;
+
+        [Tooltip("ScorePercent from the MOST RECENT completed Assessment run - where the learner " +
+                 "stands NOW, which is not the same question as how well they have ever done.\n\n" +
+                 "Kept beside bestScorePercent rather than replacing it, because the two answer " +
+                 "different questions and the screen asks both: the bar shows where they are, the " +
+                 "label keeps what they achieved. A retry that scores 85 after a 100 must move the " +
+                 "bar - otherwise the screen says nothing happened - and must not touch the record.")]
+        public int latestScorePercent;
+
+        [Tooltip("True once latestScorePercent has been written by a graded run. Same reason " +
+                 "assessmentScored exists: 0 is both 'scored zero this time' and 'never measured', " +
+                 "and a ledger written before this field existed arrives with 0 in it.")]
+        public bool latestScored;
+
+        [Tooltip("How much of this outcome's evidence was in place at the end of the best run so far, in ANY mode. Stored on the record rather than recomputed, because the competency screen usually runs on the main menu where there is no TaskManager to ask.")]
+        public int evidenceSatisfied;
+
+        [Tooltip("The same figure, but counting only COMPLETED ASSESSMENT runs. This is what the " +
+                 "Assessment tab draws: evidence collected while the game was leading the learner " +
+                 "step by step is practice, and must not fill a bar that claims proof.")]
+        public int evidenceSatisfiedAssessment;
+
+        public int evidenceRequired;
+
+        public string lastResultId = "";
+        public string lastUpdatedUtc = "";
+
+        public CompetencyStatus Status => (CompetencyStatus)status;
+
+        /// <summary>
+        /// The evidence position to show for one of the two standings.
+        ///
+        /// Lives here rather than on the view so that the four things that draw an evidence figure
+        /// cannot each pick a different field - the same reason CompetencyCount owns the counting
+        /// rule.
+        /// </summary>
+        public int EvidenceFor(bool gradedOnly)
+        {
+            return gradedOnly ? evidenceSatisfiedAssessment : evidenceSatisfied;
+        }
+    }
+
+    /// <summary>
+    /// The learner's standing across all four modules, persisted per profile.
+    /// This is the object that makes the four modules one qualification rather
+    /// than four separate games.
+    ///
+    /// ATTACH THIS TO: the persistent Managers object, beside SaveManager,
+    /// ScoreManager and ProfileManager. It is DontDestroyOnLoad for the same
+    /// reason they are.
+    ///
+    /// WHY NOT PUT THIS IN THE SAVE FILE
+    /// It could have been another ISaveable - and that was the first instinct -
+    /// but the save file is scene state that gets reset when a mode is restarted
+    /// or a save is deleted. A competency record must outlive all of that: a
+    /// learner who replays COC1 from scratch has not stopped being competent at
+    /// assembling a PC. Keeping it in its own file, keyed by profile, is what
+    /// gives it the right lifetime.
+    ///
+    /// PROMOTION RULES
+    ///   Any completed run                       -> at least Practised
+    ///   Assessment mode, outcome fully evidenced,
+    ///   run completed, score >= pass threshold  -> Competent
+    ///   Never demotes.
+    ///
+    /// WHAT A STORY RUN MAY AND MAY NOT WRITE
+    ///   May:  status up to Practised, attempts, evidenceSatisfied, knowledge bestPercent.
+    ///   Must not: status Competent, bestScorePercent, evidenceSatisfiedAssessment,
+    ///             knowledge.passed, ModuleBestScore.
+    /// Everything in the second list is a claim about what the learner has PROVEN, and the whole
+    /// Assessment tab of the competency screen is drawn from it. One shared test - Assessment mode
+    /// and completed - guards all five; see `graded` in Apply and the identical line in
+    /// RecordModuleBest.
+    ///
+    /// The Guided exclusion is deliberate and worth defending: a run where the
+    /// game told the learner what to do at every step is evidence of exposure,
+    /// not of independent competence. Practice runs count as Practised for the
+    /// same reason. Only an unassisted graded run can produce a Competent
+    /// judgement, which is also how the real assessment works.
+    /// </summary>
+    public class CompetencyLedger : MonoBehaviour
+    {
+        public static CompetencyLedger Instance { get; private set; }
+
+        [Header("Competency Definitions")]
+        [Tooltip("One CompetencyDefinition asset per module. Used to turn a run's task completions into outcome judgements, and to render the competency profile screen.")]
+        [SerializeField] private List<CompetencyDefinition> definitions = new List<CompetencyDefinition>();
+
+        [Header("Rules")]
+        [Tooltip("Minimum score percentage an ASSESSMENT run must reach before any of its outcomes can be marked Competent. Below this the run still records as Practised.")]
+        [Range(0, 100)]
+        [SerializeField] private int passThresholdPercent = 80;
+
+        [Header("Underpinning knowledge (the quiz)")]
+        [Tooltip("Require the module's quiz to be passed before any outcome can be marked Competent.\n\n" +
+                 "TESDA's Evidence Plan lists demonstration AND written test as separate requirements " +
+                 "that must both be met - it does not average them. Leaving this ON is the behaviour " +
+                 "that matches the real instrument, IF the quiz is actually reachable during an " +
+                 "Assessment run.\n\n" +
+                 "OFF BY DESIGN ON THIS PROJECT: the quiz here only ever runs in Story mode, as " +
+                 "practice - Assessment mode has no quiz to take. With this left ON, no module could " +
+                 "ever award Competent, because result.KnowledgeAttempted can never be true for an " +
+                 "Assessment run - the Console said exactly that (\"no quiz was answered during the " +
+                 "run\") rather than failing silently.\n\n" +
+                 "Tick it back on only for a module whose Assessment run genuinely does put the quiz " +
+                 "in front of the learner; a module with no reachable quiz and this ticked can never " +
+                 "award Competent, however well it scores.")]
+        [SerializeField] private bool requireKnowledgeEvidence = false;
+
+        [Tooltip("Minimum quiz percentage. TESDA written tests are commonly set at 75%.")]
+        [Range(0, 100)]
+        [SerializeField] private int knowledgeThresholdPercent = 75;
+
+        /// <summary>Fires whenever any record changes. A competency profile screen
+        /// should subscribe rather than poll.</summary>
+        public event Action OnLedgerChanged;
+
+        [Serializable]
+        private class LedgerFile
+        {
+            public string profileId = "";
+            public List<OutcomeRecord> records = new List<OutcomeRecord>();
+
+            // Added after the first ledgers were written. JsonUtility simply leaves a field it
+            // cannot find at its default, so an existing ledger_*.json loads with an empty list
+            // and fills in from the next run - no migration, nothing to delete.
+            public List<KnowledgeRecord> knowledge = new List<KnowledgeRecord>();
+
+            // Same story again: an older ledger file loads with this empty and starts tracking
+            // from the next completed Assessment run.
+            public List<ModuleBestScore> moduleBests = new List<ModuleBestScore>();
+        }
+
+        private LedgerFile ledger = new LedgerFile();
+
+        public static string LedgerPathFor(string profileId)
+        {
+            string safe = string.IsNullOrEmpty(profileId) ? "default" : profileId;
+            return Path.Combine(Application.persistentDataPath, $"ledger_{safe}.json");
+        }
+
+        // ------------------------------------------------------------------
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                // Destroy(this), not Destroy(gameObject) - see the long comment on
+                // ProfileManager.Awake. Scene-specific recorder/bridge components
+                // live on the per-scene copy of this object, and destroying the
+                // whole GameObject would take them down with it before they ever
+                // ran, with no error to explain the silence.
+                Debug.Log($"[CompetencyLedger] A second CompetencyLedger on '{name}' stood down - the one from the first scene is still active. Any other components on this object keep running.", this);
+                Destroy(this);
+                return;
+            }
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        private void Start()
+        {
+            // Deliberately in Start, not Awake: ProfileManager also runs its Awake
+            // this frame and there is no guaranteed order between two components,
+            // even on the same GameObject. By Start it has definitely chosen an
+            // active profile, so the right ledger gets loaded first time rather
+            // than loading "default" and then being corrected.
+            if (ProfileManager.Instance != null)
+            {
+                ProfileManager.Instance.OnActiveProfileChanged += HandleProfileChanged;
+                Load(ProfileManager.Instance.ActiveProfileId);
+            }
+            else
+            {
+                Debug.LogWarning("[CompetencyLedger] No ProfileManager in the scene - falling back to a single shared ledger. Add ProfileManager to the same Managers object for per-learner records.");
+                Load("default");
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (ProfileManager.Instance != null)
+                ProfileManager.Instance.OnActiveProfileChanged -= HandleProfileChanged;
+
+            if (Instance == this) Instance = null;
+        }
+
+        private void HandleProfileChanged(LearnerProfile profile)
+        {
+            Load(profile != null ? profile.profileId : "default");
+        }
+
+        // ------------------------------------------------------------------
+        // Recording
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Folds a finished run into the ledger. Called by AssessmentRecorder;
+        /// call it yourself if you build a result some other way.
+        ///
+        /// Also fills in result.criteria as a side effect, so the stored result
+        /// file carries its own copy of the judgement and can be read back later
+        /// without this ledger or the definition asset.
+        /// </summary>
+        public void RecordResult(AssessmentResult result)
+        {
+            if (result == null) return;
+
+            CompetencyDefinition definition = GetDefinition(result.moduleId);
+            if (definition == null)
+            {
+                Debug.LogWarning($"[CompetencyLedger] No CompetencyDefinition assigned for module '{result.moduleId}' - the run was saved, but no outcomes could be judged. Add the asset to the Definitions list.");
+                return;
+            }
+
+            // Evidence comes from two places, and it needs both.
+            //
+            //   1. Live TaskManager state at the end of the run. Reading this
+            //      rather than replaying the stage list means an outcome
+            //      evidenced by work done outside the recorder's own stages - a
+            //      checklist tool, a quiz, a station elsewhere in the scene -
+            //      still counts.
+            //
+            //   2. Stages this run completed. COC3 doesn't use TaskManager at
+            //      all, and COC4's repair tasks are named per ticket at runtime,
+            //      so those modules close stages by manual id. Without this
+            //      second source their outcomes could never be evidenced and
+            //      every learner would sit at Practised forever.
+            //
+            // A CompetencyDefinition therefore accepts EITHER a TaskManager task
+            // id or an AssessmentRecorder manual stage id in evidenceTaskIds,
+            // and doesn't have to say which it is.
+            Func<string, bool> isComplete = id =>
+                (TaskManager.Instance != null && TaskManager.Instance.IsTaskComplete(
+                    string.IsNullOrWhiteSpace(id) ? id : id.Trim()))
+                || HasCompletedStage(result, id);
+
+            // Knowledge evidence is gathered here rather than by whoever built the result, because
+            // RecordResult runs BEFORE ResultsRepository.Save in both the recorder and the legacy
+            // bridge - so the JSON evidence file and the CSV row carry these numbers too, without
+            // either of those scripts having to change.
+            KnowledgeCheck.FillInto(result);
+
+            bool modeOk = result.Mode == SessionMode.Assessment;
+            bool completedOk = result.completed;
+            bool scoreOk = result.ScorePercent >= passThresholdPercent;
+
+            // THE SECOND EVIDENCE REQUIREMENT, NOT A SECOND HALF OF THE FIRST.
+            //
+            // Performance and underpinning knowledge are separate requirements in TESDA's Evidence
+            // Plan and both must be met; they are never averaged. So this is another AND, and the
+            // quiz result is deliberately NOT mixed into result.score.
+            bool knowledgeOk = !requireKnowledgeEvidence
+                               || (result.KnowledgeAttempted &&
+                                   result.KnowledgePercent >= knowledgeThresholdPercent);
+
+            bool canAwardCompetent = modeOk && completedOk && scoreOk && knowledgeOk;
+
+            // SAY WHY, WHEN THE ANSWER IS NO.
+            //
+            // Three separate conditions stand between a finished run and a Competent judgement,
+            // and until now failing any of them looked identical from the outside: the run saves,
+            // the profile screen shows Practised, and nothing anywhere says which one it was. A
+            // trainer looking at a learner who plainly did the work has no way to tell whether the
+            // score fell a point under the threshold, a stage never closed, or the run was not
+            // recognised as an assessment at all.
+            if (!canAwardCompetent)
+            {
+                string why = null;
+                if (!modeOk)
+                    why = Add(why, $"the run was recorded as {result.Mode}, not Assessment - it was " +
+                                   "started from the campaign menu rather than the assessment menu");
+                if (!completedOk)
+                    why = Add(why, "not every stage was completed - an unfinished run can only ever " +
+                                   "be Practised, however well it scored");
+                if (!scoreOk)
+                    why = Add(why, $"the score was {result.ScorePercent}%, below the {passThresholdPercent}% " +
+                                   "pass threshold on this ledger");
+                if (!knowledgeOk)
+                    why = Add(why, result.KnowledgeAttempted
+                        ? $"the quiz scored {result.KnowledgePercent}% ({result.knowledgeCorrect} of " +
+                          $"{result.knowledgeQuestions}), below the {knowledgeThresholdPercent}% knowledge " +
+                          "threshold - performance and knowledge are separate requirements and both must be met"
+                        : "no quiz was answered during the run, so there is no underpinning-knowledge " +
+                          "evidence. If this module has no quiz, untick Require Knowledge Evidence on " +
+                          "this ledger - otherwise it can never award Competent");
+
+                Debug.LogWarning($"[CompetencyLedger] '{result.moduleId}' run recorded, but NOTHING can " +
+                                 $"be marked Competent from it: {why}.\n\n" +
+                                 "The outcomes below will be stored as Practised instead.");
+            }
+
+            result.criteria.Clear();
+
+            var evidenceReport = new System.Text.StringBuilder();
+
+            foreach (var outcome in definition.outcomes)
+            {
+                if (outcome == null || string.IsNullOrEmpty(outcome.code)) continue;
+
+                bool satisfied = definition.Evaluate(outcome, isComplete, out int have, out int need);
+
+                evidenceReport.AppendLine($"  {outcome.code} '{outcome.title}': evidence {have}/{need}" +
+                                          (satisfied ? " - satisfied" : " - NOT satisfied"));
+
+                // NAME THE IDs THAT DID NOT MATCH, AND THE ONES THAT WERE AVAILABLE.
+                //
+                // "0 of 1 evidenced" is the single most common thing to go wrong here and the least
+                // informative message possible: it says an outcome was not evidenced without saying
+                // WHICH id was looked for or what the run actually closed. The two lists almost
+                // always differ by a typo, or by an id the module names at runtime that the asset
+                // could not have known - COC 4 names its repair stages per ticket.
+                //
+                // Printed only for outcomes that failed, so a clean run stays quiet.
+                if (!satisfied && outcome.evidenceTaskIds != null)
+                {
+                    foreach (string id in outcome.evidenceTaskIds)
+                    {
+                        if (string.IsNullOrWhiteSpace(id)) continue;
+                        evidenceReport.AppendLine($"      looking for '{id.Trim()}' : " +
+                                                  (isComplete(id) ? "found" : "NOT FOUND"));
+                    }
+                }
+
+                CompetencyStatus earned;
+                if (satisfied && canAwardCompetent) earned = CompetencyStatus.Competent;
+                else if (have > 0 || result.completed) earned = CompetencyStatus.Practised;
+                else earned = CompetencyStatus.NotAttempted;
+
+                result.criteria.Add(new CriterionOutcome
+                {
+                    outcomeCode = outcome.code,
+                    outcomeTitle = outcome.title,
+                    status = (int)earned,
+                    evidenceSatisfied = have,
+                    evidenceRequired = need
+                });
+
+                Apply(definition.moduleId, outcome, earned, result, have, need);
+            }
+
+            // Printed whether or not anything was awarded. An outcome sitting at 2/3 names the one
+            // piece of evidence that never arrived, which is usually an evidenceTaskIds entry that
+            // does not match any task id the module actually reports.
+            string knowledgeLine = result.KnowledgeAttempted
+                ? $"{result.KnowledgePercent}% ({result.knowledgeCorrect}/{result.knowledgeQuestions} " +
+                  $"across {result.knowledgeQuizzes} quiz(zes)), threshold {knowledgeThresholdPercent}%"
+                : "not taken";
+
+            Debug.Log($"[CompetencyLedger] '{result.moduleId}' outcomes judged\n" +
+                      $"  Performance : {result.ScorePercent}%, threshold {passThresholdPercent}%\n" +
+                      $"  Knowledge   : {knowledgeLine}" +
+                      (requireKnowledgeEvidence ? "" : "   (not required on this ledger)") + "\n" +
+                      $"  All stages complete: {result.completed}, mode {result.Mode}\n" +
+                      evidenceReport);
+
+            // What the run ACTUALLY produced, once, under the per-outcome lines. Copy the ids from
+            // here into the CompetencyDefinition's Evidence Task Ids and the outcome starts
+            // evidencing - no guessing at what a module calls its stages.
+            if (result.stages != null && result.stages.Count > 0)
+            {
+                var closed = new System.Text.StringBuilder();
+                foreach (var stage in result.stages)
+                {
+                    if (stage == null || !stage.completed) continue;
+                    if (closed.Length > 0) closed.Append(", ");
+                    closed.Append(stage.stageId);
+                }
+
+                Debug.Log($"[CompetencyLedger] Stage ids this '{result.moduleId}' run actually closed:\n  " +
+                          (closed.Length > 0 ? closed.ToString() : "(none)") +
+                          "\n\nAn outcome stuck at 0 of N is looking for an id that is not in this list. " +
+                          "Paste the right ones into that outcome's Evidence Task Ids.");
+            }
+
+            RecordKnowledge(result);
+            RecordModuleBest(result);
+
+            Save();
+            OnLedgerChanged?.Invoke();
+        }
+
+        private static string Add(string all, string line)
+        {
+            return all == null ? line : all + "; and " + line;
+        }
+
+        // ------------------------------------------------------------------
+        // Underpinning knowledge
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Folds this run's quiz into the module's knowledge standing.
+        ///
+        /// BEST-EVER, NEVER WORSE - the same rule OutcomeRecord follows for evidence position. A
+        /// learner who scored 90% and then replays the module and rushes the quiz has not become
+        /// less knowledgeable, and a record that slid backwards would make the screen useless as a
+        /// history.
+        ///
+        /// 'passed' is one-way and only a GRADED run can set it, for the same reason a Guided run
+        /// cannot award Competent: answering questions with the game leading you is exposure.
+        /// Practice attempts still update bestPercent, so progress is visible.
+        /// </summary>
+        private void RecordKnowledge(AssessmentResult result)
+        {
+            if (result == null || !result.KnowledgeAttempted) return;
+            if (string.IsNullOrEmpty(result.moduleId)) return;
+
+            KnowledgeRecord record = ledger.knowledge.Find(
+                k => k != null && k.moduleId == result.moduleId);
+
+            if (record == null)
+            {
+                record = new KnowledgeRecord { moduleId = result.moduleId };
+                ledger.knowledge.Add(record);
+            }
+
+            record.attempts++;
+
+            int percent = result.KnowledgePercent;
+
+            // EVERY attempt, in every mode, worse ones included. The quiz is practice here, and a
+            // practice figure that can only rise is not feedback - it is a trophy. The best below
+            // is untouched, so nothing is lost by showing where they actually stand.
+            record.latestPercent = percent;
+            record.latestScored = true;
+
+            if (percent > record.bestPercent)
+            {
+                record.bestPercent = percent;
+                record.evidenceResultId = result.resultId;
+                record.achievedUtc = result.finishedUtc;
+            }
+
+            if (result.Mode == SessionMode.Assessment && percent >= knowledgeThresholdPercent)
+                record.passed = true;
+
+            Debug.Log($"[CompetencyLedger] Knowledge for '{result.moduleId}': this run {percent}%, " +
+                      $"best {record.bestPercent}%, passed: {record.passed} " +
+                      $"(attempt {record.attempts}).");
+        }
+
+        /// <summary>This learner's knowledge standing for a module, or null if they have never
+        /// answered a question in it. Safe to call on the main menu - it reads the ledger only.</summary>
+        public KnowledgeRecord GetKnowledge(string moduleId)
+        {
+            if (string.IsNullOrEmpty(moduleId) || ledger.knowledge == null) return null;
+            return ledger.knowledge.Find(k => k != null && k.moduleId == moduleId);
+        }
+
+        // ------------------------------------------------------------------
+        // Module high score
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Folds this run into the module's all-time high score - BEST-EVER, NEVER WORSE, same
+        /// rule as everything else in this ledger, and ASSESSMENT-MODE-COMPLETED-ONLY, same
+        /// restriction as awarding Competent. See the ModuleBestScore class comment for why this
+        /// is its own record rather than read back off the outcome rows.
+        /// </summary>
+        private void RecordModuleBest(AssessmentResult result)
+        {
+            if (result == null || string.IsNullOrEmpty(result.moduleId)) return;
+            if (result.Mode != SessionMode.Assessment || !result.completed) return;
+
+            ModuleBestScore record = ledger.moduleBests.Find(
+                m => m != null && m.moduleId == result.moduleId);
+
+            if (record == null)
+            {
+                record = new ModuleBestScore { moduleId = result.moduleId };
+                ledger.moduleBests.Add(record);
+            }
+
+            record.assessmentAttempts++;
+
+            // Where the learner stands after THIS run, kept whether or not it beat the record.
+            record.latestScorePercent = result.ScorePercent;
+            record.latestResultId = result.resultId;
+            record.latestUtc = result.finishedUtc;
+
+            if (result.ScorePercent > record.bestScorePercent)
+            {
+                record.bestScorePercent = result.ScorePercent;
+                record.bestResultId = result.resultId;
+                record.achievedUtc = result.finishedUtc;
+
+                Debug.Log($"[CompetencyLedger] New high score for '{result.moduleId}': " +
+                          $"{record.bestScorePercent}% (run '{record.bestResultId}').");
+            }
+        }
+
+        /// <summary>This learner's high score for a module, or null if no completed Assessment
+        /// run has ever been recorded for it. Safe to call on the main menu - it reads the ledger
+        /// only.</summary>
+        public ModuleBestScore GetModuleBest(string moduleId)
+        {
+            if (string.IsNullOrEmpty(moduleId) || ledger.moduleBests == null) return null;
+            return ledger.moduleBests.Find(m => m != null && m.moduleId == moduleId);
+        }
+
+        /// <summary>The knowledge threshold, so a screen can say "75% needed" without hard-coding
+        /// a number that lives on this component.</summary>
+        public int KnowledgeThresholdPercent => knowledgeThresholdPercent;
+
+        /// <summary>Whether this ledger demands knowledge evidence at all, so a screen can hide the
+        /// knowledge line entirely on a build that does not use quizzes.</summary>
+        public bool RequiresKnowledgeEvidence => requireKnowledgeEvidence;
+
+        /// <summary>The performance threshold, for the same reason.</summary>
+        public int PassThresholdPercent => passThresholdPercent;
+
+        /// <summary>True if this run closed a stage with the given id. Lets a
+        /// manual stage id stand as evidence for modules that don't route their
+        /// progress through TaskManager - see the comment in RecordResult.</summary>
+        private static bool HasCompletedStage(AssessmentResult result, string stageId)
+        {
+            if (result == null || string.IsNullOrWhiteSpace(stageId)) return false;
+
+            string wanted = stageId.Trim();
+
+            // Trimmed, for the same reason as GetDefinition: a stage id comes from an Inspector
+            // field and the evidence id it is being matched against comes from a different one.
+            foreach (var stage in result.stages)
+            {
+                if (stage == null || !stage.completed || string.IsNullOrWhiteSpace(stage.stageId))
+                    continue;
+
+                if (string.Equals(stage.stageId.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        private void Apply(string moduleId, CompetencyDefinition.LearningOutcome outcome,
+                           CompetencyStatus earned, AssessmentResult result,
+                           int evidenceSatisfied, int evidenceRequired)
+        {
+            OutcomeRecord record = GetOrCreate(moduleId, outcome.code);
+            record.outcomeTitle = outcome.title;
+
+            if (earned != CompetencyStatus.NotAttempted)
+                record.attempts++;
+
+            // THE ONE TEST THIS METHOD USED NOT TO MAKE.
+            //
+            // Everything else in this ledger that means "proven" is gated on exactly this pair -
+            // awarding Competent, RecordModuleBest, knowledge.passed. Apply was not, so a Guided
+            // story run stamped the per-outcome score and the per-outcome evidence position just as
+            // hard as a graded run did. The visible results were a row reading "Best 0%" after a
+            // clean COC1 story playthrough (StoryRunRecorder writes 0/0 deliberately - a story run
+            // is not marked) and an evidence bar that filled on the Assessment tab without the
+            // learner ever having sat an assessment.
+            //
+            // 'completed' is part of the test, not decoration: an abandoned graded run is not a
+            // measurement of anything either.
+            bool graded = result.Mode == SessionMode.Assessment && result.completed;
+
+            // Keep the best evidence position ever reached, not the latest. A
+            // learner who evidenced 4 of 4 last week and only got through 2 of 4
+            // on a rushed retry has not un-done the earlier work, and the screen
+            // showing them slipping backwards would be both wrong and dispiriting.
+            record.evidenceRequired = evidenceRequired;
+            if (evidenceSatisfied > record.evidenceSatisfied)
+                record.evidenceSatisfied = evidenceSatisfied;
+
+            if (graded && evidenceSatisfied > record.evidenceSatisfiedAssessment)
+                record.evidenceSatisfiedAssessment = evidenceSatisfied;
+
+            // One-way promotion. See the class comment - a bad retry must not
+            // erase a judgement the learner already earned.
+            if ((int)earned > record.status)
+                record.status = (int)earned;
+
+            // Best-ever, never worse, and only from a graded run. A learner who scored 84% and then
+            // replays the module in story mode has not scored 0%.
+            if (graded && (!record.assessmentScored || result.ScorePercent > record.bestScorePercent))
+            {
+                record.bestScorePercent = result.ScorePercent;
+                record.assessmentScored = true;
+            }
+
+            // THE LATEST STANDING, WRITTEN ON EVERY GRADED RUN - including a worse one. This is the
+            // one figure in the ledger that is allowed to go down, and it has to be: a second run
+            // scoring 85 after a perfect first run is a real result, and a screen that cannot show
+            // it tells the learner their retry did not happen. The best above is untouched, so
+            // nothing they earned is lost - the two numbers simply answer different questions.
+            if (graded)
+            {
+                record.latestScorePercent = result.ScorePercent;
+                record.latestScored = true;
+            }
+
+            record.lastResultId = result.resultId;
+            record.lastUpdatedUtc = DateTime.UtcNow.ToString("o");
+        }
+
+        // ------------------------------------------------------------------
+        // Queries - for the competency profile screen and for unlock rules
+        // ------------------------------------------------------------------
+
+        public CompetencyStatus GetStatus(string moduleId, string outcomeCode)
+        {
+            var record = Find(moduleId, outcomeCode);
+            return record != null ? record.Status : CompetencyStatus.NotAttempted;
+        }
+
+        public IReadOnlyList<OutcomeRecord> AllRecords => ledger.records;
+
+        public List<OutcomeRecord> GetRecords(string moduleId)
+        {
+            var list = new List<OutcomeRecord>();
+            foreach (var record in ledger.records)
+            {
+                if (record != null && record.moduleId == moduleId) list.Add(record);
+            }
+            return list;
+        }
+
+        public CompetencyDefinition GetDefinition(string moduleId)
+        {
+            if (string.IsNullOrWhiteSpace(moduleId)) return null;
+
+            string wanted = moduleId.Trim();
+
+            // Trimmed and case-insensitive. Both sides are hand-typed strings in two different
+            // Inspectors - the module id on the definition asset, and the one the assessment menu
+            // starts the run with - and an exact compare means 'coc2' or 'COC2 ' silently finds
+            // nothing. The run then saves with no outcomes judged at all.
+            foreach (var definition in definitions)
+            {
+                if (definition == null || string.IsNullOrWhiteSpace(definition.moduleId)) continue;
+
+                if (string.Equals(definition.moduleId.Trim(), wanted,
+                                  StringComparison.OrdinalIgnoreCase))
+                    return definition;
+            }
+            return null;
+        }
+
+        public IReadOnlyList<CompetencyDefinition> Definitions => definitions;
+
+        /// <summary>How many outcomes in a module are Competent, and how many
+        /// exist. Reads the count from the DEFINITION rather than from the stored
+        /// records, so an outcome never attempted still counts in the denominator -
+        /// otherwise a learner who has done one outcome shows as 100 percent.</summary>
+        public void GetModuleProgress(string moduleId, out int competent, out int total)
+        {
+            GetModuleProgress(moduleId, out competent, out int _, out total);
+        }
+
+        /// <summary>
+        /// Both standings at once: how many outcomes are Competent, how many are Practised OR
+        /// BETTER, and how many exist.
+        ///
+        /// THE TWO BARS ON THE COMPETENCY SCREEN ARE DRAWN FROM THIS, and the asymmetry is
+        /// deliberate. `practised` counts Competent outcomes too, so it can never be the smaller
+        /// number - which is what lets the yellow story fill sit behind the blue assessment fill
+        /// without the back bar ever being overtaken by the front one. The alternative, counting
+        /// only outcomes that stopped at Practised, makes the yellow bar visibly SHRINK as a reward
+        /// for passing an assessment.
+        ///
+        /// Returned from one pass rather than two calls because every caller needs both and two
+        /// passes is two chances to read them against different ledger states.
+        ///
+        /// Counted from the DEFINITION, not from the stored records, so an outcome never attempted
+        /// still counts in the denominator - otherwise a learner who has done one outcome shows as
+        /// 100 percent.
+        /// </summary>
+        public void GetModuleProgress(string moduleId, out int competent, out int practised, out int total)
+        {
+            competent = 0;
+            practised = 0;
+            total = 0;
+
+            var definition = GetDefinition(moduleId);
+            if (definition == null) return;
+
+            foreach (var outcome in definition.outcomes)
+            {
+                if (outcome == null || string.IsNullOrEmpty(outcome.code)) continue;
+
+                total++;
+
+                CompetencyStatus status = GetStatus(moduleId, outcome.code);
+
+                if (status == CompetencyStatus.Competent) competent++;
+                if (status >= CompetencyStatus.Practised) practised++;
+            }
+        }
+
+        /// <summary>True when every outcome in a module has been judged Competent.
+        /// This is the check to gate a COC4 ticket on - a cabling fault should
+        /// require COC2 competence, not merely that COC2 was finished once.</summary>
+        public bool IsModuleCompetent(string moduleId)
+        {
+            GetModuleProgress(moduleId, out int competent, out int total);
+            return total > 0 && competent == total;
+        }
+
+        // ------------------------------------------------------------------
+        // Persistence
+        // ------------------------------------------------------------------
+
+        private OutcomeRecord Find(string moduleId, string outcomeCode)
+        {
+            foreach (var record in ledger.records)
+            {
+                if (record != null && record.moduleId == moduleId && record.outcomeCode == outcomeCode)
+                    return record;
+            }
+            return null;
+        }
+
+        private OutcomeRecord GetOrCreate(string moduleId, string outcomeCode)
+        {
+            var existing = Find(moduleId, outcomeCode);
+            if (existing != null) return existing;
+
+            var record = new OutcomeRecord
+            {
+                moduleId = moduleId,
+                outcomeCode = outcomeCode,
+                status = (int)CompetencyStatus.NotAttempted
+            };
+            ledger.records.Add(record);
+            return record;
+        }
+
+        public void Load(string profileId)
+        {
+            string path = LedgerPathFor(profileId);
+
+            if (!File.Exists(path))
+            {
+                ledger = new LedgerFile { profileId = profileId };
+                OnLedgerChanged?.Invoke();
+                return;
+            }
+
+            try
+            {
+                ledger = JsonUtility.FromJson<LedgerFile>(File.ReadAllText(path)) ?? new LedgerFile();
+                if (ledger.records == null) ledger.records = new List<OutcomeRecord>();
+                if (ledger.knowledge == null) ledger.knowledge = new List<KnowledgeRecord>();
+                if (ledger.moduleBests == null) ledger.moduleBests = new List<ModuleBestScore>();
+                ledger.profileId = profileId;
+                Migrate();
+                Debug.Log($"[CompetencyLedger] Loaded {ledger.records.Count} record(s) for profile '{profileId}'.");
+            }
+            catch (Exception e)
+            {
+                // Same reasoning as ProfileManager: start clean in memory, leave the
+                // file alone so it can be recovered rather than overwritten.
+                Debug.LogWarning($"[CompetencyLedger] Couldn't read '{path}' ({e.Message}). Starting an empty ledger; the existing file has been left in place.");
+                ledger = new LedgerFile { profileId = profileId };
+            }
+
+            OnLedgerChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Brings a ledger file written before OutcomeRecord had a graded half up to date.
+        ///
+        /// Unity fills a field a JSON file has never heard of with its default, so every record in
+        /// an existing file arrives with assessmentScored = false and evidenceSatisfiedAssessment =
+        /// 0 - which would read as "this learner has never sat an assessment" and quietly blank a
+        /// best score they really did earn. Neither field can be recovered exactly, but both can be
+        /// inferred safely from something the old file DID store:
+        ///
+        ///   status == Competent  ->  only a completed graded run can set that, so the evidence was
+        ///                            in place in a graded run: carry evidenceSatisfied across.
+        ///   bestScorePercent > 0 ->  a story run writes 0/0 and therefore 0%, so any score above
+        ///                            zero came from a marked run: keep it.
+        ///
+        /// Deliberately one-way and lossy in the safe direction. A genuine 0% graded run on an
+        /// outcome that never reached Competent reads as "never graded" after this, which shows one
+        /// blank label instead of inventing proof - and the learner's next graded run restores it.
+        /// Idempotent, so running it on an already-migrated file changes nothing.
+        /// </summary>
+        private void Migrate()
+        {
+            if (ledger == null || ledger.records == null) return;
+
+            int carried = 0;
+
+            foreach (OutcomeRecord record in ledger.records)
+            {
+                if (record == null) continue;
+
+                if (!record.assessmentScored && record.bestScorePercent > 0)
+                {
+                    record.assessmentScored = true;
+                    carried++;
+                }
+
+                if (record.evidenceSatisfiedAssessment == 0
+                    && record.Status == CompetencyStatus.Competent
+                    && record.evidenceSatisfied > 0)
+                {
+                    record.evidenceSatisfiedAssessment = record.evidenceSatisfied;
+                    carried++;
+                }
+
+                // A file written before latestScorePercent existed arrives with 0 in it, which would
+                // empty the bar for a learner who really has scored. The best is the only figure
+                // that file kept, so it stands in as the latest until their next graded run replaces
+                // it - one run behind is recoverable, a bar reading zero beside "Best 92%" is not.
+                if (!record.latestScored && record.assessmentScored)
+                {
+                    record.latestScorePercent = record.bestScorePercent;
+                    record.latestScored = true;
+                    carried++;
+                }
+            }
+
+            if (ledger.knowledge != null)
+            {
+                foreach (KnowledgeRecord knowledge in ledger.knowledge)
+                {
+                    if (knowledge == null) continue;
+
+                    if (!knowledge.latestScored && knowledge.bestPercent >= 0)
+                    {
+                        knowledge.latestPercent = knowledge.bestPercent;
+                        knowledge.latestScored = true;
+                        carried++;
+                    }
+                }
+            }
+
+            if (ledger.moduleBests != null)
+            {
+                foreach (ModuleBestScore module in ledger.moduleBests)
+                {
+                    if (module == null) continue;
+
+                    if (module.latestScorePercent < 0 && module.bestScorePercent >= 0)
+                    {
+                        module.latestScorePercent = module.bestScorePercent;
+                        module.latestResultId = module.bestResultId;
+                        module.latestUtc = module.achievedUtc;
+                        carried++;
+                    }
+                }
+            }
+
+            if (carried > 0)
+                Debug.Log($"[CompetencyLedger] Migrated {carried} field(s) on an older ledger file: " +
+                          "scores and evidence positions that could only have come from a graded run " +
+                          "have been carried into the assessment half of the record. Anything that " +
+                          "could not be told apart from story-mode progress now reads as not yet " +
+                          "graded, which is the safe direction.");
+        }
+
+        public void Save()
+        {
+            try
+            {
+                File.WriteAllText(LedgerPathFor(ledger.profileId), JsonUtility.ToJson(ledger, prettyPrint: true));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[CompetencyLedger] Couldn't write the ledger: {e.Message}");
+            }
+        }
+
+        /// <summary>Wipes the active profile's ledger. For an instructor reset
+        /// button - confirm before calling, there is no undo.</summary>
+        public void ResetActiveLedger()
+        {
+            ledger.records.Clear();
+            Save();
+            OnLedgerChanged?.Invoke();
+        }
+    }
+}

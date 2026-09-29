@@ -64,12 +64,6 @@ public class AssessmentIntroPanel : MonoBehaviour
     // ------------------------------------------------------------------
 
     [Header("Text")]
-    [Tooltip("GUIDANCE: assign this scene's Job Order and the briefing shows its ASSESSMENT reading - the " +
-             "scenario, the required outcome and the specifications - instead of the Title and Objectives " +
-             "below. Recommended: an objectives list written as steps ('Strip the jacket... Arrange the " +
-             "wires...') tells the candidate the procedure being assessed.")]
-    public CircuitCrafter.Guidance.JobOrderData jobOrder;
-
     public string title = "COC 2 - Cable Assembly and Testing";
 
     [Tooltip("One line per objective. A bullet is added to each, so type the text only.")]
@@ -283,9 +277,8 @@ public class AssessmentIntroPanel : MonoBehaviour
 
         foreach (var go in disableForAssessment) if (go != null) go.SetActive(false);
 
-        if (titleText != null) titleText.text = jobOrder != null ? jobOrder.Title(true) : title;
-        if (objectivesText != null)
-            objectivesText.text = jobOrder != null ? jobOrder.BuildText(true, false) : BuildObjectives();
+        if (titleText != null) titleText.text = title;
+        if (objectivesText != null) objectivesText.text = BuildObjectives();
 
         if (rulesText != null)
         {

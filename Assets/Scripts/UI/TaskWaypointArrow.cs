@@ -700,7 +700,7 @@ namespace CSSSimulation.Networking
         // ---------------------------------------------------------------- public API
 
         /// <summary>Whether the step at this index counts as done right now, latch included - the
-        /// same answer the arrow itself uses. Added so StoryGuide can follow this arrow's steps
+        /// same answer the arrow itself uses, for any script that wants to follow this arrow's steps
         /// instead of keeping a second copy of their conditions. Read-only; changes nothing.</summary>
         public bool IsStepComplete(int index)
         {

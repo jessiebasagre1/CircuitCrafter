@@ -141,10 +141,10 @@ public class DisassemblyHintGlow : MonoBehaviour
     {
         block = new MaterialPropertyBlock();
 
-        // GUIDANCE: any assessment, not just this module's - a COC4 run uses COC1-style repair
+        // Any assessment, not just this module's - a COC4 run uses COC1-style repair
         // sites, where IsAssessing("COC1") is false and the glow used to stay on mid-exam.
         if (storyModeOnly && (AssessmentMode.IsAssessing(moduleId) ||
-            !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights)))
+            AssessmentMode.IsActive))
         {
             standingDown = true;
             enabled = false;

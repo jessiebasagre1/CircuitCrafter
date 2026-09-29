@@ -54,6 +54,28 @@ namespace CircuitCrafter.Assessment.UI
         [SerializeField] private CompetencyModuleHeaderView moduleHeaderPrefab;
         [SerializeField] private CompetencyOutcomeRowView outcomeRowPrefab;
 
+        [Header("Extra rows under each module")]
+        [Tooltip("Add a QUIZ row under every module that has a quiz - the underpinning-knowledge " +
+                 "score. It follows the LATEST attempt, so every story run moves it; the module " +
+                 "header keeps the best.")]
+        [SerializeField] private bool showQuizRow = true;
+
+        [Tooltip("Gold, the colour this project already reserves for anything earned. Used for the " +
+                 "quiz row and the COC4 faults row so they read as one kind of thing, distinct from " +
+                 "the graded outcome rows above them.")]
+        [SerializeField] private Color extraRowColour = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
+
+        [Tooltip("The module with no quiz, which gets a repaired-faults row instead. Normally COC4. " +
+                 "Leave blank to give every module a quiz row and none a faults row.")]
+        [SerializeField] private string ticketsModuleId = "COC4";
+
+        [Tooltip("How many service-call tickets that module has in total - the number the bar has " +
+                 "to reach to be full.\n\n" +
+                 "Typed in rather than counted, because the tickets live in the COC4 scene and this " +
+                 "screen normally runs on the Main Menu where that scene is not loaded. Set it to " +
+                 "the number of TicketData assets the ticket hub offers. 0 hides the row.")]
+        [SerializeField] private int ticketsInModule = 2;
+
         [Header("Empty state")]
         [Tooltip("Shown instead of the list when there are no CompetencyDefinition assets at all. Optional but worth having - an empty screen otherwise looks broken.")]
         [SerializeField] private GameObject emptyStatePanel;
@@ -179,6 +201,8 @@ namespace CircuitCrafter.Assessment.UI
                     row.Setup(outcome, record);
                     spawnedRows.Add(row.gameObject);
                 }
+
+                SpawnExtraRow(ledger, definition.moduleId);
             }
 
             if (overallText != null)
@@ -193,6 +217,131 @@ namespace CircuitCrafter.Assessment.UI
                 overallBar.maxValue = Mathf.Max(1, totalOutcomes);
                 overallBar.value = totalCompetent;
             }
+        }
+
+        /// <summary>
+        /// One extra row beneath a module's outcomes: its quiz score, or - for the module that has
+        /// no quiz - the service calls it has repaired.
+        ///
+        /// BOTH ARE STORY-MODE FIGURES, AND THAT IS WHY THEY ARE NOT OUTCOME ROWS. The outcomes
+        /// above them are evidence: what the learner has PROVEN in a graded run. A quiz here is
+        /// practice - it only ever runs in story mode - and a repaired fault in story mode is work
+        /// done with the game leading. Mixing them into the same rows would put practice figures
+        /// under a heading that claims proof, which is the one thing this screen must not do.
+        /// Hence the separate row, and the gold rather than the graded palette.
+        /// </summary>
+        private void SpawnExtraRow(CompetencyLedger ledger, string moduleId)
+        {
+            if (outcomeRowPrefab == null || rowContainer == null || string.IsNullOrEmpty(moduleId))
+                return;
+
+            bool isTicketModule = !string.IsNullOrEmpty(ticketsModuleId)
+                && string.Equals(moduleId.Trim(), ticketsModuleId.Trim(),
+                                 System.StringComparison.OrdinalIgnoreCase);
+
+            if (isTicketModule) SpawnTicketRow(moduleId);
+            else if (showQuizRow) SpawnQuizRow(ledger, moduleId);
+        }
+
+        private void SpawnQuizRow(CompetencyLedger ledger, string moduleId)
+        {
+            KnowledgeRecord knowledge = ledger.GetKnowledge(moduleId);
+
+            // latestPercent is what the bar follows; bestPercent stands in for a ledger written
+            // before that field existed and not yet migrated.
+            int percent = -1;
+            if (knowledge != null)
+                percent = knowledge.latestScored ? knowledge.latestPercent : knowledge.bestPercent;
+
+            int threshold = ledger.KnowledgeThresholdPercent;
+
+            string status = percent < 0
+                ? "Not taken"
+                : percent >= threshold ? "Above the pass mark" : $"{threshold}% needed";
+
+            string detail = knowledge == null || knowledge.attempts <= 0
+                ? "No attempts yet"
+                : knowledge.attempts == 1 ? "1 attempt" : $"{knowledge.attempts} attempts";
+
+            var row = Instantiate(outcomeRowPrefab, rowContainer);
+            row.SetupMetric("QUIZ", "Underpinning knowledge (quiz)", percent, status, detail,
+                            extraRowColour);
+            spawnedRows.Add(row.gameObject);
+        }
+
+        private void SpawnTicketRow(string moduleId)
+        {
+            if (ticketsInModule <= 0) return;
+
+            int repaired = CountRepairedTickets(moduleId);
+            int percent = Mathf.Clamp(Mathf.RoundToInt(100f * repaired / ticketsInModule), 0, 100);
+
+            string status = repaired >= ticketsInModule ? "All faults repaired" : "In progress";
+            string detail = $"{repaired} of {ticketsInModule} repaired";
+
+            var row = Instantiate(outcomeRowPrefab, rowContainer);
+            row.SetupMetric("FAULTS", "Service calls repaired (story)", percent, status, detail,
+                            extraRowColour);
+            spawnedRows.Add(row.gameObject);
+        }
+
+        /// <summary>
+        /// How many distinct tickets this learner has actually REPAIRED in story mode.
+        ///
+        /// COUNTED FROM THE RESULT FILES, the same source COC4StoryTicketRecorder uses to decide
+        /// what it has already recorded - so the two can never disagree about which tickets are
+        /// done. The ledger cannot answer this: it stores outcomes, not tickets, and every ticket
+        /// evidences the same three COC4 outcomes.
+        ///
+        /// THE REPAIR STAGE IS THE TEST, NOT THE TICKET STAGE. The recorder writes
+        /// coc4_ticket_&lt;id&gt; as completed for every service call it records, including one the
+        /// learner only diagnosed - so counting those would fill the bar for work not done. The
+        /// coc4_repair stage in the same result is what says the machine was actually fixed.
+        ///
+        /// Guided runs only, because the bar is explicitly about story mode.
+        /// </summary>
+        private int CountRepairedTickets(string moduleId)
+        {
+            string profileId = ProfileManager.Instance != null
+                ? ProfileManager.Instance.ActiveProfileId
+                : "default";
+
+            List<AssessmentResult> results = ResultsRepository.LoadAll(profileId);
+            if (results == null) return 0;
+
+            const string prefix = "coc4_ticket_";
+            var repaired = new HashSet<string>();
+
+            foreach (AssessmentResult result in results)
+            {
+                if (result == null || result.stages == null) continue;
+                if (!string.Equals(result.moduleId, moduleId, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (result.Mode != SessionMode.Guided) continue;
+
+                bool fixedIt = false;
+                foreach (StageOutcome stage in result.stages)
+                {
+                    if (stage != null && stage.stageId == "coc4_repair" && stage.completed)
+                    {
+                        fixedIt = true;
+                        break;
+                    }
+                }
+
+                if (!fixedIt) continue;
+
+                foreach (StageOutcome stage in result.stages)
+                {
+                    if (stage == null || string.IsNullOrEmpty(stage.stageId)) continue;
+                    if (!stage.stageId.StartsWith(prefix)) continue;
+
+                    string ticketId = stage.stageId.Substring(prefix.Length);
+                    if (!string.IsNullOrEmpty(ticketId)) repaired.Add(ticketId);
+                }
+            }
+
+            return repaired.Count;
         }
 
         /// <summary>Forwards a module header's History click to this screen's popup. A no-op if

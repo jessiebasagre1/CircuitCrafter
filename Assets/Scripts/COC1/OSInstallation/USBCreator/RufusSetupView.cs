@@ -138,9 +138,9 @@ public class RufusSetupView : MonoBehaviour
 
         ShowScreen(step);
 
-        // GUIDANCE: step-by-step instructions are Story Mode help.
+        // Step-by-step instructions are Story Mode help.
         if (instructionText != null)
-            instructionText.text = CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.StepInstructions)
+            instructionText.text = !AssessmentMode.IsActive
                 ? step.instruction : assessmentInstruction;
         if (hintText != null) hintText.gameObject.SetActive(false);
 
@@ -308,10 +308,10 @@ public class RufusSetupView : MonoBehaviour
     {
         if (hintText == null) return;
 
-        // GUIDANCE: the step's hint names the right answer - Story Mode only. In an assessment it
+        // The step's hint names the right answer - Story Mode only. In an assessment it
         // stays hidden; the mistake is already recorded, and explained on the review screen.
         if (string.IsNullOrEmpty(step.hint) ||
-            !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints))
+            AssessmentMode.IsActive)
         {
             hintText.gameObject.SetActive(false);
             return;

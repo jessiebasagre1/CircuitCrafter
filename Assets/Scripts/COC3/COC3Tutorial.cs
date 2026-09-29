@@ -248,7 +248,7 @@ public class COC3Tutorial : MonoBehaviour
         if (newStep == null || !TutorialOn) return;
 
         if (highlightHotspots &&
-            CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+            !AssessmentMode.IsActive)
             BeginHotspotPulse(newStep);
 
         if (playIntroDialogs)
@@ -278,15 +278,15 @@ public class COC3Tutorial : MonoBehaviour
     // ==================================================================
 
     /// <summary>Opens the hint panel. Wired to your Hint button automatically.</summary>
-    /// <summary>GUIDANCE: the Inspector switch AND GuidancePolicy. Hints, auto-hints, the hint button
+    /// <summary>The Inspector switch AND the mode. Hints, auto-hints, the hint button
     /// and the hotspot pulse are all withheld in an assessment even if nothing called
     /// SetTutorialMode(false) - COC3AssessmentManager only does when its Disable Hints is ticked.</summary>
     private bool TutorialOn =>
         tutorialMode &&
-        (CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints) ||
+        (!AssessmentMode.IsActive ||
          // The COC 3 assessment with Disable Hints unticked. Hotspot pulses and intro dialogs stay off
-         // there all the same - they have their own checks (ObjectHighlights, DialogManager).
-         (HintsAllowedInAssessment && AssessmentMode.IsActive));
+         // there all the same - they have their own checks (the pulse below, DialogManager).
+         HintsAllowedInAssessment);
 
     public void ShowHint()
     {
@@ -380,9 +380,9 @@ public class COC3Tutorial : MonoBehaviour
         else if (activeStep != null)
         {
             if (hintButton != null) hintButton.gameObject.SetActive(TutorialOn);
-            // GUIDANCE: the pulse is a highlight - withheld in an assessment, as in OnStepChanged.
+            // The pulse is a highlight - withheld in an assessment, as in OnStepChanged.
             if (highlightHotspots &&
-                CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+                !AssessmentMode.IsActive)
                 BeginHotspotPulse(activeStep);
         }
     }

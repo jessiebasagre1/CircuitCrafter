@@ -125,10 +125,10 @@ namespace CircuitCrafter.Repair
 
             Debug.Log($"[TicketArrivalDialog] Arrived on ticket '{RepairTicketMode.ActiveTicketId}'.", this);
 
-            // GUIDANCE: in an assessment this dialog IS the job order - the customer's complaint and
+            // In an assessment this dialog IS the job order - the customer's complaint and
             // the required outcome - so it must get past the tutorial suppression that silences
             // every other dialog on the site. In Story it plays exactly as before.
-            bool assessment = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+            bool assessment = COC4AssessmentRun.IsActive || AssessmentMode.IsActive;
             DialogManager.Instance.ShowDialog(sequence, OnFinished, ignoreSuppression: assessment);
         }
 
@@ -139,7 +139,7 @@ namespace CircuitCrafter.Repair
             TicketData ticket = RepairTicketMode.ActiveTicket;
             if (ticket == null) return null;
 
-            bool assessment = CircuitCrafter.Guidance.GuidancePolicy.IsAssessment;
+            bool assessment = COC4AssessmentRun.IsActive || AssessmentMode.IsActive;
 
             // Not in an assessment: a hub briefing may coach, and an assessment brief must not.
             if (replayBriefingDialog && ticket.briefingDialog != null && !assessment)

@@ -280,6 +280,60 @@ namespace CircuitCrafter.Assessment.UI
             if (scoreText != null) authoredScoreColour = scoreText.color;
         }
 
+        /// <summary>
+        /// Fills the row in for something that is NOT a learning outcome - the module's quiz, or
+        /// COC4's repaired faults - using the same prefab.
+        ///
+        /// WHY THE SAME PREFAB RATHER THAN A SECOND ONE. These rows sit in the same list, under the
+        /// same module heading, and have to line up with the outcome rows above them to the pixel.
+        /// Two prefabs means two layouts to keep in step by hand, and the first time one of them is
+        /// edited alone the columns stop agreeing. The row is already "code, title, detail, score,
+        /// bar" - a quiz fits that shape exactly.
+        ///
+        /// percent below zero means "never measured": blank score, empty bar, nothing painted red
+        /// or yellow. A learner who has not taken the quiz has not failed it.
+        /// </summary>
+        public void SetupMetric(string code, string title, int percent, string status,
+                                string detail, Color barColour)
+        {
+            OutcomeCode = code;
+
+            if (codeText != null) codeText.text = code;
+            if (titleText != null) titleText.text = title;
+            if (evidenceText != null) evidenceText.text = detail ?? "";
+            if (statusText != null) statusText.text = status ?? "";
+
+            if (statusPill != null)
+                statusPill.color = percent >= 0 ? barColour : notAttemptedColor;
+
+            if (scoreBar != null)
+            {
+                scoreBar.minValue = 0f;
+                scoreBar.maxValue = 100f;
+                scoreBar.value = percent < 0 ? 0f : Mathf.Clamp(percent, 0, 100);
+            }
+
+            if (scoreText != null)
+            {
+                scoreText.text = percent < 0
+                    ? ""
+                    : string.IsNullOrEmpty(scoreLabel)
+                        ? $"{percent}%"
+                        : $"{scoreLabel} {percent}%";
+            }
+
+            // The colour is passed in rather than worked out here, because "what counts as good"
+            // is different for each of these rows - a quiz has a pass mark, a count of repaired
+            // faults does not - and the caller is the only one that knows which it is holding.
+            Capture();
+
+            if (fillImage != null)
+                fillImage.color = percent < 0 ? authoredFillColour : barColour;
+
+            if (scoreText != null && tintScoreTextToo)
+                scoreText.color = percent < 0 ? authoredScoreColour : barColour;
+        }
+
         private static int CountEvidence(CompetencyDefinition.LearningOutcome outcome)
         {
             if (outcome.evidenceTaskIds == null) return 0;

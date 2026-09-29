@@ -1550,7 +1550,7 @@ MonoBehaviour:
   mistakePenalty: 10
   perfectRunBonus: 50
   contributeToGlobalScore: 1
-  assessmentTimeLimitSeconds: 600
+  assessmentTimeLimitSeconds: 900
   endOnTimeUp: 1
   beginOnStart: 1
   finishWhenAllStagesComplete: 1

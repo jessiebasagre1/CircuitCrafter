@@ -27,9 +27,9 @@ public class PartDescriptionPanel : MonoBehaviour
     {
         if (panelRoot == null) return;
 
-        // GUIDANCE: a part's description often says what it is and where it goes - identification
-        // is part of what an assessment marks. Story Mode reference only (GuidanceKind.ReferenceGuides).
-        if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ReferenceGuides)) return;
+        // A part's description often says what it is and where it goes - identification
+        // is part of what an assessment marks. Story Mode reference only.
+        if (AssessmentMode.IsActive) return;
 
         if (iconImage != null)
         {

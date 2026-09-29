@@ -73,14 +73,12 @@ public class WaypointIndicator : MonoBehaviour
 
     /// <summary>Call this to start pointing at a target (e.g. the PC).
     ///
-    /// GUIDANCE: Story Mode help. In an assessment GuidancePolicy withholds waypoints, so this
-    /// clears the arrow instead - which silences every story caller (IntroDialogTrigger,
-    /// PCDisassemblySetup, TicketArrivalDialog, COC3StationController, StoryGuide) with no edits
-    /// to any of them. The assessment managers use SetStationTarget below.</summary>
+    /// Story Mode help. In an assessment this clears the arrow instead - which silences every story
+    /// caller (IntroDialogTrigger, PCDisassemblySetup, TicketArrivalDialog, COC3StationController)
+    /// with no edits to any of them. The assessment managers use SetStationTarget below.</summary>
     public void SetTarget(Transform newTarget)
     {
-        if (newTarget != null &&
-            !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Waypoints))
+        if (newTarget != null && AssessmentMode.IsActive)
         {
             ClearTarget();
             return;
@@ -94,19 +92,12 @@ public class WaypointIndicator : MonoBehaviour
     /// <summary>
     /// For the COC1/COC2 assessment managers: point at the NEXT STATION after a stage. That is part
     /// of their assessment design - it names a place, never a part or an action - so it is allowed in
-    /// an assessment when GuidanceSettings > Assessment Station Markers is ticked (the default).
-    /// In Story Mode it behaves exactly like SetTarget.
+    /// an assessment. In Story Mode it behaves exactly like SetTarget.
     /// </summary>
     public void SetStationTarget(Transform station)
     {
-        if (station != null && CircuitCrafter.Guidance.GuidancePolicy.IsAssessment)
+        if (station != null && AssessmentMode.IsActive)
         {
-            if (!CircuitCrafter.Guidance.GuidancePolicy.AllowsStationMarkersInAssessment)
-            {
-                ClearTarget();
-                return;
-            }
-
             target = station;
             isActive = true;
             SetVisible(true);

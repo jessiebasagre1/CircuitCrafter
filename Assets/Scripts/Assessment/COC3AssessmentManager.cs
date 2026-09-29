@@ -213,8 +213,6 @@ public class COC3AssessmentManager : MonoBehaviour
         sawAnyStep = false;
         ElapsedSeconds = 0f;
 
-        // GUIDANCE: a fresh journal for this run's mistakes and their withheld explanations.
-        CircuitCrafter.Guidance.MistakeJournal.BeginRun(ModeId);
         localScore = 0;
         localMistakes = 0;
         IsFinished = false;

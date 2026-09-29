@@ -738,8 +738,8 @@ namespace CSSSimulation.Networking
         {
             if (hintText == null) return;
 
-            // GUIDANCE: these lines coach the cable run - Story Mode only. Empty in an assessment.
-            if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.Hints)) message = null;
+            // These lines coach the cable run - Story Mode only. Empty in an assessment.
+            if (AssessmentMode.IsActive) message = null;
             hintText.text = message ?? "";
             hintClearAt = (hintSeconds > 0f && !string.IsNullOrEmpty(message))
                 ? Time.unscaledTime + hintSeconds

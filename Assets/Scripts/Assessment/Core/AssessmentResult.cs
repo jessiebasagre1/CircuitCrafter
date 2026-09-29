@@ -205,7 +205,7 @@ namespace CircuitCrafter.Assessment
 
         // ---- added for the assessment review (appended, so older result files still load) ----
 
-        [Tooltip("The correct procedure, withheld during the run and shown on the review screen. Filled from the wrong-choice dialog that would have played, or left blank for the ReviewLibrary to supply.")]
+        [Tooltip("The correct procedure or expected values, withheld during the run and saved with the result. Optional.")]
         public string correction = "";
 
         [Tooltip("Where it happened, e.g. the COC4 ticket title. Optional.")]

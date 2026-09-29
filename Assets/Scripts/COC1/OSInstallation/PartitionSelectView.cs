@@ -167,8 +167,8 @@ public class PartitionSelectView : MonoBehaviour
         var p = partitions[selectedIndex];
         if (p.kind != PartitionKind.Primary)
         {
-            // GUIDANCE: in an assessment, the message Windows Setup itself would give - not the fix.
-            SetError(CircuitCrafter.Guidance.GuidancePolicy.IsAssessment
+            // In an assessment, the message Windows Setup itself would give - not the fix.
+            SetError(AssessmentMode.IsActive
                 ? "Windows can't be installed to this drive space."
                 : "Create a partition here before continuing.");
             COC1AssessmentManager.ReportMistake(
@@ -178,7 +178,7 @@ public class PartitionSelectView : MonoBehaviour
         }
         if (!p.isFormatted)
         {
-            SetError(CircuitCrafter.Guidance.GuidancePolicy.IsAssessment
+            SetError(AssessmentMode.IsActive
                 ? "Windows can't be installed to this partition."
                 : "Format this partition before continuing.");
             COC1AssessmentManager.ReportMistake(

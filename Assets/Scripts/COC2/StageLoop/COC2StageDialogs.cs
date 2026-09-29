@@ -18,6 +18,9 @@ namespace CSSSimulation.Networking
     ///      from CableTestAnalyzer, not guessed) and then hands off to COC2ProcedureReset, which
     ///      winds the whole procedure back to stripping.
     ///
+    ///   3. PATCH CORDS. The plugging phases after the punch-down get their own briefing, and their
+    ///      pass/fail messages talk about patch cords - not about conductors and IDC contacts.
+    ///
     /// Nothing here edits an existing script. It detects stages by polling the InStrippingView /
     /// InCrimpingView / InCrimpView / InTesterView properties those controllers already expose, so
     /// this is add-and-assign only.
@@ -35,9 +38,11 @@ namespace CSSSimulation.Networking
     /// </summary>
     public class COC2StageDialogs : MonoBehaviour
     {
-        enum Stage { None, Stripping, Wiring, Crimping, Testing, PatchPanel }
+        // PatchCords added at the END - the enum is not serialised, but keeping the order stable
+        // keeps the shown[] slots meaning the same thing.
+        enum Stage { None, Stripping, Wiring, Crimping, Testing, PatchPanel, PatchCords }
 
-        const int StageCount = 6;
+        const int StageCount = 7;
 
         public static COC2StageDialogs Instance { get; private set; }
 
@@ -184,6 +189,34 @@ namespace CSSSimulation.Networking
         };
 
         // ------------------------------------------------------------------
+        // Stage 6 - Patch cords
+        // ------------------------------------------------------------------
+
+        [Header("Stage 6 - Patch cords")]
+        [Tooltip("Shown when a plugging phase of the patch panel station starts - the cords from the " +
+                 "panel front to the switch. Skipped for a phase that has its own Intro Dialog.\n\n" +
+                 "{socket} becomes the phase's Socket Noun ('switch port'), {phase} its Phase Name.")]
+        public DialogSequence patchCordsAsset;
+        [TextArea(2, 6)]
+        public string[] patchCordsLines =
+        {
+            "Next: the patch cords ({phase}). The punch-down joined the cable run to the BACK of the " +
+            "patch panel. Now the FRONT of each panel port has to be connected to the switch.",
+
+            "Each short patch cord already has one end in a panel port. Drag its loose end into the " +
+            "{socket} with the SAME number: panel port 1 to {socket} 1, port 2 to {socket} 2, and so on.",
+
+            "Matching numbers keep the rack readable. When a user's connection fails, a technician can " +
+            "follow panel port 3 straight to {socket} 3 without tracing the cable by hand."
+        };
+
+        [Tooltip("Used instead of the second line above when the phase accepts any free socket " +
+                 "(Match Partner Port Number off).")]
+        [TextArea(2, 4)]
+        public string patchCordsAnyPortLine =
+            "Each short patch cord already has one end in a panel port. Drag its loose end into a free {socket}.";
+
+        // ------------------------------------------------------------------
         // Results
         // ------------------------------------------------------------------
 
@@ -268,6 +301,35 @@ namespace CSSSimulation.Networking
 
         // ------------------------------------------------------------------
 
+        [Header("Result - PATCH CORDS")]
+        [Tooltip("Shown when a plugging phase passes. It used to show the punch-down lines above, which " +
+                 "talk about conductors and contacts. {socket} = the phase's Socket Noun.")]
+        [TextArea(2, 6)]
+        public string[] cordPassLines =
+        {
+            "Every patch cord is in its matching {socket}, so each panel port now reaches the switch."
+        };
+        [Tooltip("Shown when a plugging phase fails. The reason from the phase goes between these and " +
+                 "the closing lines.")]
+        [TextArea(2, 6)]
+        public string[] cordFailLines =
+        {
+            "Some patch cords are not in the right {socket}."
+        };
+        [TextArea(2, 6)]
+        public string[] cordFailClosingLines =
+        {
+            "The cords have been pulled back out. Run each one to the {socket} with the same number as " +
+            "its panel port."
+        };
+        [Tooltip("ASSESSMENT ONLY - instead of the patch cord fail lines. States the result, never the cause.")]
+        [TextArea(2, 6)]
+        public string[] assessmentCordFailLines =
+        {
+            "The patch cords did not pass inspection.",
+            "Run the patch cords again."
+        };
+
         [Header("Retry")]
         [Tooltip("The COC2ProcedureReset that winds the procedure back after a failed test. Leave " +
                  "empty and a failure only shows the dialog - nothing resets.")]
@@ -307,6 +369,14 @@ namespace CSSSimulation.Networking
         bool resultHandled;
         bool testerWasTested;
 
+        // Patch cord phases: which have been briefed, and the frame a phase last reported a result on
+        // (a phase result arrives through ShowPanelResult, the same door as a punch-down result).
+        PatchCordBoard[] cordBoards = new PatchCordBoard[0];
+        readonly System.Collections.Generic.HashSet<PatchCordBoard> briefedBoards =
+            new System.Collections.Generic.HashSet<PatchCordBoard>();
+        int cordResultFrame = -1;
+        PatchCordBoard cordResultBoard;
+
         void Awake()
         {
             Instance = this;
@@ -317,6 +387,18 @@ namespace CSSSimulation.Networking
 
         void Start()
         {
+            // Every plugging phase in the scene. Their pass/fail events fire just BEFORE the phase hands
+            // its result to PunchDownStation, which then calls ShowPanelResult in the same frame - so
+            // noting the frame here is how ShowPanelResult tells a cord result from a punch-down result.
+            cordBoards = FindObjectsByType<PatchCordBoard>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (PatchCordBoard b in cordBoards)
+            {
+                if (b == null) continue;
+                PatchCordBoard board = b;
+                if (board.OnPhasePassed != null) board.OnPhasePassed.AddListener(() => NoteCordResult(board));
+                if (board.OnPhaseFailed != null) board.OnPhaseFailed.AddListener(() => NoteCordResult(board));
+            }
+
             if (NetworkTestStation.Instance == null)
             {
                 Debug.LogWarning("[COC2StageDialogs] No NetworkTestStation in the scene - the pass/fail " +
@@ -389,6 +471,10 @@ namespace CSSSimulation.Networking
         /// single frame where two views overlap during a hand-off resolves to the new one.</summary>
         Stage DetectStage()
         {
+            // A plugging phase runs inside the punch-down station's view, so it is checked first.
+            if (RunningCordBoard() != null)
+                return Stage.PatchCords;
+
             // The punch-down stage. This used to read PatchPanelStation, which drove the 3D panel
             // directly; the stage now lives on its own set with its own camera, so it is
             // PunchDownStation that owns the view. Nothing else about stage 5 changed - the
@@ -413,6 +499,8 @@ namespace CSSSimulation.Networking
 
         void ShowTutorial(Stage stage)
         {
+            if (stage == Stage.PatchCords) { ShowCordBriefing(); return; }
+
             int i = (int)stage;
             if (shown[i]) return;
             shown[i] = true;
@@ -481,31 +569,38 @@ namespace CSSSimulation.Networking
         {
             var sequence = ScriptableObject.CreateInstance<DialogSequence>();
 
+            // A patch cord phase reports through here too. Its result needs cord lines, not the
+            // punch-down ones about conductors and IDC contacts.
+            bool cords = cordResultFrame == Time.frameCount;
+            string socket = cords && cordResultBoard != null && !string.IsNullOrEmpty(cordResultBoard.socketNoun)
+                ? cordResultBoard.socketNoun : "switch port";
+
             if (passed)
             {
-                AddLines(sequence, panelPassLines);
+                AddLines(sequence, cords ? CordLines(cordPassLines, socket) : panelPassLines);
             }
             else
             {
-                AddLines(sequence, panelFailLines);
+                AddLines(sequence, cords ? CordLines(cordFailLines, socket) : panelFailLines);
                 if (includeFailureReason && !string.IsNullOrEmpty(reason)) AddLine(sequence, reason);
-                AddLines(sequence, panelFailClosingLines);
+                AddLines(sequence, cords ? CordLines(cordFailClosingLines, socket) : panelFailClosingLines);
             }
 
             // A failed panel sends the player round this stage again, so the briefing should be
-            // allowed to reappear if they've asked for replays.
-            if (!passed && replayTutorialsOnRetry) shown[(int)Stage.PatchPanel] = false;
+            // allowed to reappear if they've asked for replays. A failed cord phase does not - the
+            // player stays in the cord phase, and the punch-down briefing would be the wrong one.
+            if (!passed && !cords && replayTutorialsOnRetry) shown[(int)Stage.PatchPanel] = false;
 
             // Same reason currentStage is cleared on a cable-test retry: the stage is about to
             // change underneath us and must register as a fresh entry, not "no change".
-            if (!passed) currentStage = Stage.None;
+            if (!passed && !cords) currentStage = Stage.None;
 
             if (AssessmentMode.IsActive)
             {
                 if (passed) ShowResult(sequence, onClosed);
                 else if (COC2AssessmentDialogs.FailureDetailsShown) ShowFailure(sequence, onClosed);
                 // Result only - and always shown, or the port would reset with no word of why.
-                else ShowFailure(Build(assessmentPanelFailLines), onClosed);
+                else ShowFailure(Build(cords ? assessmentCordFailLines : assessmentPanelFailLines), onClosed);
                 return;
             }
 
@@ -621,6 +716,7 @@ namespace CSSSimulation.Networking
             if (replayTutorials)
             {
                 for (int i = 0; i < shown.Length; i++) shown[i] = false;
+                briefedBoards.Clear();
             }
 
             // The stage the player was in has gone away underneath us; clear it so the stripping
@@ -743,6 +839,60 @@ namespace CSSSimulation.Networking
             }
 
             return wrong;
+        }
+
+        // ------------------------------------------------------------------
+        // Patch cords
+        // ------------------------------------------------------------------
+
+        void NoteCordResult(PatchCordBoard board)
+        {
+            cordResultFrame = Time.frameCount;
+            cordResultBoard = board;
+        }
+
+        /// <summary>The plugging phase running right now, or null.</summary>
+        PatchCordBoard RunningCordBoard()
+        {
+            foreach (PatchCordBoard b in cordBoards)
+                if (b != null && b.IsRunning) return b;
+            return null;
+        }
+
+        /// <summary>Briefs each plugging phase once, as it starts - unless it has an Intro Dialog of its own.</summary>
+        void ShowCordBriefing()
+        {
+            PatchCordBoard board = RunningCordBoard();
+            if (board == null || briefedBoards.Contains(board)) return;
+            briefedBoards.Add(board);
+
+            if (board.introDialog != null) return;   // the phase shows its own
+
+            if (patchCordsAsset != null) { Show(patchCordsAsset, null); return; }
+
+            string socket = string.IsNullOrEmpty(board.socketNoun) ? "switch port" : board.socketNoun;
+            var lines = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < patchCordsLines.Length; i++)
+            {
+                string line = patchCordsLines[i];
+                // The second line promises matching numbers; a phase that takes any free socket gets
+                // the plain version instead.
+                if (i == 1 && !board.matchPartnerPortNumber) line = patchCordsAnyPortLine;
+                lines.Add(line);
+            }
+
+            string phase = string.IsNullOrEmpty(board.phaseName) ? "panel to switch" : board.phaseName;
+            Show(Build(CordLines(lines.ToArray(), socket, phase)), null);
+        }
+
+        static string[] CordLines(string[] lines, string socket, string phase = "")
+        {
+            if (lines == null) return null;
+            var result = new string[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+                result[i] = lines[i] == null ? null
+                    : lines[i].Replace("{socket}", socket).Replace("{phase}", phase);
+            return result;
         }
 
         // ------------------------------------------------------------------

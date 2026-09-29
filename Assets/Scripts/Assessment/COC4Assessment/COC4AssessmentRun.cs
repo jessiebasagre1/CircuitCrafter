@@ -159,9 +159,6 @@ namespace CircuitCrafter.Repair
             TotalMistakes = 0;
             bankedSeconds = 0f;
 
-            // GUIDANCE: one journal for the whole six-scene run. force: this is the one caller
-            // allowed to start it; recorders in the repair sites are told to leave it alone.
-            CircuitCrafter.Guidance.MistakeJournal.BeginRun("COC4", force: true);
             Index = 0;
             TimedOut = false;
             TimeLimitSeconds = Mathf.Max(0f, timeLimitSeconds);

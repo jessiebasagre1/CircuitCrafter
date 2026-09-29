@@ -350,10 +350,10 @@ namespace CSSSimulation.Networking
 
             CableTestReport report = CableTestAnalyzer.Analyze(endOne, endTwo, station.targetCableType);
 
-            // GUIDANCE: the hint explains the fault - Story only. An assessment gets the verdict.
+            // The hint explains the fault - Story only. An assessment gets the verdict.
             summary = report.Passed
                 ? "PASS - all 8 conductors correct."
-                : CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.CorrectiveFeedback)
+                : !AssessmentMode.IsActive
                     ? "FAIL - " + CableTestAnalyzer.FailureHint(report)
                     : "FAIL - one or more conductors are not correct.";
 

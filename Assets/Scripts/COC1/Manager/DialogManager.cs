@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using CircuitCrafter.Guidance;
 
 /// <summary>
 /// Central manager that displays tutorial/dialog popups.
@@ -159,10 +158,10 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     public void ShowDialog(DialogSequence sequence, Action onComplete, bool ignoreSuppression)
     {
-        // GUIDANCE: tutorial dialogs are also withheld whenever GuidancePolicy says so - i.e. in ANY
-        // assessment, including COC4's repair sites, which have no assessment manager of their own
-        // to set SuppressTutorials. The assessment's own messages still pass ignoreSuppression.
-        bool withheld = SuppressTutorials || !GuidancePolicy.Allows(GuidanceKind.ProcedureTutorial);
+        // Tutorial dialogs are also withheld in ANY assessment, including COC4's repair sites, which
+        // have no assessment manager of their own to set SuppressTutorials. The assessment's own
+        // messages still pass ignoreSuppression.
+        bool withheld = SuppressTutorials || AssessmentMode.IsActive;
 
         if (withheld && !ignoreSuppression && (sequence == null || !AllowedWhileSuppressed.Contains(sequence)))
         {
@@ -199,31 +198,13 @@ public class DialogManager : MonoBehaviour
     ///
     /// Story Mode: shown straight away, exactly like the old ShowDialog(seq, cb, true) calls.
     /// Assessment: NOT shown - revealing the correct procedure right after a mistake would turn the
-    /// exam into a lesson. Its text is kept with the mistake just recorded (MistakeJournal) and shown
-    /// on the review screen once the run is over. The callback still fires, so nothing waits on it.
-    ///
-    /// Call it on the line AFTER the mistake is reported, in the same frame - that is how the text
-    /// finds the right mistake.
+    /// exam into a lesson. The mistake itself is still recorded by whoever reported it. The callback
+    /// still fires, so nothing waits on it.
     /// </summary>
     public void ShowCorrectiveDialog(DialogSequence sequence, Action onComplete = null)
     {
-        if (!GuidancePolicy.Allows(GuidanceKind.CorrectiveFeedback))
+        if (AssessmentMode.IsActive)
         {
-            if (sequence != null)
-            {
-                var text = new System.Text.StringBuilder();
-                foreach (var line in sequence.lines)
-                {
-                    if (line == null || string.IsNullOrEmpty(line.text)) continue;
-                    if (text.Length > 0) text.Append(' ');
-                    text.Append(line.text.Trim());
-                }
-                MistakeJournal.AttachCorrectionToLast(text.ToString());
-            }
-
-            if (GuidancePolicy.IsAssessment && GuidancePolicy.Settings.showNeutralRejectionToast)
-                CoachFeedback.Info(GuidancePolicy.NeutralRejection);
-
             onComplete?.Invoke();
             return;
         }

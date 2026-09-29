@@ -66,11 +66,21 @@ namespace CircuitCrafter.Assessment.UI
         [SerializeField] private Color notMetColour = new Color32(0x6B, 0x72, 0x80, 0xFF);
 
         [Header("History (optional)")]
-        [Tooltip("\"Best: 92%\" - this module's Assessment-mode high score. Optional.")]
+        [Tooltip("\"Assessment best: 92%\" - this module's Assessment-mode high score. Optional.\n\n" +
+                 "Named in full because it now sits beside a quiz best. \"Best\" alone was clear " +
+                 "when it was the only best on the row; with two of them, the reader has to be told " +
+                 "which is which.")]
         [SerializeField] private TMP_Text bestScoreText;
 
         [Tooltip("Gold, matching the palette this project reserves for anything earned.")]
         [SerializeField] private Color bestScoreColour = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
+
+        [Tooltip("\"Quiz best: 92%\" - the module's highest quiz score, from any mode. Optional; " +
+                 "leave it empty on a module with no quiz and nothing is drawn.\n\n" +
+                 "The BEST lives here while the quiz ROW in the list below follows the latest " +
+                 "attempt. One place for what they achieved, one for where they stand - the same " +
+                 "split as the assessment score above.")]
+        [SerializeField] private TMP_Text quizBestText;
 
         [Tooltip("Opens CompetencyHistoryView for this module. Optional - leave empty on a build that doesn't want a history popup.")]
         [SerializeField] private Button historyButton;
@@ -107,6 +117,7 @@ namespace CircuitCrafter.Assessment.UI
 
             FillEvidenceLines(definition.moduleId, competent, total);
             FillBestScore(definition.moduleId);
+            FillQuizBest(definition.moduleId);
 
             if (summaryText != null)
                 summaryText.text = total > 0 ? $"{competent} of {total} competent" : "No outcomes defined";
@@ -201,9 +212,9 @@ namespace CircuitCrafter.Assessment.UI
         }
 
         /// <summary>
-        /// "Best: 92%" in gold, or a neutral "Best: -" when no Assessment run has ever completed
-        /// for this module. Deliberately silent about WHY there's no best yet - the History popup
-        /// this sits beside is where that story (or its absence) gets told in full.
+        /// "Assessment best: 92%" in gold, or a neutral "Assessment best: -" when no Assessment run
+        /// has ever completed for this module. Deliberately silent about WHY there's no best yet -
+        /// the History popup this sits beside is where that story (or its absence) gets told in full.
         /// </summary>
         private void FillBestScore(string moduleId)
         {
@@ -214,12 +225,12 @@ namespace CircuitCrafter.Assessment.UI
 
             if (best != null && best.bestScorePercent >= 0)
             {
-                bestScoreText.text = $"Best: {best.bestScorePercent}%";
+                bestScoreText.text = $"Assessment best: {best.bestScorePercent}%";
                 bestScoreText.color = bestScoreColour;
             }
             else
             {
-                bestScoreText.text = "Best: -";
+                bestScoreText.text = "Assessment best: -";
                 bestScoreText.color = notMetColour;
             }
 
@@ -229,10 +240,43 @@ namespace CircuitCrafter.Assessment.UI
         }
 
         /// <summary>
-        /// Makes sure a short label is never clipped to "Best: 10...".
+        /// "Quiz best: 92%" in gold, or a neutral "Quiz best: -" when the quiz has never been
+        /// answered in this module.
+        ///
+        /// ANY MODE COUNTS HERE, unlike the assessment score above it. The quiz in this project
+        /// only ever runs in story mode, so a best restricted to graded runs would read "-" for
+        /// every learner for ever - a label that can never say anything is worse than no label.
+        /// Whether that practice score is allowed to count as EVIDENCE is a separate question, and
+        /// the knowledge evidence line above already answers it honestly.
+        /// </summary>
+        private void FillQuizBest(string moduleId)
+        {
+            if (quizBestText == null) return;
+
+            CompetencyLedger ledger = CompetencyLedger.Instance;
+            KnowledgeRecord knowledge = ledger != null ? ledger.GetKnowledge(moduleId) : null;
+
+            if (knowledge != null && knowledge.bestPercent >= 0)
+            {
+                quizBestText.text = $"Quiz best: {knowledge.bestPercent}%";
+                quizBestText.color = bestScoreColour;
+            }
+            else
+            {
+                quizBestText.text = "Quiz best: -";
+                quizBestText.color = notMetColour;
+            }
+
+            // Same treatment as the score beside it - "Quiz best: 100%" is one character longer
+            // than the box was built for.
+            FitLabel(quizBestText);
+        }
+
+        /// <summary>
+        /// Makes sure a short label is never clipped to "Assessment best: 10...".
         ///
         /// WHY THE THREE DIGITS WERE THE ONES TO GO. The label's box was built wide enough for
-        /// "Best: 92%" and the only score that does not fit it is 100% - one character longer, and
+        /// "Best: 92%" and the only score that did not fit was 100% - one character longer, and
         /// the one every learner most wants to see. With Overflow set to Ellipsis, TMP does not
         /// shrink the text to fit or spill it over the edge: it draws what fits and replaces the
         /// rest with dots, so the reader is shown "10..." and left to guess whether that is 100 or

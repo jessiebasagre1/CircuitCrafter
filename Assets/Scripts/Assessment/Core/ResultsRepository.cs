@@ -47,10 +47,9 @@ namespace CircuitCrafter.Assessment
         // ------------------------------------------------------------------
 
         /// <summary>
-        /// Raised after every Save - whether or not the file write succeeded, because a learner who
-        /// just finished should see their review even on a machine with a full disk. The assessment
-        /// review screen (AssessmentReviewPanel) listens to this, which is how it opens for COC1-COC4
-        /// without any of the four finishing paths having to know it exists.
+        /// Raised after every Save - whether or not the file write succeeded. Nothing in the project
+        /// needs it at the moment; it is kept so a results screen can open on it later without any
+        /// of the four finishing paths having to know that screen exists.
         /// </summary>
         public static event Action<AssessmentResult> Saved;
 
@@ -62,12 +61,6 @@ namespace CircuitCrafter.Assessment
 
             if (string.IsNullOrEmpty(result.resultId))
                 result.resultId = Guid.NewGuid().ToString("N").Substring(0, 12);
-
-            // GUIDANCE: an assessment's mistakes, with the explanations that were withheld during the
-            // run, are folded in before the file is written - so the saved record, the review screen
-            // and the history screen all carry them. Does nothing for Story records.
-            if (result.Mode == SessionMode.Assessment)
-                CircuitCrafter.Guidance.MistakeJournal.MergeInto(result);
 
             string path = WriteFiles(result);
 

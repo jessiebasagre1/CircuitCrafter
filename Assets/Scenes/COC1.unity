@@ -5703,7 +5703,6 @@ MonoBehaviour:
   objectivesText: {fileID: 6372409918236901290}
   rulesText: {fileID: 505627461121656014}
   startButton: {fileID: 2074650266575491084}
-  jobOrder: {fileID: 0}
   title: "COC 1 \u2014 Install and Configure Computer Systems"
   objectives:
   - 'Assemble the unit: mount the CPU, RAM, storage and power supply in the correct
@@ -5730,6 +5729,10 @@ MonoBehaviour:
   - {fileID: 5255766220423958008}
   - {fileID: 2966701706709408951}
   manageCursor: 1
+  holdPlayer: 1
+  keepOnTop: 1
+  enterStarts: 1
+  reportMissedClicks: 1
   disableForAssessment: []
   suppressDialogsDuringBriefing: 1
   OnBriefingShown:
@@ -65885,7 +65888,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d2a386c54eed349a3379bd2fbaba8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobileControlsVisibility
-  showInEditor: 0
+  showInEditor: 1
   logDecision: 1
 --- !u!23 &7395365995709635384
 MeshRenderer:
@@ -67085,7 +67088,7 @@ MonoBehaviour:
   useKeyboardInteract: 1
   interactKey: 103
   castRadius: 0.05
-  pickupRange: 3
+  pickupRange: 4
   plugRange: 2
   visibilityObstructionMask:
     serializedVersion: 2

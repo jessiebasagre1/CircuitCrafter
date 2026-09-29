@@ -128,9 +128,9 @@ public class PCPartItem : MonoBehaviour
 
         if (pickupReadyVisual == null) return;      // was the first line
 
-        // GUIDANCE: the glow says "this part can come off NOW" - which is exactly the removal order
+        // The glow says "this part can come off NOW" - which is exactly the removal order
         // an assessment is marking. Story Mode only. IsPickupReady above is unchanged.
-        if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+        if (AssessmentMode.IsActive)
             ready = false;
 
         if (ready == pickupReadyVisualActive) return;

@@ -178,10 +178,10 @@ namespace CSSSimulation.WindowsSim
                 !string.IsNullOrEmpty(current.instructionLabel.text))
                 return current.instructionLabel.text;
 
-            // GUIDANCE: the fallback below reads the Story instruction straight off the asset, which
+            // The fallback below reads the Story instruction straight off the asset, which
             // would put step-by-step help on the banner during an assessment. Use the requirement.
             if (current.stepData != null &&
-                !CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.StepInstructions))
+                AssessmentMode.IsActive)
                 return string.IsNullOrEmpty(current.stepData.assessmentPrompt)
                     ? "Continue the server configuration required by the job order."
                     : current.stepData.assessmentPrompt;

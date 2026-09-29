@@ -4,7 +4,6 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using CircuitCrafter.Guidance;
 
 namespace CSSSimulation.Networking
 {
@@ -250,9 +249,6 @@ namespace CSSSimulation.Networking
             TimedOut = false;
             IsRunning = true;
             log.Clear();
-
-            // GUIDANCE: a fresh journal for this run's mistakes and their withheld explanations.
-            MistakeJournal.BeginRun(ModeId);
 
             lastFailedCable = null;
             lastFailedFrame = -1;
@@ -509,8 +505,8 @@ namespace CSSSimulation.Networking
         {
             if (WaypointIndicator.Instance == null) return;
 
-            // SetStationTarget: allowed in an assessment only while GuidanceSettings > Assessment
-            // Station Markers is ticked - it points at a station, never at a wire or a pin.
+            // SetStationTarget: allowed in an assessment - it points at a station, never at a wire
+            // or a pin.
             if (target != null) WaypointIndicator.Instance.SetStationTarget(target);
             else WaypointIndicator.Instance.ClearTarget();
         }
@@ -548,9 +544,6 @@ namespace CSSSimulation.Networking
             Mistakes++;
             Score = Mathf.Max(0, Score - failedCablePenalty);
             log.Add($"FAILED CABLE #{FailedCables} at {FormatTime(ElapsedSeconds)}: {description}");
-
-            // GUIDANCE: kept, with the tester's diagnosis, for the review screen.
-            MistakeJournal.Record("cable", description);
 
             Debug.Log($"[COC2AssessmentManager] {description}", this);
             RefreshHud();
@@ -599,8 +592,7 @@ namespace CSSSimulation.Networking
         {
             if (Instance == null || !Instance.IsRunning)
             {
-                // GUIDANCE: Story Mode - explain it on the spot. Silent in an assessment.
-                if (!GuidancePolicy.IsAssessment) CoachFeedback.Mistake(description, null, null, ModeId, context);
+                // Not being assessed - nothing to record.
                 return;
             }
             Instance.AddMistake(description, context);
@@ -623,7 +615,6 @@ namespace CSSSimulation.Networking
                 : "Patch panel termination failed - " + reason.Trim();
 
             log.Add($"MISTAKE at {FormatTime(ElapsedSeconds)}: {description}");
-            MistakeJournal.Record("cable", description);   // GUIDANCE: kept for the review screen
             Debug.Log($"[COC2AssessmentManager] Mistake #{Mistakes}: {description}", context);
             RefreshHud();
         }
@@ -636,11 +627,6 @@ namespace CSSSimulation.Networking
             Mistakes++;
             Score = Mathf.Max(0, Score - mistakePenalty);
             log.Add($"MISTAKE at {FormatTime(ElapsedSeconds)}: {description}");
-
-            // GUIDANCE: kept with its explanation for the review screen (the log above is private).
-            string d = (description ?? "").ToLowerInvariant();
-            MistakeJournal.Record(d.Contains("configuration") ? "configuration"
-                                : d.Contains("connectivity") ? "connectivity" : "procedure", description);
 
             Debug.Log($"[COC2AssessmentManager] Mistake #{Mistakes}: {description}", context);
             RefreshHud();

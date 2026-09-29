@@ -30,6 +30,18 @@ namespace CircuitCrafter.Assessment
         public string evidenceResultId = "";
 
         public string achievedUtc = "";
+
+        [Tooltip("Percentage from the MOST RECENT quiz attempt, in ANY mode. This is the one that " +
+                 "moves every time the learner takes the quiz again - including downwards.\n\n" +
+                 "The quiz in this project only runs in Story mode, so 'best ever' alone would " +
+                 "freeze after one good attempt and the screen would stop responding to practice " +
+                 "entirely. The best above is what the module header shows; this is what the bar " +
+                 "follows.")]
+        public int latestPercent = -1;
+
+        [Tooltip("True once latestPercent has been written. A ledger saved before this field " +
+                 "existed arrives with -1 and falls back to the best, which the migration does.")]
+        public bool latestScored;
     }
 
     /// <summary>
@@ -528,6 +540,13 @@ namespace CircuitCrafter.Assessment
             record.attempts++;
 
             int percent = result.KnowledgePercent;
+
+            // EVERY attempt, in every mode, worse ones included. The quiz is practice here, and a
+            // practice figure that can only rise is not feedback - it is a trophy. The best below
+            // is untouched, so nothing is lost by showing where they actually stand.
+            record.latestPercent = percent;
+            record.latestScored = true;
+
             if (percent > record.bestPercent)
             {
                 record.bestPercent = percent;
@@ -914,6 +933,21 @@ namespace CircuitCrafter.Assessment
                     record.latestScorePercent = record.bestScorePercent;
                     record.latestScored = true;
                     carried++;
+                }
+            }
+
+            if (ledger.knowledge != null)
+            {
+                foreach (KnowledgeRecord knowledge in ledger.knowledge)
+                {
+                    if (knowledge == null) continue;
+
+                    if (!knowledge.latestScored && knowledge.bestPercent >= 0)
+                    {
+                        knowledge.latestPercent = knowledge.bestPercent;
+                        knowledge.latestScored = true;
+                        carried++;
+                    }
                 }
             }
 

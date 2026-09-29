@@ -46,10 +46,10 @@ public class PulsingHighlightRing : MonoBehaviour
 
     private void Update()
     {
-        // GUIDANCE: this ring marks the CORRECT button. In an assessment it stays invisible - the
+        // This ring marks the CORRECT button. In an assessment it stays invisible - the
         // candidate has to find it. Hidden rather than destroyed, so whoever spawned it can still
         // clean it up the way it always has.
-        if (!CircuitCrafter.Guidance.GuidancePolicy.Allows(CircuitCrafter.Guidance.GuidanceKind.ObjectHighlights))
+        if (AssessmentMode.IsActive)
         {
             if (_graphic != null && _graphic.enabled) _graphic.enabled = false;
             return;
