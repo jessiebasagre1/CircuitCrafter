@@ -27666,26 +27666,13 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - modeId: COC4
-    sceneName: 
+    sceneName: COC4-Briefing
     button: {fileID: 8641738694363929057}
     statusText: {fileID: 0}
     available: 1
     customLaunch:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1896759112}
-          m_TargetAssemblyTypeName: CircuitCrafter.Repair.COC4AssessmentLauncher,
-            Assembly-CSharp
-          m_MethodName: StartAssessment
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   backButton: {fileID: 6709607268753025160}
   availableLabel: Available
   unavailableLabel: Coming soon

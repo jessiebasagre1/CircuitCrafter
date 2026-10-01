@@ -56,8 +56,17 @@ namespace CircuitCrafter.Repair
         [Min(0)]
         [SerializeField] private int pointsForDiagnosisOnly = 40;
 
+        [Tooltip("Points taken off the final score for every mistake: a wrong diagnosis, starting " +
+                 "the repair before diagnosing, a failed power-on test, or a hardware-handling error " +
+                 "(e.g. pulling a part that is still plugged in). The score never goes below zero.")]
         [Min(0)]
         [SerializeField] private int mistakePenalty = 10;
+
+        [Tooltip("OFF (recommended): the SAME mistake repeated on the SAME ticket counts once - " +
+                 "five taps at a locked part is one wrong decision, and a double-fired click must " +
+                 "never cost 20 points. A different mistake, or the same one on another ticket, " +
+                 "always counts.\n\nON: every repeat costs the penalty again.")]
+        [SerializeField] private bool countRepeatedMistakes = false;
 
         [Header("Assessment")]
         [Tooltip("Module id recorded against the result, matching the COC4 CompetencyDefinition asset.")]
@@ -82,7 +91,8 @@ namespace CircuitCrafter.Repair
             AssessmentMode.Begin(moduleId);
 
             COC4AssessmentRun.Begin(pool, ticketsToDraw, resultsSceneName, timeLimitMinutes * 60f,
-                                    pointsPerTicket, pointsForDiagnosisOnly, mistakePenalty);
+                                    pointsPerTicket, pointsForDiagnosisOnly, mistakePenalty,
+                                    countRepeatedMistakes);
         }
 
         /// <summary>For a Cancel button while the learner is still on the menu.</summary>

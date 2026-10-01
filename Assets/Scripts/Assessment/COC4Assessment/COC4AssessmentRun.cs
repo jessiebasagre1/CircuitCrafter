@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CircuitCrafter.Assessment;
 
 namespace CircuitCrafter.Repair
 {
@@ -45,7 +46,28 @@ namespace CircuitCrafter.Repair
             /// half a job - a machine fixed by swapping parts until it works is not a diagnosis,
             /// and a correct diagnosis nobody acted on is not a repair.</summary>
             public bool Passed => diagnosed && repaired && !gaveUp;
+
+            /// <summary>"category|description" of every mistake already counted on this ticket,
+            /// so the same slip repeated on the same ticket is counted once. See ReportMistake.</summary>
+            internal readonly HashSet<string> mistakeKeys = new HashSet<string>();
         }
+
+        // ---- shared mistake wording ------------------------------------
+        //
+        // RepairWorkGate (reaching for a part) and TicketFaultCoordinator (a repair landing) can both
+        // catch the same wrong habit on the same ticket - starting the repair before the diagnosis.
+        // They report it with this ONE wording, so the same-ticket rule in ReportMistake counts it
+        // once instead of charging the learner twice for one decision.
+
+        public const string RepairBeforeDiagnosisText = "Started the repair before diagnosing the fault.";
+
+        public const string RepairBeforeDiagnosisCorrection =
+            "Diagnose first: observe the symptoms, run your checks, and submit the cause (Diagnose) " +
+            "before opening the case or touching any part.";
+
+        public const string FailedTestCorrection =
+            "Repair every fault you found before testing. Then power on and confirm the machine " +
+            "passes every check before closing the job.";
 
         // ==================================================================
 
@@ -70,6 +92,32 @@ namespace CircuitCrafter.Repair
             IsActive ? bankedSeconds + (Time.realtimeSinceStartup - ticketStartedAt) : bankedSeconds;
 
         public static int TotalMistakes { get; private set; }
+
+        /// <summary>Every mistake counted in this run, oldest first - one entry per -MistakePenalty.
+        /// Its Count always equals TotalMistakes, which is what keeps the report's "Mistakes: N",
+        /// the list under it and the points taken off in agreement.</summary>
+        public static IReadOnlyList<MistakeEntry> Mistakes => mistakeLog;
+
+        /// <summary>Points taken off for mistakes so far (TotalMistakes x MistakePenalty).</summary>
+        public static int PenaltyPoints => TotalMistakes * MistakePenalty;
+
+        /// <summary>True when the same mistake on the same ticket counts every time. Off by default.
+        /// Set by the launcher.</summary>
+        public static bool CountRepeatedMistakes { get; private set; }
+
+        /// <summary>True once the results screen has saved this run. A second report component, or
+        /// the results scene loading twice, then shows LastResult instead of saving a duplicate
+        /// record to the competency screen.</summary>
+        public static bool ResultRecorded { get; private set; }
+
+        /// <summary>The result that was saved for this run, or null.</summary>
+        public static AssessmentResult LastResult { get; private set; }
+
+        public static void MarkRecorded(AssessmentResult result)
+        {
+            ResultRecorded = true;
+            LastResult = result;
+        }
 
         public static int PassedCount
         {
@@ -135,10 +183,24 @@ namespace CircuitCrafter.Repair
         public static bool TimedOut { get; private set; }
 
         private static readonly List<TicketAttempt> attempts = new List<TicketAttempt>();
+        private static readonly List<MistakeEntry> mistakeLog = new List<MistakeEntry>();
         private static float bankedSeconds;
         private static float ticketStartedAt;
         private static string resultsSceneName = "COC4-Results";
         private static Ticker ticker;
+
+        // True from the moment a ticket is closed until the next scene has loaded. While it is up,
+        // the ticket just closed is graded and gone: a second "done" call (Give up pressed while
+        // AutoReturnToHub is already leaving) must not close the NEXT ticket unseen, and a late
+        // mistake from the old scene must not land on a ticket the learner has not reached.
+        private static bool sceneChangePending;
+        private static float sceneChangeStartedAt;
+
+        /// <summary>Gives up waiting after 10 s, so a scene that never loads (missing from Build
+        /// Settings) cannot leave the Give up button and the mistake count dead for the rest of
+        /// the run.</summary>
+        private static bool WaitingForScene =>
+            sceneChangePending && Time.realtimeSinceStartup - sceneChangeStartedAt < 10f;
 
         // ==================================================================
         // Starting
@@ -153,11 +215,17 @@ namespace CircuitCrafter.Repair
         /// measured four things while claiming five.
         /// </summary>
         public static void Begin(IList<TicketData> pool, int draw, string resultsScene, float timeLimitSeconds,
-                                 int pointsPerTicket, int pointsForDiagnosisOnly, int mistakePenalty)
+                                 int pointsPerTicket, int pointsForDiagnosisOnly, int mistakePenalty,
+                                 bool countRepeatedMistakes = false)
         {
             attempts.Clear();
+            mistakeLog.Clear();
             TotalMistakes = 0;
             bankedSeconds = 0f;
+            sceneChangePending = false;
+            ResultRecorded = false;
+            LastResult = null;
+            CountRepeatedMistakes = countRepeatedMistakes;
 
             Index = 0;
             TimedOut = false;
@@ -211,12 +279,66 @@ namespace CircuitCrafter.Repair
         // During a ticket
         // ==================================================================
 
-        /// <summary>Counted against the whole run, not the ticket in progress, so a mistake made
-        /// while the learner is between scenes is not lost.</summary>
+        /// <summary>Kept for older callers. Records a mistake with no details.</summary>
         public static void ReportMistake()
         {
+            ReportMistake("general", "Mistake recorded.", null);
+        }
+
+        /// <summary>
+        /// Records one mistake: -MistakePenalty points, logged with its details for the report and
+        /// the competency screen. Returns false when it was not counted.
+        ///
+        /// Normally reached through AssessmentRecorder.Mistake(), which every COC4 site script
+        /// already calls - so a site script never has to know whether it is in an assessment.
+        ///
+        /// THE SAME MISTAKE ON THE SAME TICKET COUNTS ONCE (unless the launcher's Count Repeated
+        /// Mistakes is on). Five taps at a locked part, or the same wrong cause clicked twice, is
+        /// one wrong decision, not five - and a double-fired event must never cost 20 points. A
+        /// DIFFERENT mistake, or the same one on another ticket, always counts.
+        ///
+        /// Not counted: no run is active, or the ticket has already been closed and the next scene
+        /// is still loading (the ticket was graded when it closed).
+        /// </summary>
+        public static bool ReportMistake(string category, string description, string correction = null)
+        {
+            if (!IsActive) return false;
+
+            if (WaitingForScene)
+            {
+                Debug.Log($"[COC4AssessmentRun] Mistake after the ticket was closed - not counted: {description}");
+                return false;
+            }
+
+            category = string.IsNullOrWhiteSpace(category) ? "general" : category.Trim();
+            description = string.IsNullOrWhiteSpace(description) ? "Mistake recorded." : description.Trim();
+
+            TicketAttempt attempt = Current;
+
+            if (attempt != null && !CountRepeatedMistakes &&
+                !attempt.mistakeKeys.Add(category + "|" + description))
+            {
+                Debug.Log($"[COC4AssessmentRun] Same mistake again on {Progress} - counted once already: {description}");
+                return false;
+            }
+
             TotalMistakes++;
-            if (Current != null) Current.mistakes++;
+            if (attempt != null) attempt.mistakes++;
+
+            mistakeLog.Add(new MistakeEntry
+            {
+                atSeconds = ElapsedSeconds,
+                category = category,
+                description = description,
+                correction = correction ?? "",
+                context = attempt != null && attempt.ticket != null
+                    ? $"Ticket {Index + 1}: {attempt.ticket.title}"
+                    : ""
+            });
+
+            Debug.Log($"[COC4AssessmentRun] Mistake #{TotalMistakes} on {Progress} ({category}, " +
+                      $"-{MistakePenalty}): {description}");
+            return true;
         }
 
         /// <summary>
@@ -231,11 +353,25 @@ namespace CircuitCrafter.Repair
         {
             if (!IsActive) return;
 
+            // A second "done" for a ticket already closed - Give up pressed while AutoReturnToHub
+            // was already on its way out. Acting on it would close the NEXT ticket, unseen, as a
+            // failure.
+            if (WaitingForScene)
+            {
+                Debug.Log("[COC4AssessmentRun] Ticket already closed; ignoring a second finish call.");
+                return;
+            }
+
             TicketAttempt attempt = Current;
             if (attempt == null) return;
 
             attempt.seconds = Time.realtimeSinceStartup - ticketStartedAt;
             bankedSeconds += attempt.seconds;
+
+            // Restarted here so Finish() does not add this ticket's time a second time. It used to:
+            // the run's duration came out as the real time PLUS the whole last ticket again.
+            ticketStartedAt = Time.realtimeSinceStartup;
+
             attempt.gaveUp = gaveUp;
 
             RepairTicketMode.TryConsumeResult(out _, out bool diagnosed, out bool fixedIt);
@@ -277,13 +413,35 @@ namespace CircuitCrafter.Repair
             Debug.Log($"[COC4AssessmentRun] {Progress} - loading '{attempt.ticket.sceneName}' for " +
                       $"'{attempt.ticket.ticketId}'.");
 
+            BeginSceneChange();
             SceneManager.LoadScene(attempt.ticket.sceneName);
+        }
+
+        /// <summary>Holds off "done" calls and mistakes until the scene being loaded has loaded.
+        /// Cleared by the next sceneLoaded, whatever its name - the ticket's Scene Name may be a
+        /// path, and matching names would leave a learner stuck if they differed.</summary>
+        private static void BeginSceneChange()
+        {
+            sceneChangePending = true;
+            sceneChangeStartedAt = Time.realtimeSinceStartup;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (mode != LoadSceneMode.Single) return;   // an additive UI scene is not the new site
+
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            sceneChangePending = false;
         }
 
         private static void Finish()
         {
-            bankedSeconds = ElapsedSeconds;
+            bankedSeconds = ElapsedSeconds;   // the callers have already banked; this adds ~0
             IsActive = false;
+            sceneChangePending = false;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             DestroyTicker();
 
             Debug.Log($"[COC4AssessmentRun] Finished{(TimedOut ? " ON TIME LIMIT" : "")} - " +
@@ -310,10 +468,15 @@ namespace CircuitCrafter.Repair
             IsActive = false;
             DestroyTicker();
             attempts.Clear();
+            mistakeLog.Clear();
             Index = 0;
             TotalMistakes = 0;
             bankedSeconds = 0f;
             TimedOut = false;
+            sceneChangePending = false;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            ResultRecorded = false;
+            LastResult = null;
 
             RepairTicketMode.TryConsumeResult(out _, out _, out _);
         }
@@ -342,14 +505,19 @@ namespace CircuitCrafter.Repair
 
             TimedOut = true;
 
+            // Banked once, here, and the ticket clock restarted - so Finish() cannot add the same
+            // seconds again (it used to, doubling the last ticket in the recorded duration).
+            float ticketSeconds = Time.realtimeSinceStartup - ticketStartedAt;
+            bankedSeconds += ticketSeconds;
+            ticketStartedAt = Time.realtimeSinceStartup;
+
             // The ticket in progress is closed with whatever the learner actually achieved, not
             // written off. Someone who diagnosed a fault thirty seconds before the bell has
             // demonstrated that, and the report should say so.
             TicketAttempt attempt = Current;
             if (attempt != null)
             {
-                attempt.seconds = Time.realtimeSinceStartup - ticketStartedAt;
-                bankedSeconds += attempt.seconds;
+                attempt.seconds = ticketSeconds;
 
                 RepairTicketMode.TryConsumeResult(out _, out bool diagnosed, out bool fixedIt);
                 attempt.diagnosed = diagnosed;

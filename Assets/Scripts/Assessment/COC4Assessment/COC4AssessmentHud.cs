@@ -16,6 +16,10 @@ namespace CircuitCrafter.Repair
     /// mid-run anyway - a ticket is graded on diagnosis AND repair, and neither is settled until
     /// they leave the site. Ticket count and elapsed time are the two things they genuinely need
     /// to pace themselves.
+    ///
+    /// MISTAKES (optional, like the COC1-3 HUDs): assign Mistakes Text for "Mistakes: 2  (-20)",
+    /// and Mistake Notice Text for a brief "Mistake recorded  -10" when one happens. Neither says
+    /// WHAT the mistake was - that waits for the report.
     /// </summary>
     public class COC4AssessmentHud : MonoBehaviour
     {
@@ -51,6 +55,27 @@ namespace CircuitCrafter.Repair
                  "same HUD the other COCs give them.")]
         [SerializeField] private TMP_Text scoreText;
 
+        [Tooltip("Optional. \"Mistakes: 2  (-20)\" - the same counter the COC1-3 assessment HUDs " +
+                 "show. Every mistake costs Mistake Penalty points (10) off the final score.")]
+        [SerializeField] private TMP_Text mistakesText;
+
+        [Tooltip("{0} = mistakes, {1} = points taken off so far.")]
+        [SerializeField] private string mistakesFormat = "Mistakes: {0}  (-{1})";
+
+        [Tooltip("Optional. A short line that appears for a moment when a mistake is recorded, e.g. " +
+                 "\"Mistake recorded  -10\". It never says what the mistake was: the assessment " +
+                 "does not explain itself until the report. Start it empty or switched off.")]
+        [SerializeField] private TMP_Text mistakeNoticeText;
+
+        [Tooltip("{0} = the penalty for one mistake.")]
+        [SerializeField] private string mistakeNoticeFormat = "Mistake recorded  -{0}";
+
+        [Min(0f)]
+        [SerializeField] private float mistakeNoticeSeconds = 2.5f;
+
+        [Tooltip("The Mistakes counter shows this colour for a moment after a new mistake.")]
+        [SerializeField] private Color mistakeFlashColor = new Color32(0xFF, 0x8A, 0x6B, 0xFF);
+
         [Tooltip("Optional. The customer's complaint, so the learner can re-read what they were " +
                  "called out for without a hub to go back to.")]
         [SerializeField] private TMP_Text ticketText;
@@ -71,10 +96,17 @@ namespace CircuitCrafter.Repair
         private Color normalColour = Color.white;
         private bool normalColourCaptured;
 
+        private Color mistakesColour = Color.white;
+        private int lastMistakeCount = -1;
+        private float flashUntil;
+        private float noticeUntil;
+
         private void Awake()
         {
             if (giveUpButton != null) giveUpButton.onClick.AddListener(AskToGiveUp);
             if (confirmPanel != null) confirmPanel.SetActive(false);
+            if (mistakesText != null) mistakesColour = mistakesText.color;
+            if (mistakeNoticeText != null) mistakeNoticeText.gameObject.SetActive(false);
         }
 
         private void Start()
@@ -109,6 +141,8 @@ namespace CircuitCrafter.Repair
             if (scoreText != null)
                 scoreText.text = $"Score: {COC4AssessmentRun.Score}";
 
+            RefreshMistakes();
+
             if (timeText == null) return;
 
             bool limited = COC4AssessmentRun.TimeLimitSeconds > 0f;
@@ -132,6 +166,50 @@ namespace CircuitCrafter.Repair
             {
                 timeText.color = normalColour;
             }
+        }
+
+        /// <summary>The Mistakes counter, and the brief notice when it goes up. Read from
+        /// COC4AssessmentRun every frame rather than told by an event, so a mistake made on the
+        /// frame a site loads - before this HUD existed - still shows.</summary>
+        private void RefreshMistakes()
+        {
+            int count = COC4AssessmentRun.TotalMistakes;
+
+            // The first frame only learns the count - arriving at ticket 3 with 2 mistakes
+            // already made is not a new mistake to flash about.
+            bool isNew = lastMistakeCount >= 0 && count > lastMistakeCount;
+            lastMistakeCount = count;
+
+            float now = Time.unscaledTime;
+
+            if (isNew)
+            {
+                flashUntil = now + 0.8f;
+
+                if (mistakeNoticeText != null && mistakeNoticeSeconds > 0f)
+                {
+                    mistakeNoticeText.text = SafeFormat(mistakeNoticeFormat, "Mistake recorded  -{0}",
+                                                        COC4AssessmentRun.MistakePenalty);
+                    mistakeNoticeText.gameObject.SetActive(true);
+                    noticeUntil = now + mistakeNoticeSeconds;
+                }
+            }
+
+            if (mistakeNoticeText != null && mistakeNoticeText.gameObject.activeSelf && now >= noticeUntil)
+                mistakeNoticeText.gameObject.SetActive(false);
+
+            if (mistakesText == null) return;
+
+            mistakesText.text = SafeFormat(mistakesFormat, "Mistakes: {0}  (-{1})",
+                                           count, COC4AssessmentRun.PenaltyPoints);
+            mistakesText.color = now < flashUntil ? mistakeFlashColor : mistakesColour;
+        }
+
+        /// <summary>A typo in a format string in the Inspector should not throw every frame.</summary>
+        private static string SafeFormat(string format, string fallback, params object[] args)
+        {
+            try { return string.Format(string.IsNullOrEmpty(format) ? fallback : format, args); }
+            catch (System.FormatException) { return string.Format(fallback, args); }
         }
 
         // ==================================================================

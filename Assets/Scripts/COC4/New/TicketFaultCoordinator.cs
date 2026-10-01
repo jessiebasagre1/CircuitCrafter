@@ -164,8 +164,11 @@ namespace CircuitCrafter.Repair
             // Recorded as a mistake, not just a nudge. Reaching for the hardware
             // before identifying the cause is the specific behaviour this module
             // is trying to train out, so it belongs in the report.
-            if (!string.IsNullOrEmpty(stageId))
-                AssessmentRecorder.Mistake("procedure", "Attempted a repair before diagnosing the fault.");
+            // In the COC4 assessment it is recorded with or without a Stage Id (the run has none of
+            // its own). Same wording as RepairWorkGate, so it is charged once per ticket.
+            if (!string.IsNullOrEmpty(stageId) || COC4AssessmentRun.IsActive)
+                AssessmentRecorder.Mistake("procedure", COC4AssessmentRun.RepairBeforeDiagnosisText,
+                                           COC4AssessmentRun.RepairBeforeDiagnosisCorrection);
 
             Debug.Log("[TicketFaultCoordinator] Something was fixed before the fault was diagnosed - run the diagnostic tool first. The repair still stands and will count once diagnosed.", this);
 

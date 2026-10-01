@@ -367,7 +367,10 @@ namespace CircuitCrafter.Assessment
             // COC4AssessmentRun.ReportMistake() was never called and in-site mistakes (wrong
             // diagnosis, repairing before diagnosing, a failed verification) were not counted.
             // They are now - which is what the run's Mistake Penalty was always meant to apply to.
-            if (CircuitCrafter.Repair.COC4AssessmentRun.IsActive) CircuitCrafter.Repair.COC4AssessmentRun.ReportMistake();
+            // The details go with it, so the COC4 report and the competency screen can list each
+            // mistake (and the correct procedure) rather than only count them.
+            if (CircuitCrafter.Repair.COC4AssessmentRun.IsActive)
+                CircuitCrafter.Repair.COC4AssessmentRun.ReportMistake(category, description, correction);
         }
 
         public static void Attempt(string stageId, bool correct)
@@ -394,6 +397,17 @@ namespace CircuitCrafter.Assessment
             IsRunning = false;
             IsFinished = true;
             Unsubscribe();
+
+            // A COC4 assessment is recorded ONCE, by COC4AssessmentReportView at the end of the whole
+            // run. A recorder sitting in a repair-site scene (COC4's, or a COC1 scene the site reuses)
+            // would otherwise save its own partial "Assessment" result mid-run - an extra row on the
+            // competency screen, and a one-ticket score that could land in the module's Best.
+            if (CircuitCrafter.Repair.COC4AssessmentRun.IsActive)
+            {
+                Debug.Log($"[AssessmentRecorder] {moduleId} recorder finished during the COC4 assessment - " +
+                          "not saved. The COC4 results screen records the whole run.", this);
+                return null;
+            }
 
             bool everyStageDone = AllStagesComplete();
             bool reallyCompleted = completed && everyStageDone;

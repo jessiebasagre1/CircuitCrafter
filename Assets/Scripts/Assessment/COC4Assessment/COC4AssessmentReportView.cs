@@ -54,6 +54,17 @@ namespace CircuitCrafter.Repair
                  "the learner was given.")]
         [SerializeField] private int ticketsRequiredToPass = 4;
 
+        [Header("Mistakes list")]
+        [Tooltip("Print the correct procedure under each mistake. The run is over by the time this " +
+                 "screen shows, and the Competency screen shows the same lines.")]
+        [SerializeField] private bool showCorrections = true;
+
+        [Tooltip("How many mistakes to print before \"...and N more\". 0 = all of them. Keeps a long " +
+                 "list from running off the bottom of the panel; the Competency screen always has " +
+                 "the full list.")]
+        [Min(0)]
+        [SerializeField] private int maxMistakesListed = 8;
+
         // ==================================================================
 
         private void Start()
@@ -78,7 +89,31 @@ namespace CircuitCrafter.Repair
                 return;
             }
 
-            AssessmentResult result = BuildAndRecord();
+            if (COC4AssessmentRun.IsActive)
+            {
+                // The results scene was opened while tickets are still being worked - not by the
+                // run finishing. Recording now would save a half-run as the learner's result.
+                if (headlineText != null) headlineText.text = "Assessment still in progress";
+                if (bodyText != null) bodyText.text = "Finish the remaining tickets first.";
+                if (scoreText != null) scoreText.text = "";
+                if (panelRoot != null) panelRoot.SetActive(true);
+                Debug.LogWarning("[COC4AssessmentReportView] The run is still active - nothing was recorded.", this);
+                return;
+            }
+
+            // ONE RECORD PER RUN. A second report component in the scene, or this scene loading a
+            // second time, shows the saved result instead of writing a duplicate to the competency
+            // screen (a duplicate would also count as another attempt in the ledger).
+            AssessmentResult result;
+            if (COC4AssessmentRun.ResultRecorded && COC4AssessmentRun.LastResult != null)
+            {
+                result = COC4AssessmentRun.LastResult;
+                Debug.Log("[COC4AssessmentReportView] This run is already recorded - showing it, not saving it again.", this);
+            }
+            else
+            {
+                result = BuildAndRecord();
+            }
 
             if (panelRoot != null) panelRoot.SetActive(true);
             if (headlineText != null) headlineText.text = Headline(result);
@@ -113,8 +148,28 @@ namespace CircuitCrafter.Repair
                 startedUtc = DateTime.UtcNow.AddSeconds(-COC4AssessmentRun.ElapsedSeconds).ToString("o"),
                 finishedUtc = DateTime.UtcNow.ToString("o"),
                 durationSeconds = COC4AssessmentRun.ElapsedSeconds,
-                mistakeCount = COC4AssessmentRun.TotalMistakes,
             };
+
+            // THE MISTAKES, ONE ENTRY PER -10.
+            //
+            // Copied from the run's log, so the competency screen's "Mistakes: N", the list under
+            // it and the points deducted always agree. It used to hold only notes about unresolved
+            // tickets (which cost no penalty) while the count came from elsewhere, so the screen
+            // could say "Mistakes: 3" above one unrelated line. Ticket outcomes now go on the
+            // ticket's own stage line instead.
+            foreach (MistakeEntry logged in COC4AssessmentRun.Mistakes)
+            {
+                if (logged == null) continue;
+                result.mistakes.Add(new MistakeEntry
+                {
+                    atSeconds = logged.atSeconds,
+                    category = logged.category,
+                    description = logged.description,
+                    correction = logged.correction,
+                    context = logged.context
+                });
+            }
+            result.mistakeCount = result.mistakes.Count;
 
             int score = 0;
             int maxScore = 0;
@@ -142,53 +197,27 @@ namespace CircuitCrafter.Repair
                     // The ticket id, so a stage in the report can be traced straight back to the
                     // TicketData asset that set it.
                     stageId = attempt.ticket.ticketId,
-                    displayName = attempt.ticket.title,
+
+                    // The outcome rides on the ticket's own line ("... (gave up)") instead of as a
+                    // mistake entry. Not resolving a ticket already costs its points; listing it as
+                    // a mistake too made the list longer than the penalty count.
+                    displayName = attempt.Passed
+                        ? attempt.ticket.title
+                        : $"{attempt.ticket.title} ({Verdict(attempt)})",
                     completed = attempt.Passed,
                     points = points,
                     completedAtSeconds = attempt.Passed ? atSeconds : -1f,
                     attempts = 1,
                     firstAttemptCorrect = attempt.Passed && attempt.mistakes == 0
                 });
-
-                if (!attempt.started)
-                {
-                    // No mistake entry. The learner did nothing wrong here - they were never given
-                    // the chance - and a mistake list padded with tickets nobody saw would make a
-                    // timed-out run look like a careless one.
-                }
-                else if (attempt.gaveUp)
-                {
-                    result.mistakes.Add(new MistakeEntry
-                    {
-                        atSeconds = atSeconds,
-                        category = "unresolved",
-                        description = $"Gave up on '{attempt.ticket.title}' without resolving it."
-                    });
-                }
-                else if (!attempt.repaired)
-                {
-                    result.mistakes.Add(new MistakeEntry
-                    {
-                        atSeconds = atSeconds,
-                        category = "unresolved",
-                        description = $"Left '{attempt.ticket.title}' unrepaired."
-                    });
-                }
-                else if (!attempt.diagnosed)
-                {
-                    result.mistakes.Add(new MistakeEntry
-                    {
-                        atSeconds = atSeconds,
-                        category = "identification",
-                        description = $"Repaired '{attempt.ticket.title}' without recording the cause."
-                    });
-                }
             }
 
             int required = TicketsRequiredToPass();
             AddCompetencyStages(result, required);
 
-            score = Mathf.Max(0, score - COC4AssessmentRun.TotalMistakes * COC4AssessmentRun.MistakePenalty);
+            // Minus MistakePenalty (10) for every mistake in the list above - the same rule as the
+            // HUD's running score, applied once, here. Never below zero.
+            score = Mathf.Max(0, score - result.mistakeCount * COC4AssessmentRun.MistakePenalty);
 
             result.score = score;
             result.maxScore = Mathf.Max(1, maxScore);
@@ -211,6 +240,7 @@ namespace CircuitCrafter.Repair
                                   "COC4-Results.", this);
 
             ResultsRepository.Save(result);
+            COC4AssessmentRun.MarkRecorded(result);
 
             if (ScoreManager.Instance != null) ScoreManager.Instance.AddScore(score, "module:" + moduleId);
 
@@ -344,9 +374,12 @@ namespace CircuitCrafter.Repair
         {
             var sb = new StringBuilder();
 
+            int penalty = result.mistakeCount * COC4AssessmentRun.MistakePenalty;
+
             sb.AppendLine($"Time: {AssessmentResult.FormatTime(result.durationSeconds)}" +
                           (COC4AssessmentRun.TimedOut ? "   -   TIME LIMIT REACHED" : ""));
-            sb.AppendLine($"Mistakes: {result.mistakeCount}");
+            sb.AppendLine($"Mistakes: {result.mistakeCount}" +
+                          (penalty > 0 ? $"   (-{penalty} points)" : ""));
             sb.AppendLine();
             sb.AppendLine("TICKETS");
 
@@ -355,25 +388,53 @@ namespace CircuitCrafter.Repair
             {
                 if (attempt == null || attempt.ticket == null) continue;
 
-                // Says WHICH half was missing, not just pass or fail. "Repaired, cause not
-                // recorded" tells a learner exactly what to do differently; "failed" tells them
-                // nothing they can act on.
-                string verdict =
-                    attempt.gaveUp ? "gave up"
-                    : attempt.Passed ? "resolved"
-                    : attempt.repaired ? "repaired, but the cause was never recorded"
-                    : attempt.diagnosed ? "cause identified, but not repaired"
-                    : "not resolved";
-
-                if (!attempt.started) verdict = "not attempted - the time ran out first";
-
                 sb.AppendLine($"  {n}. {attempt.ticket.title}");
-                sb.AppendLine($"       {verdict}   -   {AssessmentResult.FormatTime(attempt.seconds)}" +
+                sb.AppendLine($"       {Verdict(attempt)}   -   {AssessmentResult.FormatTime(attempt.seconds)}" +
                               (attempt.mistakes > 0 ? $", {attempt.mistakes} mistake(s)" : ""));
                 n++;
             }
 
+            if (result.mistakes.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"MISTAKES   (-{COC4AssessmentRun.MistakePenalty} points each)");
+
+                int shown = 0;
+                foreach (MistakeEntry mistake in result.mistakes)
+                {
+                    if (mistake == null) continue;
+                    if (maxMistakesListed > 0 && shown >= maxMistakesListed)
+                    {
+                        sb.AppendLine($"  ...and {result.mistakes.Count - shown} more - see the Competency screen.");
+                        break;
+                    }
+
+                    sb.AppendLine($"  - {mistake.description}" +
+                                  (string.IsNullOrEmpty(mistake.context) ? "" : $"   ({mistake.context})"));
+
+                    if (showCorrections && !string.IsNullOrEmpty(mistake.correction))
+                        sb.AppendLine($"       Correct procedure: {mistake.correction}");
+
+                    shown++;
+                }
+            }
+
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// What happened on one ticket, in words. Says WHICH half was missing, not just pass or
+        /// fail: "repaired, but the cause was never recorded" tells a learner what to do
+        /// differently; "failed" tells them nothing they can act on.
+        /// </summary>
+        private static string Verdict(COC4AssessmentRun.TicketAttempt attempt)
+        {
+            if (!attempt.started) return "not attempted - the time ran out first";
+            if (attempt.gaveUp) return "gave up";
+            if (attempt.Passed) return "resolved";
+            if (attempt.repaired) return "repaired, but the cause was never recorded";
+            if (attempt.diagnosed) return "cause identified, but not repaired";
+            return "not resolved";
         }
 
         /// <summary>Wired to the Done button.</summary>

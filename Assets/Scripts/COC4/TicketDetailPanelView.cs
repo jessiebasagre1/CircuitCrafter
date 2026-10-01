@@ -36,7 +36,18 @@ public class TicketDetailPanelView : MonoBehaviour
     [SerializeField] private Color diagnosedColor = new Color32(0xFF, 0xC9, 0x3C, 0xFF);
     [SerializeField] private Color resolvedColor = new Color32(0x5A, 0xE0, 0xA8, 0xFF);
 
+    [Header("Locked (tickets unlock in order)")]
+    [Tooltip("The status line for a locked ticket. {0} is the title of the ticket to finish first.")]
+    [SerializeField] private string lockedStatusFormat = "Locked - finish \"{0}\" first";
+    [SerializeField] private Color lockedColor = new Color32(0x6B, 0x77, 0x88, 0xFF);
+
     private TicketData _current;
+
+    /// <summary>The Manager field, or the scene's TicketManager if it was left empty.</summary>
+    private TicketManager Manager => manager != null ? manager : TicketManager.Instance;
+
+    /// <summary>The ticket that has to be finished before the one showing, or null.</summary>
+    private TicketData BlockingCurrent => _current != null && Manager != null ? Manager.BlockingTicket(_current) : null;
 
     public void Show(TicketData ticket, TicketStatus status)
     {
@@ -57,6 +68,30 @@ public class TicketDetailPanelView : MonoBehaviour
 
     private void Refresh(TicketStatus status)
     {
+        // Locked: say which ticket comes first, and neither button works.
+        TicketData blocking = BlockingCurrent;
+        if (blocking != null)
+        {
+            if (statusText != null)
+            {
+                statusText.text = string.Format(lockedStatusFormat, blocking.title);
+                statusText.color = lockedColor;
+            }
+            if (startButton != null)
+            {
+                startButton.interactable = false;
+                startButton.onClick.RemoveAllListeners();
+                startButton.onClick.AddListener(HandleStartClicked);
+            }
+            if (goToSiteButton != null)
+            {
+                goToSiteButton.interactable = false;
+                goToSiteButton.onClick.RemoveAllListeners();
+                goToSiteButton.onClick.AddListener(HandleGoToSiteClicked);
+            }
+            return;
+        }
+
         if (statusText != null)
         {
             statusText.text = status switch
@@ -97,6 +132,7 @@ public class TicketDetailPanelView : MonoBehaviour
     private void HandleGoToSiteClicked()
     {
         if (_current == null) return;
+        if (BlockingCurrent != null) return;   // locked
 
         if (string.IsNullOrEmpty(_current.sceneName))
         {
@@ -123,6 +159,7 @@ public class TicketDetailPanelView : MonoBehaviour
     private void HandleStartClicked()
     {
         if (_current == null || manager == null) return;
+        if (BlockingCurrent != null) return;   // locked
 
         var ticket = _current;
         manager.StartTicket(ticket);

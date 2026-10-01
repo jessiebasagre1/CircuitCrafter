@@ -156,8 +156,14 @@ namespace CircuitCrafter.Assessment.UI
                 {
                     if (mistake == null) continue;
 
+                    // context says WHERE, e.g. "Ticket 2: No display" in COC4. Empty for modules
+                    // that do not fill it, and then the line is exactly what it always was.
+                    string where = string.IsNullOrEmpty(mistake.context)
+                        ? ""
+                        : $"  <color={ColorMuted}>{mistake.context}</color>";
+
                     sb.AppendLine($"  - [{mistake.category}] {mistake.description}  " +
-                                  $"({AssessmentResult.FormatTime(mistake.atSeconds)})");
+                                  $"({AssessmentResult.FormatTime(mistake.atSeconds)}){where}");
 
                     // GUIDANCE: the correct procedure that was withheld during the run.
                     if (!string.IsNullOrEmpty(mistake.correction))

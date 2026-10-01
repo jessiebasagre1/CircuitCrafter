@@ -162,6 +162,9 @@ namespace CircuitCrafter.Repair
         // ==================================================================
 
         private bool running;
+
+        // Failed power-on tests on this visit, so each one is its own mistake in the report.
+        private int failedTests;
         private bool resolved;
         private bool openRequested;
 
@@ -690,8 +693,20 @@ namespace CircuitCrafter.Repair
                 {
                     AssessmentRecorder.Attempt(stageId, allClear);
                     if (allClear) AssessmentRecorder.Stage(stageId);
-                    else AssessmentRecorder.Mistake("verification", "Powered the machine on to test the repair and it still failed.");
                 }
+            }
+
+            // A failed test is a mistake - the learner believed the job was done and it was not.
+            // Recorded in the COC4 assessment with or without a Stage Id (the run has none of its
+            // own, and this was being dropped). Numbered, so a second failed test on the same
+            // ticket is a second mistake rather than a repeat of the first.
+            if (countsAsTest && !allClear && (!string.IsNullOrEmpty(stageId) || COC4AssessmentRun.IsActive))
+            {
+                failedTests++;
+                AssessmentRecorder.Mistake("verification",
+                    "Powered the machine on to test the repair and it still failed" +
+                    (failedTests > 1 ? $" (test {failedTests})." : "."),
+                    COC4AssessmentRun.FailedTestCorrection);
             }
 
             Debug.Log($"[PCPowerStation] Boot {(allClear ? "PASSED" : "FAILED")} " +

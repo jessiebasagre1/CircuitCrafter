@@ -121,6 +121,9 @@ namespace CircuitCrafter.Repair
         [Tooltip("Shown the first time the learner tries to open a case they have not diagnosed. Leave empty and a line is written for you.")]
         [SerializeField] private DialogSequence lockedUntilDiagnosedDialog;
 
+        [Tooltip("COC4 ASSESSMENT ONLY. Trying to open this locked case before diagnosing counts as a mistake (-10) - the same \"started the repair before diagnosing\" mistake RepairWorkGate records, so the learner is charged for it at most once per ticket. Story mode is unaffected.")]
+        [SerializeField] private bool lockedCaseIsAssessmentMistake = true;
+
         [Tooltip("The walk-up prompt while the station is locked. The diagnose key is prepended for you, so write only the end of the sentence.")]
         [SerializeField] private string lockedPrompt = "the case stays shut until you do";
 
@@ -410,6 +413,13 @@ namespace CircuitCrafter.Repair
             Debug.Log($"[RepairStation] '{name}' is shut - the fault has not been diagnosed yet. " +
                       $"Press {RepairWorkGate.DiagnosisKey} to diagnose.", this);
 
+            // In the COC4 assessment, reaching for the case before naming the fault is the
+            // procedure mistake the module trains out. Same wording as RepairWorkGate, so the run
+            // counts this habit once per ticket however many times the learner tries.
+            if (lockedCaseIsAssessmentMistake && COC4AssessmentRun.IsActive)
+                CircuitCrafter.Assessment.AssessmentRecorder.Mistake("procedure",
+                    COC4AssessmentRun.RepairBeforeDiagnosisText,
+                    COC4AssessmentRun.RepairBeforeDiagnosisCorrection);
 
             if (DialogManager.Instance == null) return;
 

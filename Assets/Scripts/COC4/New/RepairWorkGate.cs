@@ -222,10 +222,14 @@ namespace CircuitCrafter.Repair
             // Recorded once per visit, not once per attempt. Five taps at a locked
             // part is one decision made five times, not five separate errors, and
             // counting them all would swamp everything else in the report.
-            if (!recordedMistake && !string.IsNullOrEmpty(stageId))
+            // In the COC4 assessment it is recorded whether or not a Stage Id is set: the run has
+            // no stage ids of its own, and this was being dropped. Same wording as
+            // TicketFaultCoordinator, so the one habit is charged once per ticket, not twice.
+            if (!recordedMistake && (!string.IsNullOrEmpty(stageId) || COC4AssessmentRun.IsActive))
             {
                 recordedMistake = true;
-                AssessmentRecorder.Mistake("procedure", "Reached for the hardware before diagnosing the fault.");
+                AssessmentRecorder.Mistake("procedure", COC4AssessmentRun.RepairBeforeDiagnosisText,
+                                           COC4AssessmentRun.RepairBeforeDiagnosisCorrection);
             }
 
             if (Time.time < nextDialogTime) return;

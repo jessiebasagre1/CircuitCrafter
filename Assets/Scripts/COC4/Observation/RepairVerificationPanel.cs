@@ -69,6 +69,9 @@ namespace CircuitCrafter.Repair
 
         private bool running;
 
+        // Failed tests on this visit, so each one is its own mistake in the report.
+        private int failedTests;
+
         // ==================================================================
 
         private bool openRequested;
@@ -174,7 +177,17 @@ namespace CircuitCrafter.Repair
             {
                 AssessmentRecorder.Attempt(stageId, allPassed);
                 if (allPassed) AssessmentRecorder.Stage(stageId);
-                else AssessmentRecorder.Mistake("verification", "Powered on for testing and the machine still failed.");
+            }
+
+            // Recorded in the COC4 assessment with or without a Stage Id (the run has none of its
+            // own). Numbered, so a second failed test on the same ticket is a second mistake.
+            if (!allPassed && (!string.IsNullOrEmpty(stageId) || COC4AssessmentRun.IsActive))
+            {
+                failedTests++;
+                AssessmentRecorder.Mistake("verification",
+                    "Powered on for testing and the machine still failed" +
+                    (failedTests > 1 ? $" (test {failedTests})." : "."),
+                    COC4AssessmentRun.FailedTestCorrection);
             }
 
             Debug.Log($"[RepairVerificationPanel] Test {(allPassed ? "PASSED" : "FAILED")}. {ServiceCallState.Summary()}", this);

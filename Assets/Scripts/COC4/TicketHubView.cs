@@ -65,8 +65,16 @@ public class TicketHubView : MonoBehaviour
 
             var row = Instantiate(rowPrefab, rowsContent);
             row.Setup(ticket, manager.GetStatus(ticket), HandleRowClicked);
+            row.SetLocked(!manager.IsUnlocked(ticket));
             _rows[ticket.ticketId] = row;
         }
+    }
+
+    /// <summary>Resolving one ticket unlocks the next, so every row's lock is re-read on any change.</summary>
+    private void RefreshLocks()
+    {
+        foreach (var row in _rows.Values)
+            if (row != null && row.Data != null) row.SetLocked(!manager.IsUnlocked(row.Data));
     }
 
     private void HandleRowClicked(TicketData ticket)
@@ -79,5 +87,7 @@ public class TicketHubView : MonoBehaviour
     {
         if (_rows.TryGetValue(ticketId, out var row))
             row.SetStatus(status);
+
+        RefreshLocks();
     }
 }

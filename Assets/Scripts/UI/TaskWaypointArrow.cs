@@ -128,7 +128,22 @@ namespace CSSSimulation.Networking
             /// <summary>COC1. OSInstallManager has reached the Complete stage. The Windows install
             /// is the one part of COC1 that never reports to TaskManager - TaskGate reads the stage
             /// directly, and so does this - so Task Complete cannot end the run.</summary>
-            OSInstallComplete
+            OSInstallComplete,
+
+            /// <summary>COC2. The assigned DeviceConfigStation has been configured correctly - its IP
+            /// settings were applied and accepted. Use one step per machine: "Configure the server"
+            /// with Config Station = the server's station, then the same for the client.
+            ///
+            /// WHY NOT TASK COMPLETE. The server and the client share one Task Id
+            /// ('configure_network', two steps), so the task only completes when BOTH are done - it
+            /// cannot tell the arrow which machine is next. Each station's own IsConfigured can, and
+            /// it is restored with the save, so a Continue resumes on the right machine.</summary>
+            MachineConfigured,
+
+            /// <summary>COC2. The assigned ConnectivityCheckStation's ping has passed. Use it for the
+            /// "test the link" step, one per machine that has to ping. Same reason as above:
+            /// 'verify_connectivity' is shared by both machines.</summary>
+            PingPassed
         }
 
         [System.Serializable]
@@ -169,6 +184,13 @@ namespace CSSSimulation.Networking
                      "the player is being sent to. Fill this whenever the scene has more than one " +
                      "port - see the Drive In Port tooltip.")]
             public USBPort port;
+            [Tooltip("Done When = Machine Configured. The DeviceConfigStation on the PC this step " +
+                     "sends the player to - the server's for \"Configure the server\", the client's for " +
+                     "\"Configure the client\".")]
+            public DeviceConfigStation configStation;
+            [Tooltip("Done When = Ping Passed. The ConnectivityCheckStation whose ping has to pass - " +
+                     "the one on the PC this step sends the player to.")]
+            public ConnectivityCheckStation pingStation;
             [Tooltip("Done When = Player Arrived. Metres. 0 falls back to Arrival Distance.")]
             public float arriveWithin = 0f;
 
@@ -561,6 +583,12 @@ namespace CSSSimulation.Networking
                     return OSInstallManager.Instance != null &&
                            OSInstallManager.Instance.CurrentStage == OSInstallManager.InstallStage.Complete;
 
+                case DoneWhen.MachineConfigured:
+                    return s.configStation != null && s.configStation.IsConfigured;
+
+                case DoneWhen.PingPassed:
+                    return s.pingStation != null && s.pingStation.IsConnected;
+
                 case DoneWhen.Manual:
                     return s.manualDone;
             }
@@ -892,6 +920,16 @@ namespace CSSSimulation.Networking
                                          "and the arrow will walk backwards to it. Tick Latch When " +
                                          "Done.");
                         break;
+                    case DoneWhen.MachineConfigured:
+                        if (s.configStation == null)
+                            problems.Add(where + " is judged by Machine Configured but Config Station is " +
+                                         "empty. Drag in the DeviceConfigStation of the PC this step points at.");
+                        break;
+                    case DoneWhen.PingPassed:
+                        if (s.pingStation == null)
+                            problems.Add(where + " is judged by Ping Passed but Ping Station is empty. Drag " +
+                                         "in the ConnectivityCheckStation of the PC this step points at.");
+                        break;
                     case DoneWhen.DriveRemovedFromPort:
                         if (s.port == null)
                             problems.Add(where + " is judged by Drive Removed From Port but Port is " +
@@ -1088,6 +1126,8 @@ namespace CSSSimulation.Networking
                 case DoneWhen.DriveRemovedFromPort:
                     return s.port != null ? "port " + Path(s.port.transform) + " to be empty" : "(none)";
                 case DoneWhen.OSInstallComplete: return "OSInstallManager stage Complete";
+                case DoneWhen.MachineConfigured: return s.configStation != null ? "'" + s.configStation.stationName + "' configured" : "(none)";
+                case DoneWhen.PingPassed: return s.pingStation != null ? "'" + s.pingStation.stationName + "' ping passed" : "(none)";
                 case DoneWhen.PlayerArrived: return "within " + (s.arriveWithin > 0f ? s.arriveWithin : arrivalDistance) + "m";
                 default: return "";
             }
