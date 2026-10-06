@@ -5155,6 +5155,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 194942172}
+  - component: {fileID: 194942209}
   - component: {fileID: 194942208}
   - component: {fileID: 194942207}
   - component: {fileID: 194942205}
@@ -5721,6 +5722,7 @@ MonoBehaviour:
   - {fileID: 911595628}
   highlightRingPrefab: {fileID: 2270116576529210411, guid: 9dc9e0b98006fd74497c4fb11394d06b, type: 3}
   showOnlyOnce: 1
+  quietSecondsBeforeShowing: 0.3
 --- !u!114 &194942201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6022,7 +6024,7 @@ MonoBehaviour:
   moduleId: COC1
   storyModeOnly: 1
   glowTint: {r: 0.45, g: 0.85, b: 1, a: 1}
-  strength: 0.35
+  strength: 1
   pulsesPerSecond: 0.9
   useEmission: 1
   emissionIntensity: 3
@@ -6031,6 +6033,15 @@ MonoBehaviour:
   glowLocks: 1
   stopWhenDisassembled: 1
   disassembleTaskId: disassemble_pc
+  glowConnectorsDuringAssembly: 1
+  assemblyConnectors:
+  - {fileID: 4154679090555821646}
+  - {fileID: 1864804455164938878}
+  - {fileID: 1907386948631124032}
+  - {fileID: 2307824752428171685}
+  - {fileID: 2011161968}
+  onlyWhenPortIsReady: 1
+  assembleTaskId: assemble_pc
   rescanSeconds: 2
   verbose: 0
 --- !u!114 &194942207
@@ -6067,6 +6078,91 @@ MonoBehaviour:
   driveIndex: 0
   writeTheRequiredImage: 1
   allowInBuilds: 0
+--- !u!114 &194942209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 194942169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ca7d5da5f0906840a6405cec0b652a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AssemblyStationTutorial
+  station: {fileID: 301048444}
+  quietSeconds: 0.4
+  showOnlyOnce: 1
+  showDisassemblyIntro: 1
+  disassemblyIntroLines:
+  - speakerName: Guide
+    text: Welcome to the PC Disassembly and Assembly station. First you will take
+      the system unit apart, one component at a time. Then you will put it back together.
+  - speakerName: Guide
+    text: 'Work like a technician: the PC is shut down and unplugged, and you handle
+      each component by its edges. Follow the correct order - some parts must come
+      off before others.'
+  disassemblyControlsPC:
+  - speakerName: Guide
+    text: 'Controls: click and drag a part to remove it. Parts and cables that glow
+      can be removed now.'
+  - speakerName: Guide
+    text: Drag every part you remove onto an empty slot in the hotbar. The hotbar
+      keeps the parts until you assemble the PC again.
+  - speakerName: Guide
+    text: To unplug a cable, drag its plug away from the port. Click a RAM clip or
+      the CPU lever to open it.
+  - speakerName: Guide
+    text: Scroll the mouse wheel to zoom, drag an empty area to move the view, and
+      press R to reset it. Press E to leave the station.
+  disassemblyControlsTouch:
+  - speakerName: Guide
+    text: 'Controls: touch and drag a part to remove it. Parts and cables that glow
+      can be removed now.'
+  - speakerName: Guide
+    text: Drag every part you remove onto an empty slot in the hotbar. The hotbar
+      keeps the parts until you assemble the PC again.
+  - speakerName: Guide
+    text: To unplug a cable, drag its plug away from the port. Tap a RAM clip or
+      the CPU lever to open it.
+  - speakerName: Guide
+    text: Pinch to zoom and drag an empty area to move the view. Use the Exit button
+      to leave the station.
+  showAssemblyIntro: 1
+  assemblyIntroLines:
+  - speakerName: Guide
+    text: 'Assembly stage: put every part back into the system unit and reconnect
+      every cable you removed.'
+  - speakerName: Guide
+    text: Work in reverse order - the last part you removed goes back first. Close
+      any clip or lever before fitting the part that sits on top of it.
+  assemblyControlsPC:
+  - speakerName: Guide
+    text: Drag a part from the hotbar onto its place in the system unit. Its slot
+      lights up when the part fits there.
+  - speakerName: Guide
+    text: Glowing cable plugs still need to go back in. Drag each one to its port
+      and let go to plug it in.
+  assemblyControlsTouch:
+  - speakerName: Guide
+    text: Touch and drag a part from the hotbar onto its place in the system unit.
+      Its slot lights up when the part fits there.
+  - speakerName: Guide
+    text: Glowing cable plugs still need to go back in. Drag each one to its port
+      and let go to plug it in.
+  showHotbarDescriptionTip: 1
+  hotbarDescriptionLines:
+  - speakerName: Guide
+    text: 'The part is now in your hotbar. {Click} it - press and let go without
+      dragging - to see its description: what the part is and what it does.'
+  - speakerName: Guide
+    text: Get to know each component as you remove it. You will need to recognise
+      every one of them when you put the PC back together.
+  slotHighlightPrefab: {fileID: 0}
+  slotHighlightMaxSeconds: 20
+  disassembleTaskId: disassemble_pc
+  assembleTaskId: assemble_pc
+  verbose: 1
 --- !u!1 &195369364
 GameObject:
   m_ObjectHideFlags: 0
@@ -53830,6 +53926,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2011161968 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1299020603642637371, guid: 72aa98206dd4ae34fa2e395ffae66677, type: 3}
+  m_PrefabInstance: {fileID: 898839657391445968}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 504474d79500537448a27ebcf08688dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CableConnector
 --- !u!1 &2016665523
 GameObject:
   m_ObjectHideFlags: 0
@@ -65431,7 +65538,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4517655982018847914, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_text
-      value: Tap to continue
+      value: Press Space to continue
       objectReference: {fileID: 0}
     - target: {fileID: 6818330433238451798, guid: bdc8bcf5de06e034a899207bb8785d3d, type: 3}
       propertyPath: m_Name

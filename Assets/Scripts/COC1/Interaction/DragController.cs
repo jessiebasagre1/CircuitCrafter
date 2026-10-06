@@ -33,6 +33,21 @@ public class DragController : MonoBehaviour
     /// to tell a cleaning tool from a computer part mid-drag.</summary>
     public PCPartItem DraggedItem => draggedItem;
 
+    /// <summary>
+    /// Raised when a part lands in a hotbar slot: dropped on one, or sent back to one after a drop
+    /// that found nowhere to go. fromWorld is true when the drag started on the PC (the part was
+    /// just removed), false when it started in the hotbar. AssemblyStationTutorial listens for the
+    /// first fromWorld one to explain the part description.
+    /// </summary>
+    public static event System.Action<PCPartItem, HotbarSlot, bool> PartStoredInHotbar;
+
+    private void RaiseStored(PCPartItem item, HotbarSlot slot)
+    {
+        if (item == null || slot == null || PartStoredInHotbar == null) return;
+        try { PartStoredInHotbar(item, slot, sourceSlot == null); }
+        catch (System.Exception e) { Debug.LogException(e, this); }
+    }
+
     [Header("Refs")]
     public Camera worldCamera;
     [Tooltip("UI Image used as the floating drag cursor. Keep Raycast Target OFF.")]
@@ -206,6 +221,7 @@ public class DragController : MonoBehaviour
             {
                 slot.SetItem(draggedItem); // item is already shrunk/disabled, this just shows its icon
                 SfxPlayer.HotbarStored();
+                RaiseStored(draggedItem, slot);
                 return true;
             }
         }
@@ -241,11 +257,16 @@ public class DragController : MonoBehaviour
         if (sourceSlot != null)
         {
             sourceSlot.SetItem(draggedItem);
+            RaiseStored(draggedItem, sourceSlot);
         }
         else
         {
             var slot = HotbarManager.Instance.GetFirstEmptySlot();
-            if (slot != null) slot.SetItem(draggedItem);
+            if (slot != null)
+            {
+                slot.SetItem(draggedItem);
+                RaiseStored(draggedItem, slot);
+            }
             // If the hotbar is full with nowhere to fall back to, the item stays
             // shrunk/hidden. Consider re-inserting into its original socket instead.
         }

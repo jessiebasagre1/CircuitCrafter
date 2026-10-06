@@ -141,16 +141,27 @@ namespace CircuitCrafter.Repair
 
         public string stepsHeading = "HOW TO COMPLETE THIS JOB";
 
+        // Steps 1 and 5 say "enter the station" rather than naming a key: the same words are right on a
+        // PC (press E) and on a phone (the on-screen button), so the panel cannot tell a mobile learner
+        // to press a key they do not have.
+        const string StepConfirm = "CONFIRM - Walk to the monitor, enter the station and click POWER. Watch the whole start-up: lights and fans, the BIOS screen, any beeps, and whether Windows loads.";
+        const string StepTest = "TEST - Step back from the case, go to the monitor, enter the station and click POWER again. The job is finished only when the computer starts up correctly.";
+
+        // The wording before 1 Oct 2026. A copy of this component saved in a scene keeps its own
+        // text, so these are swapped for the new lines in Awake - only if left exactly as they were.
+        const string OldStepConfirm = "CONFIRM - Walk to the monitor, {interact} and {click} POWER. Watch the whole start-up: lights and fans, the BIOS screen, any beeps, and whether Windows loads.";
+        const string OldStepTest = "TEST - Step back from the case, go to the monitor, {interact} and {click} POWER again. The job is finished only when the computer starts up correctly.";
+
         [Tooltip("The five steps at a site with a power-on test. Write each as \"NAME - what to do\"; the " +
                  "name is shown in bold. Tokens: {interact}, {leave}, {diagnose}, {click}, {penalty}.")]
         [TextArea(2, 4)]
         public string[] hardwareSteps =
         {
-            "CONFIRM - Walk to the monitor, {interact} and {click} POWER. Watch the whole start-up: lights and fans, the BIOS screen, any beeps, and whether Windows loads.",
+            StepConfirm,
             "EXAMINE - {Leave} to step back, go to the system unit and {interact} to open it. Look before you touch: is every part seated, every cable plugged in, anything dusty?",
             "DIAGNOSE - {Diagnose} and choose the cause that explains everything you saw. Each wrong answer adds {penalty} seconds.",
             "REPAIR - Go to the system unit, {interact} to open it and fix the cause you named - nothing else.",
-            "TEST - Step back from the case, go to the monitor, {interact} and {click} POWER again. The job is finished only when the computer starts up correctly."
+            StepTest
         };
 
         [Tooltip("The five steps at a site with no power-on test (a network ticket). Same format and tokens.")]
@@ -272,6 +283,18 @@ namespace CircuitCrafter.Repair
         // Unity
         // ==================================================================
 
+        /// <summary>Swaps the old key-specific monitor steps for the new wording in a copy saved in a
+        /// scene. Text that was edited in the Inspector is left alone.</summary>
+        void UpgradeOldStepText()
+        {
+            if (hardwareSteps == null) return;
+            for (int i = 0; i < hardwareSteps.Length; i++)
+            {
+                if (hardwareSteps[i] == OldStepConfirm) hardwareSteps[i] = StepConfirm;
+                else if (hardwareSteps[i] == OldStepTest) hardwareSteps[i] = StepTest;
+            }
+        }
+
         void Awake()
         {
             // Unity runs Awake on an unticked component too. Unticked means "keep the old arrival
@@ -286,6 +309,7 @@ namespace CircuitCrafter.Repair
                 return;
             }
             Instance = this;
+            UpgradeOldStepText();
 
             if (!IsStoryTicket() || !IsRepairSite()) return;
             if (RepairTicketMode.IsDiagnosed && !showOnReturnVisits) return;

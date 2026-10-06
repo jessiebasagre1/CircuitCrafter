@@ -62,8 +62,15 @@ public class HotbarTutorialTrigger : MonoBehaviour
     [Tooltip("Show only once per session. Untick to re-test repeatedly without restarting Play mode.")]
     [SerializeField] private bool showOnlyOnce = true;
 
+    [Tooltip("Seconds with no dialog open before this one appears. It waits its turn: the station's " +
+             "own introduction and controls (AssemblyStationTutorial) come first.")]
+    [Min(0f)]
+    [SerializeField] private float quietSecondsBeforeShowing = 0.3f;
+
     private bool hasShown;
     private bool wasUsingStationCamera;
+    private bool pending;
+    private float quietSince = -1f;
     private readonly List<RectTransform> activeRingInstances = new List<RectTransform>();
 
     private void Update()
@@ -72,12 +79,34 @@ public class HotbarTutorialTrigger : MonoBehaviour
 
         bool isUsingStationCamera = station.IsUsingStationCamera;
 
-        // Rising edge only -- fire the moment the player enters, not every frame they're inside.
-        if (isUsingStationCamera && !wasUsingStationCamera)
-        {
-            TryShowTutorial();
-        }
+        // Rising edge only -- the moment the player enters, not every frame they're inside.
+        if (isUsingStationCamera && !wasUsingStationCamera) { pending = true; quietSince = -1f; }
+        if (!isUsingStationCamera) pending = false;
         wasUsingStationCamera = isUsingStationCamera;
+
+        // WAITS ITS TURN instead of firing on the entry frame. DialogManager shows one dialog at a
+        // time: opening this over another one (the station introduction, a removal tip) cut that
+        // one off and lost its callback - and if this one was the one cut off, its rings stayed
+        // pulsing for good, because HideHighlights is that callback.
+        if (!pending) return;
+
+        if (OtherDialogBusy())
+        {
+            quietSince = -1f;
+            return;
+        }
+
+        if (quietSince < 0f) quietSince = Time.unscaledTime;
+        if (Time.unscaledTime - quietSince < quietSecondsBeforeShowing) return;
+
+        pending = false;
+        TryShowTutorial();
+    }
+
+    private static bool OtherDialogBusy()
+    {
+        if (AssemblyStationTutorial.IsBusy) return true;
+        return DialogManager.Instance != null && DialogManager.Instance.IsDialogOpen;
     }
 
     private void TryShowTutorial()

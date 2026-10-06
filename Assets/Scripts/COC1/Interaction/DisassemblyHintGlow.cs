@@ -23,6 +23,11 @@ using UnityEngine;
 /// itself - the heatsink cable pulses, then the heatsink, then the locks - without a script
 /// anywhere spelling that order out a second time.
 ///
+/// ASSEMBLY: CABLE CONNECTORS ONLY. Once disassembly is finished, the parts stop glowing and only
+/// the plugs dragged into Assembly Connectors glow - each one while it is unplugged and its port is
+/// installed and empty - until assemble_pc is complete. Same tint, strength, pulse and emission as
+/// the disassembly glow, because it is the same component drawing it.
+///
 /// HOW IT GLOWS. It pushes colour through a MaterialPropertyBlock rather than touching
 /// materials. Assigning to renderer.material clones the material for every part, which leaks
 /// one instance per object and, worse, means any part sharing a material silently stops sharing
@@ -100,6 +105,29 @@ public class DisassemblyHintGlow : MonoBehaviour
     [Tooltip("The task that counts as \"disassembly finished\". Matches PCDisassemblySetup.TaskId.")]
     [SerializeField] private string disassembleTaskId = "disassemble_pc";
 
+    [Header("Assembly glow (cable connectors only)")]
+    [Tooltip("Once disassembly is finished, glow the CABLE CONNECTORS listed below until the PC is " +
+             "assembled. Parts never glow during assembly - only these plugs.\n\n" +
+             "Same Glow Tint, Strength, pulse and emission as the disassembly glow above: it is the " +
+             "same component, so the two can never drift apart.")]
+    [SerializeField] private bool glowConnectorsDuringAssembly = true;
+
+    [Tooltip("Drag in every cable connector (the plug end with the CableConnector component) that " +
+             "should glow during the ASSEMBLY stage - e.g. the 24-pin, CPU power, SATA data and SATA " +
+             "power plugs.\n\n" +
+             "A connector glows while it is unplugged and stops the moment it is plugged in.\n\n" +
+             "Shortcut: right-click this component > Assembly glow: add every cable connector.")]
+    [SerializeField] private CableConnector[] assemblyConnectors = new CableConnector[0];
+
+    [Tooltip("ON (recommended): a connector glows only when the port it plugs into is installed and " +
+             "empty - so the SATA cable waits until the SSD is back in, instead of glowing at a port " +
+             "that is not there yet.\n\nOFF: every unplugged connector in the list glows.")]
+    [SerializeField] private bool onlyWhenPortIsReady = true;
+
+    [Tooltip("The task that counts as \"assembly finished\" - the connector glow stops then. Matches " +
+             "PCDisassemblySetup.AssembleTaskId.")]
+    [SerializeField] private string assembleTaskId = "assemble_pc";
+
     [Header("Performance")]
     [Tooltip("Seconds between re-scans for new parts and cables. The scene does not gain parts " +
              "mid-run, so this is only for safety - 2 is plenty and costs nothing on a phone.")]
@@ -123,7 +151,11 @@ public class DisassemblyHintGlow : MonoBehaviour
     /// remembered, or a clip cannot tell whether there is still anything underneath it.</summary>
     private readonly Dictionary<RAMLock, RAMSocket> clipOwner = new Dictionary<RAMLock, RAMSocket>();
 
+    private PortSocket[] ports = new PortSocket[0];
+
     private bool finishedForThisRun;
+    private bool disassemblyGlowOff;        // the disassembly hint has ended for this run
+    private bool warnedNoConnectors;
 
     /// <summary>Renderers currently being written to, and the base colour each one started with.
     /// Kept so the glow can be taken off cleanly rather than leaving the last pulse frozen on a
@@ -170,6 +202,7 @@ public class DisassemblyHintGlow : MonoBehaviour
         cables = FindObjectsByType<CableConnector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         ramLocks = FindObjectsByType<RAMLock>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         cpuLocks = FindObjectsByType<CPULock>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        ports = FindObjectsByType<PortSocket>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         clipOwner.Clear();
         foreach (RAMSocket socket in FindObjectsByType<RAMSocket>(FindObjectsInactive.Include,
@@ -191,14 +224,40 @@ public class DisassemblyHintGlow : MonoBehaviour
     {
         if (standingDown || finishedForThisRun) return;
 
-        // The job is done - hands off. Checked before anything else so the last pulse is cleared
-        // on the same frame the final part comes out, rather than one frame into assembly.
-        if (stopWhenDisassembled && DisassemblyFinished())
+        bool disassembled = DisassemblyFinished();
+
+        // The disassembly job is done - the part hints go. Checked before anything else so the
+        // last pulse is cleared on the same frame the final part comes out, rather than one frame
+        // into assembly.
+        if (!disassemblyGlowOff && stopWhenDisassembled && disassembled)
         {
+            disassemblyGlowOff = true;
+            ClearAll();
+            Debug.Log("[DisassemblyHintGlow] Disassembly finished - part hints off for the rest of this " +
+                      "run. Putting the PC back together is the learner's own work" +
+                      (AssemblyGlowWanted
+                          ? "; only the listed cable connectors glow during assembly."
+                          : "."), this);
+
+            if (glowConnectorsDuringAssembly && !AssemblyGlowWanted && !warnedNoConnectors)
+            {
+                warnedNoConnectors = true;
+                Debug.LogWarning("[DisassemblyHintGlow] Glow Connectors During Assembly is on, but " +
+                                 "Assembly Connectors is empty - nothing will glow while assembling. " +
+                                 "Drag the cable plugs into that list.", this);
+            }
+        }
+
+        // ASSEMBLY: cable connectors only, from the Inspector list, until assemble_pc is done.
+        bool assemblyGlow = AssemblyGlowWanted && disassembled && !AssemblyFinished();
+
+        if (disassemblyGlowOff && !assemblyGlow)
+        {
+            // Nothing left to point at - the PC is assembled (or there is no connector list).
             finishedForThisRun = true;
             ClearAll();
-            Debug.Log("[DisassemblyHintGlow] Disassembly finished - hints off for the rest of this " +
-                      "run. Putting the PC back together is the learner's own work.", this);
+            if (AssemblyGlowWanted)
+                Debug.Log("[DisassemblyHintGlow] Assembly finished - connector glow off.", this);
             return;
         }
 
@@ -212,7 +271,18 @@ public class DisassemblyHintGlow : MonoBehaviour
         toClear.Clear();
         foreach (var pair in litNow) toClear.Add(pair.Key);
 
-        if (glowParts)
+        if (assemblyGlow)
+        {
+            // Same LightUp, same amount - so the same colour, strength, pulse and emission as the
+            // disassembly glow. Only the plugs in the list, and only while unplugged.
+            foreach (CableConnector plug in assemblyConnectors)
+            {
+                if (plug == null || !IsReadyToPlug(plug)) continue;
+                LightUp(plug.gameObject, amount, toClear);
+            }
+        }
+
+        if (!disassemblyGlowOff && glowParts)
         {
             foreach (PCPartItem part in parts)
             {
@@ -221,7 +291,7 @@ public class DisassemblyHintGlow : MonoBehaviour
             }
         }
 
-        if (glowCables)
+        if (!disassemblyGlowOff && glowCables)
         {
             foreach (CableConnector cable in cables)
             {
@@ -230,7 +300,7 @@ public class DisassemblyHintGlow : MonoBehaviour
             }
         }
 
-        if (glowLocks)
+        if (!disassemblyGlowOff && glowLocks)
         {
             foreach (RAMLock clip in ramLocks)
             {
@@ -313,6 +383,53 @@ public class DisassemblyHintGlow : MonoBehaviour
         if (TaskManager.Instance == null) return false;
 
         return TaskManager.Instance.IsTaskComplete(disassembleTaskId.Trim());
+    }
+
+    /// <summary>True once TaskManager says the assembly task is complete.</summary>
+    private bool AssemblyFinished()
+    {
+        if (string.IsNullOrWhiteSpace(assembleTaskId)) return false;
+        if (TaskManager.Instance == null) return false;
+
+        return TaskManager.Instance.IsTaskComplete(assembleTaskId.Trim());
+    }
+
+    /// <summary>The assembly connector glow is switched on and has at least one plug to work with.</summary>
+    private bool AssemblyGlowWanted
+    {
+        get
+        {
+            if (!glowConnectorsDuringAssembly || assemblyConnectors == null) return false;
+            foreach (CableConnector plug in assemblyConnectors)
+                if (plug != null) return true;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// An ASSEMBLY connector glows while it is out and can go back in right now.
+    ///
+    /// "Can go back in" is the port: its own Start Socket if it has one, otherwise any port that
+    /// takes this cable type. The port has to be active (its part is installed, not sitting in the
+    /// hotbar) and empty. A plug on a part that is itself in the hotbar is inactive, so it does not
+    /// glow either.
+    /// </summary>
+    private bool IsReadyToPlug(CableConnector plug)
+    {
+        if (!plug.isActiveAndEnabled || plug.isPlugged || plug.isLocked) return false;
+        if (!onlyWhenPortIsReady) return true;
+
+        if (plug.startSocket != null) return PortFree(plug.startSocket);
+
+        foreach (PortSocket port in ports)
+            if (port != null && port.Accepts(plug.cableType) && PortFree(port)) return true;
+
+        return false;
+    }
+
+    private static bool PortFree(PortSocket port)
+    {
+        return port.isActiveAndEnabled && !port.isOccupied;
     }
 
     // ==================================================================
@@ -467,6 +584,35 @@ public class DisassemblyHintGlow : MonoBehaviour
         Debug.Log(sb.ToString(), this);
     }
 
+    /// <summary>Fills Assembly Connectors with every CableConnector in the open scene that can be
+    /// moved (not Locked). Edit the list afterwards to drop any you do not want glowing.</summary>
+    [ContextMenu("Assembly glow: add every cable connector")]
+    private void AddEveryConnector()
+    {
+        var list = new List<CableConnector>();
+        if (assemblyConnectors != null)
+            foreach (CableConnector plug in assemblyConnectors)
+                if (plug != null && !list.Contains(plug)) list.Add(plug);
+
+        int added = 0;
+        foreach (CableConnector plug in FindObjectsByType<CableConnector>(FindObjectsInactive.Include,
+                                                                            FindObjectsSortMode.None))
+        {
+            if (plug == null || plug.isLocked || list.Contains(plug)) continue;
+            list.Add(plug);
+            added++;
+        }
+
+#if UNITY_EDITOR
+        UnityEditor.Undo.RecordObject(this, "Add cable connectors to assembly glow");
+#endif
+        assemblyConnectors = list.ToArray();
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        Debug.Log($"[DisassemblyHintGlow] Assembly Connectors: added {added}, {assemblyConnectors.Length} in the list.", this);
+    }
+
     [ContextMenu("Report glow")]
     private void ReportGlow()
     {
@@ -488,6 +634,21 @@ public class DisassemblyHintGlow : MonoBehaviour
 
         foreach (CPULock lever in cpuLocks)
             if (lever != null && IsReady(lever)) sb.AppendLine($"    LEVER {lever.name}");
+
+        sb.AppendLine($"  Assembly connector glow: {(AssemblyGlowWanted ? "on" : "off")}, " +
+                      $"phase: {(DisassemblyFinished() ? (AssemblyFinished() ? "assembled" : "ASSEMBLY") : "disassembly")}");
+        if (assemblyConnectors != null)
+        {
+            foreach (CableConnector plug in assemblyConnectors)
+            {
+                if (plug == null) { sb.AppendLine("    (empty slot in Assembly Connectors)"); continue; }
+                string state = plug.isPlugged ? "plugged in"
+                             : !plug.isActiveAndEnabled ? "inactive (its part is not installed)"
+                             : IsReadyToPlug(plug) ? "READY - glows during assembly"
+                             : "waiting for its port to be installed and empty";
+                sb.AppendLine($"    PLUG  {plug.name}: {state}");
+            }
+        }
 
         // The renderers by name, because "the wrong thing is lighting up" is the one complaint
         // the list above cannot answer - a part whose mesh lives on a child, or shares an object
